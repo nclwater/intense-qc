@@ -21,14 +21,16 @@ June 2019
 """
 
 from __future__ import division
-import os #
+import os  #
 import sys
-import numpy as np #
-import pandas as pd #
+import numpy as np  #
+import pandas as pd  #
 
 """
 ------------------------------- INTENSE Series definition -------------------------------
 """
+
+
 class Series:
     def __init__(self,
                  station_id,
@@ -132,13 +134,13 @@ class Series:
         self.end_datetime = max(self.data.index)
         self.number_of_records = len(self.data)
         self.percent_missing_data = len(self.data[self.data == self.no_data_value]) * 100 / self.number_of_records
-        self.resolution = self.data[self.data != self.no_data_value].diff()[self.data[self.data != self.no_data_value].diff() > 0].abs().min()
-
+        self.resolution = self.data[self.data != self.no_data_value].diff()[
+            self.data[self.data != self.no_data_value].diff() > 0].abs().min()
 
     def write(self, directory):
         if not os.path.exists(directory):
             os.mkdir(directory)
-        with open(os.path.join(directory, self.station_id)+'.txt', 'w') as o:
+        with open(os.path.join(directory, self.station_id) + '.txt', 'w') as o:
             o.write(
                 "Station ID: {self.station_id}\n"
                 "Country: {self.country}\n"
@@ -161,24 +163,24 @@ class Series:
                 "No data value: {self.no_data_value}\n"
                 "Resolution: {self.resolution:.2f}\n"
                 "Other: {self.other}\n".format(self=self))
-            
+
             # try:
-                # o.writelines([('%f' % v).rstrip('0').rstrip('.') + '\n' for v in self.data.values])
+            # o.writelines([('%f' % v).rstrip('0').rstrip('.') + '\n' for v in self.data.values])
             # except:
-                # o.writelines([('%f' % v).rstrip('0').rstrip('.') + '\n' for v in self.data.vals.values])
-            
+            # o.writelines([('%f' % v).rstrip('0').rstrip('.') + '\n' for v in self.data.vals.values])
+
             try:
                 output_data = self.data.vals.values.copy()
             except:
                 output_data = self.data.values.copy()
             output_data[np.isnan(output_data)] = -999
-            #output_data2 = [int(x) if x == -999 else x for x in output_data]
+            # output_data2 = [int(x) if x == -999 else x for x in output_data]
             o.writelines([('%f' % v).rstrip('0').rstrip('.') + '\n' for v in output_data])
 
-    def write_QC(self, directory):
+    def write_qc(self, directory):
         if not os.path.exists(directory):
             os.mkdir(directory)
-        with open(os.path.join(directory, self.station_id)+'_QC.txt', 'w') as o:
+        with open(os.path.join(directory, self.station_id) + '_QC.txt', 'w') as o:
             o.write(
                 "Station ID: {self.station_id}\n"
                 "Country: {self.country}\n"
@@ -217,100 +219,104 @@ class Series:
                 "Pre QC Affinity Index: {self.QC_preQC_affinity_index}\n"
                 "Pre QC Pearson coefficient: {self.QC_preQC_pearson_coefficient}\n"
                 "Factor against nearest daily gauge: {self.QC_factor_daily}\n".format(self=self))
-    
+
             if self.QC_hourly_neighbours == None:
                 self.QC_hourly_neighbours = [-999 for a in range(len(self.data))]
 
             if self.QC_hourly_neighbours_dry == None:
                 self.QC_hourly_neighbours_dry = [-999 for a in range(len(self.data))]
-                
+
             if self.QC_daily_neighbours == None:
                 self.QC_daily_neighbours = [-999 for a in range(len(self.data))]
 
             if self.QC_daily_neighbours_dry == None:
-                self.QC_daily_neighbours_dry = [-999 for a in range(len(self.data))]                
-            
+                self.QC_daily_neighbours_dry = [-999 for a in range(len(self.data))]
+
             if self.QC_monthly_neighbours == None:
                 self.QC_monthly_neighbours = [-999 for a in range(len(self.data))]
-      
+
             if self.QC_world_record == None:
                 self.QC_world_record = [-999 for a in range(len(self.data))]
-      
+
             if self.QC_Rx1day == None:
                 self.QC_Rx1day = [-999 for a in range(len(self.data))]
-      
+
             if self.QC_CWD == None:
                 self.QC_CWD = [-999 for a in range(len(self.data))]
-      
+
             if self.QC_CDD == None:
                 self.QC_CDD = [-999 for a in range(len(self.data))]
-      
+
             if self.QC_daily_accumualtions == None:
                 self.QC_daily_accumualtions = [-999 for a in range(len(self.data))]
-      
+
             if self.QC_monthly_accumulations == None:
                 self.QC_monthly_accumulations = [-999 for a in range(len(self.data))]
-      
+
             if self.QC_streaks == None:
-                self.QC_streaks = [-999 for a in range(len(self.data))]          
+                self.QC_streaks = [-999 for a in range(len(self.data))]
 
             if self.QC_factor_monthly == None:
                 self.QC_factor_monthly = [-999 for a in range(len(self.data))]
-                
+
             self.data.fillna(-999, inplace=True)
-            vals_flags = zip([float(format(v, '.3f')) for v in self.data.values], 
-                    self.QC_hourly_neighbours,
-                    self.QC_hourly_neighbours_dry,
-                    self.QC_daily_neighbours,
-                    self.QC_daily_neighbours_dry,
-                    self.QC_monthly_neighbours,
-                    self.QC_world_record,
-                    self.QC_Rx1day,
-                    self.QC_CWD,
-                    self.QC_CDD,
-                    self.QC_daily_accumualtions,
-                    self.QC_monthly_accumulations,
-                    self.QC_streaks,
-                    self.QC_factor_monthly)
+            vals_flags = zip([float(format(v, '.3f')) for v in self.data.values],
+                             self.QC_hourly_neighbours,
+                             self.QC_hourly_neighbours_dry,
+                             self.QC_daily_neighbours,
+                             self.QC_daily_neighbours_dry,
+                             self.QC_monthly_neighbours,
+                             self.QC_world_record,
+                             self.QC_Rx1day,
+                             self.QC_CWD,
+                             self.QC_CDD,
+                             self.QC_daily_accumualtions,
+                             self.QC_monthly_accumulations,
+                             self.QC_streaks,
+                             self.QC_factor_monthly)
             print(vals_flags)
             o.writelines(str(a)[1:-1] + "\n" for a in vals_flags)
-            
+
     def monthly_max(self):
         return self.masked.groupby(pd.TimeGrouper('M')).max()
 
-def tryFloat(testVal):
+
+def try_float(testVal):
     try:
         v = float(testVal)
     except:
         v = np.nan
     return v
 
-def tryInt(testVal):
+
+def try_int(testVal):
     try:
         v = int(testVal)
     except:
         v = np.nan
     return v
 
-def tryStrptime(testVal):
+
+def try_strptime(testVal):
     try:
         v = pd.datetime.strptime(testVal, '%Y%m%d%H')
     except:
         v = np.nan
     return v
 
-def tryList(testList):
+
+def try_list(testList):
     try:
-        v = [tryInt(i) for i in testList[1:-1].split(", ")]
+        v = [try_int(i) for i in testList[1:-1].split(", ")]
     except:
         v = np.nan
     return v
 
-def readIntense_QC(path, only_metadata=False, opened=False):
 
+def read_intense_qc(path, only_metadata=False, opened=False):
     import pandas as pd
     metadata = []
-    if opened==False:
+    if opened == False:
         try:
             with open(path, 'rb') as f:
                 while True:
@@ -343,8 +349,8 @@ def readIntense_QC(path, only_metadata=False, opened=False):
                     data = None
                 else:
                     data = f.readlines()
-        
-        
+
+
     else:
         f = path
         while True:
@@ -363,56 +369,64 @@ def readIntense_QC(path, only_metadata=False, opened=False):
             data = f.readlines()
     metadata = dict(metadata)
 
-    for variable in ['country','elevation','time zone', 'daylight saving info', 'original station name', 'original station number']:
+    for variable in ['country', 'elevation', 'time zone', 'daylight saving info', 'original station name',
+                     'original station number']:
         if variable not in metadata.keys():
             metadata[variable] = 'NA'
     if data is not None:
-        #data = [i.rstrip().split(", ") for i in data]
+        # data = [i.rstrip().split(", ") for i in data]
         try:
             data = [i.rstrip().split(", ") for i in data]
         except:
             # working on files written from linux (DWD server), it seems to work 
             # without specifying "utf-8" as argument for decode...
             data = [i.rstrip().decode().split(", ") for i in data]
-        
+
         data = np.array(data)
-        data = pd.DataFrame(data, pd.date_range(start=pd.datetime.strptime(metadata['start datetime'],'%Y%m%d%H'),end=pd.datetime.strptime(metadata['end datetime'],'%Y%m%d%H'),freq=metadata['new timestep'][:-2]+'H'),dtype=float, columns=["vals","QC_hourly_neighbours","QC_hourly_neighbours_dry","QC_daily_neighbours","QC_daily_neighbours_dry","QC_monthly_neighbours","QC_world_record","QC_Rx1day","QC_CWD","QC_CDD","QC_daily_accumualtions","QC_monthly_accumulations","QC_streaks","QC_factor_monthly"])
-        
-        #data = data.where(data>=0)
-        data = data.where(data!=-999)
-        
-    s =  Series(station_id=metadata['station id'],
-                  path_to_original_data = metadata['path to original data'],
-                  latitude = tryFloat(metadata['latitude']),
-                  longitude  =tryFloat(metadata['longitude']),
-                  original_timestep = metadata['original timestep'],
-                  original_units = metadata['original units'],
-                  new_units = metadata['new units'],
-                  new_timestep = metadata['new timestep'],
-                  data = data,
-                  elevation = metadata['elevation'],
-                  country = metadata['country'],
-                  original_station_number = metadata['original station number'],
-                  original_station_name = metadata['original station name'],
-                  time_zone=metadata['time zone'])
+        data = pd.DataFrame(data, pd.date_range(start=pd.datetime.strptime(metadata['start datetime'], '%Y%m%d%H'),
+                                                end=pd.datetime.strptime(metadata['end datetime'], '%Y%m%d%H'),
+                                                freq=metadata['new timestep'][:-2] + 'H'), dtype=float,
+                            columns=["vals", "QC_hourly_neighbours", "QC_hourly_neighbours_dry", "QC_daily_neighbours",
+                                     "QC_daily_neighbours_dry", "QC_monthly_neighbours", "QC_world_record", "QC_Rx1day",
+                                     "QC_CWD", "QC_CDD", "QC_daily_accumualtions", "QC_monthly_accumulations",
+                                     "QC_streaks", "QC_factor_monthly"])
+
+        # data = data.where(data>=0)
+        data = data.where(data != -999)
+
+    s = Series(station_id=metadata['station id'],
+               path_to_original_data=metadata['path to original data'],
+               latitude=try_float(metadata['latitude']),
+               longitude=try_float(metadata['longitude']),
+               original_timestep=metadata['original timestep'],
+               original_units=metadata['original units'],
+               new_units=metadata['new units'],
+               new_timestep=metadata['new timestep'],
+               data=data,
+               elevation=metadata['elevation'],
+               country=metadata['country'],
+               original_station_number=metadata['original station number'],
+               original_station_name=metadata['original station name'],
+               time_zone=metadata['time zone'])
 
     s.number_of_records = int(metadata['number of records'])
-    s.percent_missing_data = tryFloat(metadata['percent missing data'])
-    s.resolution = tryFloat(metadata['resolution'])
-    s.start_datetime = tryStrptime(metadata['start datetime'])
-    s.end_datetime = tryStrptime(metadata['end datetime'])
-    s.QC_percentiles = [tryList(metadata['years where q95 equals 0']), tryList(metadata['years where q99 equals 0'])]
-    s.QC_k_largest = [tryList(metadata['years where k1 equals 0']), tryList(metadata['years where k5 equals 0']), tryList(metadata['years where k10 equals 0'])]
-    s.QC_days_of_week = tryInt(metadata['uneven distribution of rain over days of the week'])
-    s.QC_hours_of_day = tryInt(metadata['uneven distribution of rain over hours of the day'])
-    s.QC_intermittency = tryList(metadata['years with intermittency issues'])
-    s.QC_breakpoint = tryInt(metadata['break point detected'])
-    s.QC_R99pTOT = tryList(metadata['r99ptot checks'])
-    s.QC_PRCPTOT = tryList(metadata['prcptot checks'])
-    
-    #s.QC_change_min_value = [tryInt(metadata['years where min value changes'].split(", ")[0][1:]), tryList(metadata['years where min value changes'].split(", ")[1][:-1])]
+    s.percent_missing_data = try_float(metadata['percent missing data'])
+    s.resolution = try_float(metadata['resolution'])
+    s.start_datetime = try_strptime(metadata['start datetime'])
+    s.end_datetime = try_strptime(metadata['end datetime'])
+    s.QC_percentiles = [try_list(metadata['years where q95 equals 0']), try_list(metadata['years where q99 equals 0'])]
+    s.QC_k_largest = [try_list(metadata['years where k1 equals 0']), try_list(metadata['years where k5 equals 0']),
+                      try_list(metadata['years where k10 equals 0'])]
+    s.QC_days_of_week = try_int(metadata['uneven distribution of rain over days of the week'])
+    s.QC_hours_of_day = try_int(metadata['uneven distribution of rain over hours of the day'])
+    s.QC_intermittency = try_list(metadata['years with intermittency issues'])
+    s.QC_breakpoint = try_int(metadata['break point detected'])
+    s.QC_R99pTOT = try_list(metadata['r99ptot checks'])
+    s.QC_PRCPTOT = try_list(metadata['prcptot checks'])
+
+    # s.QC_change_min_value = [tryInt(metadata['years where min value changes'].split(", ")[0][1:]), tryList(metadata['years where min value changes'].split(", ")[1][:-1])]
     tmp = metadata['years where min value changes']
-    change_flag = tryInt(tmp.split(", ")[0][1:])
+    change_flag = try_int(tmp.split(", ")[0][1:])
     if change_flag == 0:
         change_list = [np.nan]
     elif change_flag == 1:
@@ -420,18 +434,18 @@ def readIntense_QC(path, only_metadata=False, opened=False):
         years = years.split(", ")
         change_list = [int(y) for y in years]
     s.QC_change_min_value = [change_flag, change_list]
-    
-    s.QC_offset = tryInt(metadata['optimum offset'])
-    s.QC_preQC_affinity_index = tryFloat(metadata['pre qc affinity index'])
-    s.QC_preQC_pearson_coefficient = tryFloat(metadata['pre qc pearson coefficient'])
-    s.QC_factor_daily = tryFloat(metadata['factor against nearest daily gauge'])
+
+    s.QC_offset = try_int(metadata['optimum offset'])
+    s.QC_preQC_affinity_index = try_float(metadata['pre qc affinity index'])
+    s.QC_preQC_pearson_coefficient = try_float(metadata['pre qc pearson coefficient'])
+    s.QC_factor_daily = try_float(metadata['factor against nearest daily gauge'])
     return s
 
-def readIntense(path, only_metadata=False, opened=False):
 
+def read_intense(path, only_metadata=False, opened=False):
     import pandas as pd
     metadata = []
-    if opened==False:
+    if opened == False:
         try:
             with open(path, 'rb') as f:
                 while True:
@@ -456,7 +470,7 @@ def readIntense(path, only_metadata=False, opened=False):
                     data = None
                 else:
                     data = f.readlines()
-        
+
     else:
         f = path
         while True:
@@ -471,48 +485,51 @@ def readIntense(path, only_metadata=False, opened=False):
             data = f.readlines()
     metadata = dict(metadata)
 
-    for variable in ['country','elevation','time zone', 'daylight saving info', 'original station name', 'original station number']:
+    for variable in ['country', 'elevation', 'time zone', 'daylight saving info', 'original station name',
+                     'original station number']:
         if variable not in metadata.keys():
             metadata[variable] = 'NA'
     if data is not None:
-        try: #Exception built for when a nan is added to end of data after applying rulebase
+        try:  # Exception built for when a nan is added to end of data after applying rulebase
             data = pd.Series(data,
-                             pd.date_range(start=pd.datetime.strptime(metadata['start datetime'],'%Y%m%d%H'),
-                                           end=pd.datetime.strptime(metadata['end datetime'],'%Y%m%d%H'),
-                                           freq=metadata['new timestep'][:-2]+'H'), 
-                                           dtype=float)
-        except: #Modification adds extra hour at end of series to accomodate nan value
+                             pd.date_range(start=pd.datetime.strptime(metadata['start datetime'], '%Y%m%d%H'),
+                                           end=pd.datetime.strptime(metadata['end datetime'], '%Y%m%d%H'),
+                                           freq=metadata['new timestep'][:-2] + 'H'),
+                             dtype=float)
+        except:  # Modification adds extra hour at end of series to accomodate nan value
             # Drop nan alternative: (keeps all series same length)
             data = pd.Series(data[:-1],
-                             pd.date_range(start=pd.datetime.strptime(metadata['start datetime'],'%Y%m%d%H'),
-                                           end=pd.datetime.strptime(metadata['end datetime'],'%Y%m%d%H'),
-                                           freq=metadata['new timestep'][:-2]+'H'), 
-                                           dtype=float)
-        data = data.where(data>=0)
-        
-    s =  Series(station_id=metadata['station id'],
-                  path_to_original_data=metadata['path to original data'],
-                  latitude=tryFloat(metadata['latitude']),
-                  longitude=tryFloat(metadata['longitude']),
-                  original_timestep=metadata['original timestep'],
-                  original_units=metadata['original units'],
-                  new_units=metadata['new units'],
-                  new_timestep=metadata['new timestep'],
-                  data=data,
-                  elevation = metadata['elevation'],
-                  country = metadata['country'],
-                  original_station_number = metadata['original station number'],
-                  original_station_name = metadata['original station name'],
-                  time_zone=metadata['time zone'])
+                             pd.date_range(start=pd.datetime.strptime(metadata['start datetime'], '%Y%m%d%H'),
+                                           end=pd.datetime.strptime(metadata['end datetime'], '%Y%m%d%H'),
+                                           freq=metadata['new timestep'][:-2] + 'H'),
+                             dtype=float)
+        data = data.where(data >= 0)
+
+    s = Series(station_id=metadata['station id'],
+               path_to_original_data=metadata['path to original data'],
+               latitude=try_float(metadata['latitude']),
+               longitude=try_float(metadata['longitude']),
+               original_timestep=metadata['original timestep'],
+               original_units=metadata['original units'],
+               new_units=metadata['new units'],
+               new_timestep=metadata['new timestep'],
+               data=data,
+               elevation=metadata['elevation'],
+               country=metadata['country'],
+               original_station_number=metadata['original station number'],
+               original_station_name=metadata['original station name'],
+               time_zone=metadata['time zone'])
     try:
         s.number_of_records = int(metadata['number of records'])
     except:
         s.number_of_records = int(metadata['number of hours'])
-    s.percent_missing_data = tryFloat(metadata['percent missing data']) 
-    s.resolution = tryFloat(metadata['resolution'])
-    s.start_datetime = tryStrptime(metadata['start datetime'])
-    s.end_datetime = tryStrptime(metadata['end datetime'])
+    s.percent_missing_data = try_float(metadata['percent missing data'])
+    s.resolution = try_float(metadata['resolution'])
+    s.start_datetime = try_strptime(metadata['start datetime'])
+    s.end_datetime = try_strptime(metadata['end datetime'])
     return s
+
+
 def convert_isd(in_path, out_path):
     import netCDF4
     import pandas as pd
@@ -524,8 +541,8 @@ def convert_isd(in_path, out_path):
     precip = f.variables['precip1_depth'][:]
     periods = f.variables['precip1_period'][:]
     if isinstance(periods, np.ma.MaskedArray):
-       precip=precip.data
-       periods=periods.data
+        precip = precip.data
+        periods = periods.data
 
     for period in np.unique(periods)[np.unique(periods) > 0]:
         mask = np.logical_and(periods == period, precip >= 0)
@@ -536,7 +553,7 @@ def convert_isd(in_path, out_path):
             datetimes = pd.date_range(start=min(times), end=max(times), freq=str(period) + 'H')
 
             data = pd.Series(precip[mask],
-                          index=times)
+                             index=times)
             data = data.reindex(datetimes)
             data = data[data.first_valid_index():data.last_valid_index()]
             data[pd.isnull(data)] = -999
@@ -545,15 +562,15 @@ def convert_isd(in_path, out_path):
                             path_to_original_data=r'\\campus\RDW\civg01\Projects\INTENSE\INTENSE data\Original data\World\ISD\isd_precipitation_files.tar',
                             latitude=f.latitude,
                             longitude=f.longitude,
-                            original_timestep='%shr'%period,
+                            original_timestep='%shr' % period,
                             original_units='mm',
                             new_units='mm',
-                            new_timestep='%shr'%period,
+                            new_timestep='%shr' % period,
                             data=data,
-                            elevation='%sm'%f.elevation,
+                            elevation='%sm' % f.elevation,
                             original_station_number=f.station_id,
                             time_zone='UTC')
-            path = os.path.join(out_path,'%shr'%period)
+            path = os.path.join(out_path, '%shr' % period)
             if not os.path.exists(path):
                 os.mkdir(path)
             series.write(path)
