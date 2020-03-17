@@ -21,10 +21,9 @@ June 2019
 """
 
 from __future__ import division
-import os  #
-import sys
-import numpy as np  #
-import pandas as pd  #
+import os
+import numpy as np
+import pandas as pd
 
 """
 ------------------------------- INTENSE Series definition -------------------------------
