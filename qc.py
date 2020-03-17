@@ -1293,8 +1293,8 @@ def find_hourly_neighbours(target):
         elv = 100
 
     converted_hourly_coords = geodetic_to_ecef(target.latitude, target.longitude, elv)
-    dist, index = hourlynTree.query(converted_hourly_coords,
-                                    k=30)  # K needs to be equal or less than the number of stations available in the database
+    dist, index = hourly_n_tree.query(converted_hourly_coords,
+                                      k=30)  # K needs to be equal or less than the number of stations available in the database
     overlap = []
     paired_stations = []
     distance = []
@@ -1305,10 +1305,10 @@ def find_hourly_neighbours(target):
     counter = 0
     for i in range(len(dist)):
         dci = index[i]
-        pol, ol = calculate_overlap(hourly_dates, hourlynDates[dci])
-        ps = hourlynNames[dci]
+        pol, ol = calculate_overlap(hourly_dates, hourly_n_dates[dci])
+        ps = hourly_n_names[dci]
         di = dist[i]
-        pa = hourlynPaths[dci]
+        pa = hourly_n_paths[dci]
 
         if di < 50000:  # must be within 50km
             if ol > 365 * 3:  # must have at least 3 years overlap
@@ -1348,8 +1348,8 @@ def find_daily_neighbours(target):
     counter = 0
     for i in range(len(dist)):
         dci = index[i]
-        pol, ol = calculate_overlap(hourly_dates, dailyDates[dci])
-        ps = dailyNames[dci]
+        pol, ol = calculate_overlap(hourly_dates, daily_dates[dci])
+        ps = daily_names[dci]
         di = dist[i]
         # print(dci, ps, di, ol)
 
@@ -1377,7 +1377,7 @@ def find_monthly_neighbours(target):
 
     converted_hourly_coords = geodetic_to_ecef(target.latitude, target.longitude, elv)
 
-    dist, index = monthlyTree.query(converted_hourly_coords, k=30)
+    dist, index = monthly_tree.query(converted_hourly_coords, k=30)
 
     overlap = []
     paired_stations = []
@@ -1388,8 +1388,8 @@ def find_monthly_neighbours(target):
     counter = 0
     for i in range(len(dist)):
         mci = index[i]
-        pol, ol = calculate_overlap(hourly_dates, monthlyDates[mci])
-        ps = monthlyNames[mci]
+        pol, ol = calculate_overlap(hourly_dates, monthly_dates[mci])
+        ps = monthly_names[mci]
         di = dist[i]
 
         if di < 50000:  # must be within 50km
@@ -1853,7 +1853,7 @@ def compare_target_to_neighbour(target, neighbour, high_or_dry, station=None, ch
 
                     # *** dp 27/11/2019 *** - commented out line below so changed to default=0
                     # normalized_df['temp_flags'] = np.select(conditions, choices, default=np.nan)
-                    ##normalized_df['temp_flags'] = np.select(conditions, choices, default=0)
+                    # normalized_df['temp_flags'] = np.select(conditions, choices, default=0)
                     df['temp_flags'] = np.select(conditions, choices, default=0)
 
                     '''
@@ -1940,7 +1940,7 @@ def compare_target_to_neighbour(target, neighbour, high_or_dry, station=None, ch
 
                 # *** dp 27/11/2019 *** - commented out line below so changed to default=0
                 # normalized_df['temp_flags'] = np.select(conditions, choices, default=np.nan)
-                ##normalized_df['temp_flags'] = np.select(conditions, choices, default=0)
+                # normalized_df['temp_flags'] = np.select(conditions, choices, default=0)
                 df['temp_flags'] = np.select(conditions, choices, default=0)
 
                 # tempFlags = normalized_df['temp_flags']
@@ -2036,7 +2036,7 @@ def check_neighbours(target, neighbours, station=None,
 
     # dp 28/11/2019 - changed assuming that looking for number of neighbours online
     # on any given day (similar to monthly neighbours)
-    ##df["online"] = len(concatList)-1 - df[cols].isnull().T.sum(axis=1)
+    # df["online"] = len(concatList)-1 - df[cols].isnull().T.sum(axis=1)
     df["online"] = len(concat_list) - df[cols].isnull().sum(axis=1) - 1
 
     # print(df)
@@ -2139,7 +2139,7 @@ def check_neighbours_dry(target, neighbours):  # Liz check this
     df.flags = df.flags.replace([np.inf, -np.inf], -999)
     df.loc[df.online < 3, "flags"] = -999
     # df.loc[df.target > 0, "flags"] = -999
-    ##df.loc[df.target < 1, "flags"] = -999
+    # df.loc[df.target < 1, "flags"] = -999
     df.flags = df.flags.astype(int)
     df.flags = df.flags.replace(-999, np.nan)
     dfr = df.flags
@@ -2477,8 +2477,8 @@ def check_daily_neighbours(target):
         neighbour_dfs = []
         for nId in neighbours:
             # neighbourDfs.append(getGPCC(dts0[0].year, dts0[-1].year, nId))
-            neighbour_start_year = dailyDates[dailyNames.index(nId)][0].year
-            neighbour_end_year = dailyDates[dailyNames.index(nId)][1].year
+            neighbour_start_year = daily_dates[daily_names.index(nId)][0].year
+            neighbour_end_year = daily_dates[daily_names.index(nId)][1].year
             neighbour_dfs.append(get_gpcc(neighbour_start_year, neighbour_end_year, nId))
 
         # get matching stats for nearest gauge and offset calculateAffinityIndexAndPearson(ts1, ts2) -> returns a flag
@@ -2611,7 +2611,8 @@ def convert_to_dry_spell(daily_df):
     # i think (i.e. do all stations agree the period is wet when the target is dry?)
     # should the threshold for dry be larger than just zero?
 
-    # daily_df["fracDryDays"] = np.around(daily_df.rolling(15, min_periods=15).apply(lambda window: (window == 0).sum()/15))
+    # daily_df["fracDryDays"] = np.around(daily_df.rolling(15, min_periods=15).apply(lambda window: (window ==
+    # 0).sum()/15))
     daily_df["fracDryDays"] = daily_df.rolling(15, min_periods=15).apply(lambda window: (window == 0).sum() / 15)
 
     converted_df = daily_df["fracDryDays"]
@@ -2626,7 +2627,7 @@ def check_monthly_neighbours(
 
     # convert hourly to daily 7am-7am
     # print("converting to monthly")
-    ##dfm = df.resample('M').sum()
+    # dfm = df.resample('M').sum()
     dfm = df.resample("M", label='right', closed='right').apply(lambda x: x.values.sum())
     # dts0 = [datetime.datetime.utcfromtimestamp(x.astype(datetime.datetime)) for x in list(dfm.index.values)]
 
@@ -2654,11 +2655,11 @@ def check_monthly_neighbours(
         # get gpcc
         # print("gettingGPCC")
         neighbour_dfs = []
-        for nId in neighbours:
-            # neighbourDfs.append(getMonthlyGPCC(startYear, endYear, nId))
-            neighbour_start_year = monthlyDates[monthlyNames.index(nId)][0].year
-            neighbour_end_year = monthlyDates[monthlyNames.index(nId)][1].year
-            neighbour_dfs.append(get_monthly_gpcc(neighbour_start_year, neighbour_end_year, nId))
+        for n_id in neighbours:
+            # neighbourDfs.append(getMonthlyGPCC(startYear, endYear, n_id))
+            neighbour_start_year = monthly_dates[monthly_names.index(n_id)][0].year
+            neighbour_end_year = monthly_dates[monthly_names.index(n_id)][1].year
+            neighbour_dfs.append(get_monthly_gpcc(neighbour_start_year, neighbour_end_year, n_id))
         # get matching stats for nearest gauge and offset calculateAffinityIndexAndPearson(ts1, ts2) -> returns a flag
 
         # do neighbour check
@@ -2764,16 +2765,16 @@ def get_flags(ito):  # pass intense object
 
 def process_folder(folder_to_check, q=None):
     print(folder_to_check)
-    if not os.path.exists(qcFolder + "/" + folder_to_check[:-4]):
-        os.makedirs(qcFolder + "/" + folder_to_check[:-4])
+    if not os.path.exists(qc_folder + "/" + folder_to_check[:-4]):
+        os.makedirs(qc_folder + "/" + folder_to_check[:-4])
     # errorPath = "/media/nas/x21971/QualityControlledData_v7/error_" + folder_to_check[:-4] + ".txt"
-    error_path = qcFolder + '/' + folder_to_check[:-4] + "/error_" + folder_to_check[:-4] + ".txt"
+    error_path = qc_folder + '/' + folder_to_check[:-4] + "/error_" + folder_to_check[:-4] + ".txt"
     if not os.path.exists(error_path):
         error_file = open(error_path, "w")
     else:
         error_file = open(error_path, "a")
-    existing_files = os.listdir(qcFolder + "/" + folder_to_check[:-4])
-    zf = zipfile.ZipFile(origFolder + "/" + folder_to_check, "r")
+    existing_files = os.listdir(qc_folder + "/" + folder_to_check[:-4])
+    zf = zipfile.ZipFile(orig_folder + "/" + folder_to_check, "r")
     files_list = zf.namelist()
     for file in files_list:
         if file == "France/":
@@ -2785,7 +2786,7 @@ def process_folder(folder_to_check, q=None):
                 d = zf.open(file, mode="r")
                 qc = ex.read_intense(d, only_metadata=False, opened=True)
                 qc = get_flags(qc)
-                # ex.Series.write_QC(qc, qcFolder + "/" + folder_to_check[:-4])
+                # ex.Series.write_QC(qc, qc_folder + "/" + folder_to_check[:-4])
             except:
                 error_file.write(file + "\n")
     error_file.close()
@@ -2798,18 +2799,18 @@ def find_files_to_process(folders_to_check):
     for folderToCheck in folders_to_check:
 
         # Check for existence of output folder - make if need be
-        if not os.path.exists(qcFolder + "/" + folderToCheck[:-4] + "/Flags"):
-            os.makedirs(qcFolder + "/" + folderToCheck[:-4] + "/Flags")
-        existing_files = os.listdir(qcFolder + "/" + folderToCheck[:-4] + "/Flags")
+        if not os.path.exists(qc_folder + "/" + folderToCheck[:-4] + "/Flags"):
+            os.makedirs(qc_folder + "/" + folderToCheck[:-4] + "/Flags")
+        existing_files = os.listdir(qc_folder + "/" + folderToCheck[:-4] + "/Flags")
 
         # dp 13/12/2019 (01o1) - temporarily altered existingFiles for assessing normalised differences in 01o1 (i.e. different output folder)
         # - uncomment line below and remove the line after to get back to normal use
-        # existingFiles = os.listdir(qcFolder + "/" + folderToCheck[:-4] + '/' +
+        # existingFiles = os.listdir(qc_folder + "/" + folderToCheck[:-4] + '/' +
         #    qc_version + '/Flags/')
         ##existingFiles = []
 
         # Get list of raw (formatted) files to process
-        zf = zipfile.ZipFile(origFolder + "/" + folderToCheck, "r")
+        zf = zipfile.ZipFile(orig_folder + "/" + folderToCheck, "r")
         files_list = zf.namelist()
         for file in files_list:
             # if file == "France/":
@@ -2827,8 +2828,8 @@ def find_files_to_process(folders_to_check):
 def process_file(file, q=None):
     # work out file index with a counter and pass as argument
     # print(file)
-    folder_to_check = fileFolders[filesToProcess.index(file)]
-    zf = zipfile.ZipFile(origFolder + "/" + folder_to_check, "r")
+    folder_to_check = file_folders[files_to_process.index(file)]
+    zf = zipfile.ZipFile(orig_folder + "/" + folder_to_check, "r")
     ##try:
     d = zf.open(file, mode="r")
 
@@ -2846,14 +2847,14 @@ def process_file(file, q=None):
 
     if successful_read:
         qc = get_flags(qc)
-        # ex.Series.write_QC(qc, qcFolder + "/" + folderToCheck[:-4]) # *** old - use line below to put in flags folder ***
+        # ex.Series.write_QC(qc, qc_folder + "/" + folderToCheck[:-4]) # *** old - use line below to put in flags folder ***
 
         # for testing
-        ## ex.Series.write_QC(qc, qcFolder + "/" + folderToCheck[:-4] + '/' +
+        ## ex.Series.write_QC(qc, qc_folder + "/" + folderToCheck[:-4] + '/' +
         ##    qc_version + '/Flags/')
 
         # for global run
-        ex.Series.write_qc(qc, qcFolder + "/" + folder_to_check[:-4] + "/Flags")
+        ex.Series.write_qc(qc, qc_folder + "/" + folder_to_check[:-4] + "/Flags")
 
     ##except:
     # errorFile.write(file + "\n")
@@ -2903,20 +2904,20 @@ for data_source in etccdi_data.keys():
 
 # create kd tree of monthly gauges ++++++++++++++++++++++++++++++++++++++
 
-##THIS_FOLDER = os.path.dirname(os.path.abspath(__file__))
+# THIS_FOLDER = os.path.dirname(os.path.abspath(__file__))
 THIS_FOLDER = '/media/nas/x21971/PythonLessons/Python_3'
 my_file = os.path.join(THIS_FOLDER, 'statlex_monthly.dat')
-##print(os.path.isfile(my_file)) 
-monthlyInfo = open(my_file, "r")
+# print(os.path.isfile(my_file))
+monthly_info = open(my_file, "r")
 
-monthlyNames = []
-monthlyDates = []
-monthlyCoords = []
+monthly_names = []
+monthly_dates = []
+monthly_coords = []
 
-monthlyInfo = open(my_file, "r")  # "/fish://extelewi@oflxs809/media/nas/x21971/statlex_monthly.dat"
-monthlyInfo.readline()
+monthly_info = open(my_file, "r")  # "/fish://extelewi@oflxs809/media/nas/x21971/statlex_monthly.dat"
+monthly_info.readline()
 
-for line in monthlyInfo:
+for line in monthly_info:
     lineList = [line[0:10], line[11:54], line[54:62], line[62:73], line[73:79], line[125:135], line[137:147]]
     sid, name, lat, lon, elv, sd, ed = [l.strip() for l in lineList]
     try:
@@ -2931,15 +2932,15 @@ for line in monthlyInfo:
     else:
         elv = float(elv)
 
-    if sd == None or ed == None:
+    if sd is None or ed is None:
         pass
     else:
-        monthlyNames.append(sid)
-        monthlyDates.append((sd, ed))
-        monthlyCoords.append((float(lat), float(lon), elv))
+        monthly_names.append(sid)
+        monthly_dates.append((sd, ed))
+        monthly_coords.append((float(lat), float(lon), elv))
 
-converted_monthlyCoords = [geodetic_to_ecef(a, b, c) for a, b, c in monthlyCoords]
-monthlyTree = sp.KDTree(converted_monthlyCoords)
+converted_monthly_coords = [geodetic_to_ecef(a, b, c) for a, b, c in monthly_coords]
+monthly_tree = sp.KDTree(converted_monthly_coords)
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -2949,15 +2950,15 @@ monthlyTree = sp.KDTree(converted_monthlyCoords)
 THIS_FOLDER = '/media/nas/x21971/PythonLessons/Python_3'
 my_file = os.path.join(THIS_FOLDER, 'statlex_daily')
 ##print(os.path.isfile(my_file)) 
-dailyInfo = open(my_file, "r")
+daily_info = open(my_file, "r")
 
-dailyNames = []
-dailyDates = []
-dailyCoords = []
+daily_names = []
+daily_dates = []
+daily_coords = []
 
-dailyInfo.readline()
+daily_info.readline()
 
-for line in dailyInfo:
+for line in daily_info:
     lineList = [line[0:10], line[11:54], line[54:62], line[62:73], line[73:79], line[125:135], line[137:147]]
     sid, name, lat, lon, elv, sd, ed = [l.strip() for l in lineList]
     try:
@@ -2972,14 +2973,14 @@ for line in dailyInfo:
     else:
         elv = float(elv)
 
-    if sd == None or ed == None:
+    if sd is None or ed is None:
         pass
     else:
-        dailyNames.append(sid)
-        dailyDates.append((sd, ed))
-        dailyCoords.append((float(lat), float(lon), elv))
+        daily_names.append(sid)
+        daily_dates.append((sd, ed))
+        daily_coords.append((float(lat), float(lon), elv))
 
-converted_dailyCoords = [geodetic_to_ecef(a, b, c) for a, b, c in dailyCoords]
+converted_dailyCoords = [geodetic_to_ecef(a, b, c) for a, b, c in daily_coords]
 tree = sp.KDTree(converted_dailyCoords)
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -2992,22 +2993,22 @@ THIS_FOLDER = '/media/nas/x21971/PythonLessons/Python_3'
 # my_file = os.path.join(THIS_FOLDER, 'statlex_hourly.dat')
 my_file = os.path.join(THIS_FOLDER, 'statlex_hourly_200108.dat')
 ##print(os.path.isfile(my_file)) 
-hourlynInfo = open(my_file, "r")
+hourlyn_info = open(my_file, "r")
 
-hourlynNames = []
-hourlynDates = []
-hourlynCoords = []
-hourlynPaths = []
-converted_hourlynCoords = []
+hourly_n_names = []
+hourly_n_dates = []
+hourly_n_coords = []
+hourly_n_paths = []
+converted_hourly_n_coords = []
 
-hourlynNamesT = []
-hourlynDatesT = []
-hourlynCoordsT = []
-hourlynPathsT = []
+hourly_n_names_t = []
+hourly_n_dates_t = []
+hourly_n_coords_t = []
+hourly_n_paths_t = []
 
-hourlynInfo.readline()
+hourlyn_info.readline()
 
-for line in hourlynInfo:
+for line in hourlyn_info:
     sid, lat, lon, sd, ed, elv, hpath = line.rstrip().split(",")
 
     try:
@@ -3027,7 +3028,7 @@ for line in hourlynInfo:
         except:
             elv = 100
 
-    if sd == None or ed == None:
+    if sd is None or ed is None:
         pass
     else:
 
@@ -3036,28 +3037,28 @@ for line in hourlynInfo:
         # - Also ensure that no duplicates arising from e.g. duplicates in Australia1min.zip
         date_diff = ed - sd
         if date_diff.days >= 3 * 365:
-            if sid not in hourlynNamesT:
-                hourlynNamesT.append(sid)
-                hourlynDatesT.append((sd, ed))
-                hourlynCoordsT.append((float(lat), float(lon), elv))
-                hourlynPathsT.append(hpath)
+            if sid not in hourly_n_names_t:
+                hourly_n_names_t.append(sid)
+                hourly_n_dates_t.append((sd, ed))
+                hourly_n_coords_t.append((float(lat), float(lon), elv))
+                hourly_n_paths_t.append(hpath)
 
-converted_hourlynCoordsT = [geodetic_to_ecef(a, b, c) for a, b, c in hourlynCoordsT]
+converted_hourly_n_coords_t = [geodetic_to_ecef(a, b, c) for a, b, c in hourly_n_coords_t]
 
-for i in range(len(converted_hourlynCoordsT)):
+for i in range(len(converted_hourly_n_coords_t)):
     addIt = 1
-    for j in converted_hourlynCoordsT[i]:
+    for j in converted_hourly_n_coords_t[i]:
         if np.isnan(j):
             addIt = 0
 
     if addIt == 1:
-        hourlynNames.append(hourlynNamesT[i])
-        hourlynDates.append(hourlynDatesT[i])
-        hourlynCoords.append(hourlynCoordsT[i])
-        hourlynPaths.append(hourlynPathsT[i])
-        converted_hourlynCoords.append(converted_hourlynCoordsT[i])
+        hourly_n_names.append(hourly_n_names_t[i])
+        hourly_n_dates.append(hourly_n_dates_t[i])
+        hourly_n_coords.append(hourly_n_coords_t[i])
+        hourly_n_paths.append(hourly_n_paths_t[i])
+        converted_hourly_n_coords.append(converted_hourly_n_coords_t[i])
 
-hourlynTree = sp.KDTree(converted_hourlynCoords)
+hourly_n_tree = sp.KDTree(converted_hourly_n_coords)
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -3067,29 +3068,29 @@ hourlynTree = sp.KDTree(converted_hourlynCoords)
 # https://wmo.asu.edu/content/world-meteorological-organization-global-weather-climate-extremes-archive
 world_records = {'hourly': 401.0, 'daily': 1825.0}  # mm
 
-origFolder = "/media/nas/x21971/QualityControlledData"
-# qcFolder = "/media/nas/x21971/QualityControlledData_v7"
-qcFolder = "/media/nas/x21971/QC_10"
+orig_folder = "/media/nas/x21971/QualityControlledData"
+# qc_folder = "/media/nas/x21971/QualityControlledData_v7"
+qc_folder = "/media/nas/x21971/QC_10"
 ##errorFile = open("/media/nas/x21971/QualityControlledData_v7/error.txt", "w")
-numProcesses = 4
+num_processes = 4
 
 # Paths for testing
-# qcFolder = "/media/nas/x21971/DP/QC_Checks"
+# qc_folder = "/media/nas/x21971/DP/QC_Checks"
 # qc_version = '01qz'
 
-foldersToCheck = []
-for file in os.listdir(origFolder):
+folders_to_check = []
+for file in os.listdir(orig_folder):
     if file.endswith(".zip"):
-        foldersToCheck.append(file)
-##foldersToCheck = ["Germany.zip", "Japan.zip", "Australia5min"]
-# foldersToCheck = ['NewZealand.zip'] # ['Germany.zip']
+        folders_to_check.append(file)
+##folders_to_check = ["Germany.zip", "Japan.zip", "Australia5min"]
+# folders_to_check = ['NewZealand.zip'] # ['Germany.zip']
 
 # Multiprocessing by folder (country)
 # if __name__ == '__main__':
-# pool = Pool(processes=numProcesses)
+# pool = Pool(processes=num_processes)
 # m = Manager()
 # q = m.Queue()
-# for folderToCheck in foldersToCheck:
+# for folderToCheck in folders_to_check:
 # pool.apply_async(processFolder, [folderToCheck, q])
 # pool.close()
 # pool.join()
@@ -3105,12 +3106,12 @@ for file in os.listdir(origFolder):
 # '''
 # Multiprocessing by file (gauge)
 # - first get lists of files to process and corresponding folder (country)
-filesToProcess, fileFolders = find_files_to_process(foldersToCheck)
+files_to_process, file_folders = find_files_to_process(folders_to_check)
 if __name__ == '__main__':
-    pool = Pool(processes=numProcesses)
+    pool = Pool(processes=num_processes)
     m = Manager()
     q = m.Queue()
-    for file in filesToProcess:
+    for file in files_to_process:
         pool.apply_async(process_file, [file, q])
     pool.close()
     pool.join()
@@ -3126,8 +3127,8 @@ if __name__ == '__main__':
 # '''
 # Additional sweep(s) with serial processing
 time.sleep(60)
-filesToProcess, fileFolders = find_files_to_process(foldersToCheck)
-for file in filesToProcess:
+files_to_process, file_folders = find_files_to_process(folders_to_check)
+for file in files_to_process:
     process_file(file)
 # '''
 
@@ -3139,7 +3140,7 @@ for file in filesToProcess:
 # For checks
 
 # Paths
-# qcFolder = "/media/nas/x21971/DP/QC_Checks"
+# qc_folder = "/media/nas/x21971/DP/QC_Checks"
 # qc_version = '01l'
 
 # File to save number of valid neighbours
@@ -3165,40 +3166,40 @@ fh_thrsh.write("Station,Check,Neighbour,Statistic,Value\n")
 '''
 
 # Process a file(s)
-##filesToProcess = ['MY_negeri sembilan_2921013.txt'] # ['MY_kuala lumpur_3016103.txt'] # ['MY_pahang_2834001.txt'] # ['MY_johor_1541139.txt'] # ['MY_pahang_4419047.txt'] # ['MY_johor_1437116.txt'] # ['MY_kuala lumpur_3116003.txt'] # ['MY_terengganu_5328043.txt'] # ['DE_03098.txt'] # ['MY_kuala lumpur_3016102.txt']
-##fileFolders = ['Malaysia.zip'] # ['Germany.zip'] # 
-##filesToProcess = ['DE_01605.txt'] # ['DE_02483.txt'] # ['DE_00599.txt'] # ['DE_00596.txt'] # ['DE_02483.txt'] # ['DE_15207.txt'] # 
-##fileFolders = ['Germany.zip']
-##processFile(filesToProcess[0])
-# filesToProcess = [
+##files_to_process = ['MY_negeri sembilan_2921013.txt'] # ['MY_kuala lumpur_3016103.txt'] # ['MY_pahang_2834001.txt'] # ['MY_johor_1541139.txt'] # ['MY_pahang_4419047.txt'] # ['MY_johor_1437116.txt'] # ['MY_kuala lumpur_3116003.txt'] # ['MY_terengganu_5328043.txt'] # ['DE_03098.txt'] # ['MY_kuala lumpur_3016102.txt']
+##file_folders = ['Malaysia.zip'] # ['Germany.zip'] #
+##files_to_process = ['DE_01605.txt'] # ['DE_02483.txt'] # ['DE_00599.txt'] # ['DE_00596.txt'] # ['DE_02483.txt'] # ['DE_15207.txt'] #
+##file_folders = ['Germany.zip']
+##processFile(files_to_process[0])
+# files_to_process = [
 #    'DE_00596.txt', 'DE_00691.txt', 'DE_00991.txt', 'DE_01050.txt', 'DE_01051.txt',
 #    'DE_01346.txt', 'DE_01769.txt', 'DE_01832.txt', 'DE_01848.txt', 'DE_02174.txt',
 #    'DE_02175.txt', 'DE_02272.txt', 'DE_02578.txt', 'DE_02749.txt', 'DE_02890.txt',
 #    'DE_03279.txt', 'DE_03740.txt', 'DE_04600.txt', 'DE_07323.txt', 'DE_07333.txt',
 #    'DE_07343.txt', 'DE_13654.txt', 'DE_13688.txt']
-# fileFolders = ['Germany.zip' for i in range(len(filesToProcess))]
-# filesToProcess = ['IT_684.txt'] # ['NZ_40980.txt'] # ['AU_022843.txt']
-# fileFolders = ['Italy.zip'] # ['NewZealand.zip'] # ['Australia1min.zip']
-# for file in filesToProcess:
+# file_folders = ['Germany.zip' for i in range(len(files_to_process))]
+# files_to_process = ['IT_684.txt'] # ['NZ_40980.txt'] # ['AU_022843.txt']
+# file_folders = ['Italy.zip'] # ['NewZealand.zip'] # ['Australia1min.zip']
+# for file in files_to_process:
 #    processFile(file)
 # sys.exit()
 
 # Process a country
-# output_path = qcFolder + fileFolders[filesToProcess.index(file)][:-4] + "/" + file.replace(".txt", "_QC.txt") 
-# foldersToCheck = ['Malaysia.zip']
-# foldersToCheck = ['NewZealand.zip'] # ['Germany.zip'] #
-# filesToProcess, fileFolders = findFilesToProcess(foldersToCheck)
-# print(len(filesToProcess))
+# output_path = qc_folder + file_folders[files_to_process.index(file)][:-4] + "/" + file.replace(".txt", "_QC.txt")
+# folders_to_check = ['Malaysia.zip']
+# folders_to_check = ['NewZealand.zip'] # ['Germany.zip'] #
+# files_to_process, file_folders = findFilesToProcess(folders_to_check)
+# print(len(files_to_process))
 # input()
-# for file in filesToProcess:
+# for file in files_to_process:
 #    processFile(file)
 '''
 # --
 import numpy.random
-inds = np.random.choice(len(filesToProcess), 100)
-for file in filesToProcess:
-    i = filesToProcess.index(file)
-    #output_path = qcFolder + fileFolders[filesToProcess.index(file)][:-4] + "/" + file.replace(".txt", "_QC.txt") 
+inds = np.random.choice(len(files_to_process), 100)
+for file in files_to_process:
+    i = files_to_process.index(file)
+    #output_path = qc_folder + file_folders[files_to_process.index(file)][:-4] + "/" + file.replace(".txt", "_QC.txt") 
     if i in inds:
         processFile(file)
 # --

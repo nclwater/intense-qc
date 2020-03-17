@@ -559,10 +559,10 @@ def processFolder(country, q=None):
 
 ##processFolder(countryList[0])
 
-numProcesses = 4
+num_processes = 4
 
 if __name__ == '__main__':
-    pool = Pool(processes=numProcesses)
+    pool = Pool(processes=num_processes)
     m = Manager()
     q = m.Queue()
     for folderToCheck in countryList:
