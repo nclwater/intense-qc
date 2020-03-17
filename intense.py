@@ -24,6 +24,7 @@ from __future__ import division
 import os
 import numpy as np
 import pandas as pd
+import netCDF4
 
 """
 ------------------------------- INTENSE Series definition -------------------------------
@@ -282,42 +283,41 @@ class Series:
         return self.masked.groupby(pd.TimeGrouper('M')).max()
 
 
-def try_float(testVal):
+def try_float(test_val):
     try:
-        v = float(testVal)
+        v = float(test_val)
     except:
         v = np.nan
     return v
 
 
-def try_int(testVal):
+def try_int(test_val):
     try:
-        v = int(testVal)
+        v = int(test_val)
     except:
         v = np.nan
     return v
 
 
-def try_strptime(testVal):
+def try_strptime(test_val):
     try:
-        v = pd.datetime.strptime(testVal, '%Y%m%d%H')
+        v = pd.datetime.strptime(test_val, '%Y%m%d%H')
     except:
         v = np.nan
     return v
 
 
-def try_list(testList):
+def try_list(test_list):
     try:
-        v = [try_int(i) for i in testList[1:-1].split(", ")]
+        v = [try_int(i) for i in test_list[1:-1].split(", ")]
     except:
         v = np.nan
     return v
 
 
 def read_intense_qc(path, only_metadata=False, opened=False):
-    import pandas as pd
     metadata = []
-    if opened == False:
+    if not opened:
         try:
             with open(path, 'rb') as f:
                 while True:
@@ -350,7 +350,6 @@ def read_intense_qc(path, only_metadata=False, opened=False):
                     data = None
                 else:
                     data = f.readlines()
-
 
     else:
         f = path
@@ -425,7 +424,8 @@ def read_intense_qc(path, only_metadata=False, opened=False):
     s.QC_R99pTOT = try_list(metadata['r99ptot checks'])
     s.QC_PRCPTOT = try_list(metadata['prcptot checks'])
 
-    # s.QC_change_min_value = [tryInt(metadata['years where min value changes'].split(", ")[0][1:]), tryList(metadata['years where min value changes'].split(", ")[1][:-1])]
+    # s.QC_change_min_value = [tryInt(metadata['years where min value changes'].split(", ")[0][1:]),
+    # tryList(metadata['years where min value changes'].split(", ")[1][:-1])]
     tmp = metadata['years where min value changes']
     change_flag = try_int(tmp.split(", ")[0][1:])
     if change_flag == 0:
@@ -444,9 +444,8 @@ def read_intense_qc(path, only_metadata=False, opened=False):
 
 
 def read_intense(path, only_metadata=False, opened=False):
-    import pandas as pd
     metadata = []
-    if opened == False:
+    if not opened:
         try:
             with open(path, 'rb') as f:
                 while True:
@@ -532,9 +531,6 @@ def read_intense(path, only_metadata=False, opened=False):
 
 
 def convert_isd(in_path, out_path):
-    import netCDF4
-    import pandas as pd
-    import numpy as np
     if not os.path.exists(out_path):
         os.mkdir(out_path)
     f = netCDF4.Dataset(in_path)
