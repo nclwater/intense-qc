@@ -556,7 +556,7 @@ def convert_isd(in_path, out_path):
             data[pd.isnull(data)] = -999
 
             series = Series(station_id='ISD_%s' % f.station_id,
-                            path_to_original_data=r'\\campus\RDW\civg01\Projects\INTENSE\INTENSE data\Original data\World\ISD\isd_precipitation_files.tar',
+                            path_to_original_data=None,
                             latitude=f.latitude,
                             longitude=f.longitude,
                             original_timestep='%shr' % period,
