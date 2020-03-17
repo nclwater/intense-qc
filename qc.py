@@ -308,11 +308,12 @@ def world_record_check_ts(its):
 
 
 """
-# Checks against ETCCDI indices +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Checks against ETCCDI indices ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 """
 
 
-# We are using [ETCCDI indicies](http://etccdi.pacificclimate.org/list_27_indices.shtml) to act as thresholds for expected hourly values.
+# We are using [ETCCDI indicies](http://etccdi.pacificclimate.org/list_27_indices.shtml)
+# to act as thresholds for expected hourly values.
 # In particular, we are using index 17:
 # Rx1day, Monthly maximum 1-day precipitation:
 # Here I'm just going to start by using the maximum of the annual maximums,
@@ -368,7 +369,7 @@ def prep_etccdi_variable(input_path, index_name, aggregation, data_source):
     vals = ds[index_name].values
     if index_name in ['CWD', 'CDD']:
         vals = ds[index_name].values.astype('timedelta64[s]')
-        vals = vals.astype('float32') / (86400.0)
+        vals = vals.astype('float32') / 86400.0
         vals[vals < 0.0] = np.nan
     vals = ma.masked_invalid(vals)
     if aggregation == 'max':
@@ -494,7 +495,9 @@ def rx_1_day_check_ts(its):
     p_max, p_max_filled = get_etccdi_value('Rx1day', its.longitude, its.latitude)
     df = its.data.to_frame("GSDR")
 
-    ''' If you have a high density of daily gauges, you can calculate Rx1day stats from that and compare them to a daily total from the hourly gauges. The ETCCDI gauge density is not high enough to do this so we use it as a threshold check for hourly values
+    ''' If you have a high density of daily gauges, you can calculate Rx1day stats from that and compare them to a daily
+        total from the hourly gauges. The ETCCDI gauge density is not high enough to do this so we use it as a threshold
+        check for hourly values
     
     df["roll"] = np.around(df.GSDR.rolling(window=24, center=False, min_periods=24).sum())
     df["r1dcts"] = df.roll.map(lambda x: dayCheck(x, pMax, pMaxFilled))
@@ -645,7 +648,7 @@ def get_wet_periods(vals):
 
     # Convert date list to index list
     for i in range(len(start_day_index_list)):
-        if ((i == 0) & (start_day_index_list[i] < vals.index[i])):
+        if (i == 0 & (start_day_index_list[i] < vals.index[i])):
             start_index_list.append(0)
         else:
             start_index_list.append(vals.index.get_loc(start_day_index_list[i]))
@@ -799,9 +802,9 @@ def get_sdii(its):
 
 def daily_accums_day_check(day_list, mean_wet_day_val, mean_wet_day_val_filled):
     """
-    Suspect daily accumulations flagged where a recorded rainfall amount at these times is preceded by 23 hours with no rain.  
-    A threshold of 2x the mean wet day amount for the corresponding month is applied to increase the chance of identifying 
-    accumulated values at the expense of genuine, moderate events.
+    Suspect daily accumulations flagged where a recorded rainfall amount at these times is preceded by 23 hours with no
+    rain. A threshold of 2x the mean wet day amount for the corresponding month is applied to increase the chance of
+    identifying accumulated values at the expense of genuine, moderate events.
     """
 
     # if day_list[23] > 0:
@@ -1294,7 +1297,9 @@ def find_hourly_neighbours(target):
 
     converted_hourly_coords = geodetic_to_ecef(target.latitude, target.longitude, elv)
     dist, index = hourly_n_tree.query(converted_hourly_coords,
-                                      k=30)  # K needs to be equal or less than the number of stations available in the database
+                                      k=30)
+    # K needs to be equal or less than the number
+    # of stations available in the database
     overlap = []
     paired_stations = []
     distance = []
@@ -1466,7 +1471,8 @@ def calculate_overlap(period1, period2):
 
 
 def get_gpcc(start_year, end_year, gpcc_id):
-    # p = subprocess.Popen(["get_zeitreihe_tw_by_id.sh", str(start_year), str(end_year), gpcc_id], cwd="/media/nas/x21971/GPCC_daily")
+    # p = subprocess.Popen(["get_zeitreihe_tw_by_id.sh", str(start_year),
+    # str(end_year), gpcc_id], cwd="/media/nas/x21971/GPCC_daily")
     # p.wait()
     gpcc_filename = "tw_" + gpcc_id + ".dat"
     dat_path = "/media/nas/x21971/GPCC_daily2/tw_" + gpcc_id + ".dat"
@@ -1574,7 +1580,8 @@ def get_gsdr(gsdr_id, path):
     return gsdr
 
 
-# Helper function to access Global Precipitation Climatology Centre monthly data... Ask Liz what is needed to implement this!
+# Helper function to access Global Precipitation Climatology Centre monthly data...
+# Ask Liz what is needed to implement this!
 def get_monthly_gpcc(start_year, end_year, gpcc_id):  # Hey liz! Check this once you have access to monthly!
 
     # p = subprocess.Popen(["get_zeitreihe_mw_by_id.sh", str(start_year), str(end_year), gpcc_id], cwd="/media/nas/x21971/GPCC_monthly")
@@ -1752,7 +1759,9 @@ def calculate_affinity_index_and_pearson(df1, df2):  # done
 # Main helper function, used by checkNeighbour and checkNeighbourDry
 # def compareTargetToNeighbour(target, neighbour, highOrDry): #Liz check this still works with the ai>0.9 bit
 def compare_target_to_neighbour(target, neighbour, high_or_dry, station=None, check_type=None,
-                                neighbour_id=None):  # last three args for output for normalised difference distribution checks
+                                neighbour_id=None):
+    # last three args for output for
+    # normalised difference distribution checks
 
     '''
   After Upton and Rahimi 2003 https://www.sciencedirect.com/science/article/pii/S0022169403001422
@@ -2292,7 +2301,8 @@ def check_hourly_neighbours(target):
     if len(neighbours) > 1:
 
         # ---
-        # *** dp 30/11/2019 temporarily remove any ISD neighbours just for neighbour difference distribution checking ***
+        # *** dp 30/11/2019 temporarily remove any ISD neighbours
+        # just for neighbour difference distribution checking ***
         '''
     #if len(neighbours) > 0:
     tmp = []
@@ -2679,8 +2689,8 @@ def check_monthly_neighbours(
         # count valid values within month and set flag as nan if more than 5% of data is missing
         # - hourly percentage differences
         hourly_flags_s = hourly_flags_s.to_frame()
-        hourly_flags_s['count'] = hourly_flags_s.groupby([hourly_flags_s.index.year, hourly_flags_s.index.month]).transform(
-            'count')
+        hourly_flags_s['count'] = hourly_flags_s.groupby(
+            [hourly_flags_s.index.year, hourly_flags_s.index.month]).transform('count')
         hourly_flags_s['expected'] = hourly_flags_s.index.days_in_month * 24
         hourly_flags_s['frac_complete'] = hourly_flags_s['count'] / hourly_flags_s['expected']
         hourly_flags_s.loc[hourly_flags_s['frac_complete'] < 0.95, 'flags'] = np.nan
@@ -2720,8 +2730,7 @@ def get_flags(ito):  # pass intense object
         # print("hourly neighbours")
         ito.QC_hourly_neighbours, ito.QC_hourly_neighbours_dry = check_hourly_neighbours(ito)
         # print("daily neighbours")
-        ito.QC_daily_neighbours, ito.QC_offset, ito.QC_preQC_affinity_index, ito.QC_preQC_pearson_coefficient, ito.QC_factor_daily, ito.QC_daily_neighbours_dry = check_daily_neighbours(
-            ito)
+        ito.QC_daily_neighbours, ito.QC_offset, ito.QC_preQC_affinity_index, ito.QC_preQC_pearson_coefficient, ito.QC_factor_daily, ito.QC_daily_neighbours_dry = check_daily_neighbours(ito)
         # print("monthly neighbours")
         ito.QC_monthly_neighbours, ito.QC_factor_monthly = check_monthly_neighbours(ito)
     # print("world record")
@@ -2803,7 +2812,8 @@ def find_files_to_process(folders_to_check):
             os.makedirs(qc_folder + "/" + folderToCheck[:-4] + "/Flags")
         existing_files = os.listdir(qc_folder + "/" + folderToCheck[:-4] + "/Flags")
 
-        # dp 13/12/2019 (01o1) - temporarily altered existingFiles for assessing normalised differences in 01o1 (i.e. different output folder)
+        # dp 13/12/2019 (01o1) - temporarily altered existingFiles for
+        # assessing normalised differences in 01o1 (i.e. different output folder)
         # - uncomment line below and remove the line after to get back to normal use
         # existingFiles = os.listdir(qc_folder + "/" + folderToCheck[:-4] + '/' +
         #    qc_version + '/Flags/')
