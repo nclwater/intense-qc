@@ -220,46 +220,48 @@ class Series:
                 "Pre QC Pearson coefficient: {self.QC_preQC_pearson_coefficient}\n"
                 "Factor against nearest daily gauge: {self.QC_factor_daily}\n".format(self=self))
 
-            if self.QC_hourly_neighbours == None:
-                self.QC_hourly_neighbours = [-999 for a in range(len(self.data))]
+            empty_series = np.full(len(self.data), self.no_data_value, dtype=int)
 
-            if self.QC_hourly_neighbours_dry == None:
-                self.QC_hourly_neighbours_dry = [-999 for a in range(len(self.data))]
+            if self.QC_hourly_neighbours is None:
+                self.QC_hourly_neighbours = empty_series
 
-            if self.QC_daily_neighbours == None:
-                self.QC_daily_neighbours = [-999 for a in range(len(self.data))]
+            if self.QC_hourly_neighbours_dry is None:
+                self.QC_hourly_neighbours_dry = empty_series
 
-            if self.QC_daily_neighbours_dry == None:
-                self.QC_daily_neighbours_dry = [-999 for a in range(len(self.data))]
+            if self.QC_daily_neighbours is None:
+                self.QC_daily_neighbours = empty_series
 
-            if self.QC_monthly_neighbours == None:
-                self.QC_monthly_neighbours = [-999 for a in range(len(self.data))]
+            if self.QC_daily_neighbours_dry is None:
+                self.QC_daily_neighbours_dry = np.full(len(self.data), self.no_data_value, dtype=int)
 
-            if self.QC_world_record == None:
-                self.QC_world_record = [-999 for a in range(len(self.data))]
+            if self.QC_monthly_neighbours is None:
+                self.QC_monthly_neighbours = np.full(len(self.data), self.no_data_value, dtype=int)
 
-            if self.QC_Rx1day == None:
-                self.QC_Rx1day = [-999 for a in range(len(self.data))]
+            if self.QC_world_record is None:
+                self.QC_world_record = empty_series
 
-            if self.QC_CWD == None:
-                self.QC_CWD = [-999 for a in range(len(self.data))]
+            if self.QC_Rx1day is None:
+                self.QC_Rx1day = empty_series
 
-            if self.QC_CDD == None:
-                self.QC_CDD = [-999 for a in range(len(self.data))]
+            if self.QC_CWD is None:
+                self.QC_CWD = empty_series
 
-            if self.QC_daily_accumualtions == None:
-                self.QC_daily_accumualtions = [-999 for a in range(len(self.data))]
+            if self.QC_CDD is None:
+                self.QC_CDD = empty_series
 
-            if self.QC_monthly_accumulations == None:
-                self.QC_monthly_accumulations = [-999 for a in range(len(self.data))]
+            if self.QC_daily_accumualtions is None:
+                self.QC_daily_accumualtions = empty_series
 
-            if self.QC_streaks == None:
-                self.QC_streaks = [-999 for a in range(len(self.data))]
+            if self.QC_monthly_accumulations is None:
+                self.QC_monthly_accumulations = empty_series
 
-            if self.QC_factor_monthly == None:
-                self.QC_factor_monthly = [-999 for a in range(len(self.data))]
+            if self.QC_streaks is None:
+                self.QC_streaks = empty_series
 
-            self.data.fillna(-999, inplace=True)
+            if self.QC_factor_monthly is None:
+                self.QC_factor_monthly = empty_series
+
+            self.data.fillna(self.no_data_value, inplace=True)
             vals_flags = zip([float(format(v, '.3f')) for v in self.data.values],
                              self.QC_hourly_neighbours,
                              self.QC_hourly_neighbours_dry,
