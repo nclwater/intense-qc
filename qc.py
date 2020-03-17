@@ -101,8 +101,8 @@ def check_k_largest(its):
 
 # Indicative, checks if proportions of rainfall in each day is significantly different
 def check_days_of_week(its):
-    key = lambda x: x.weekday  # 0 is monday, 1 is tuesday etc...
-    days = its.data.groupby(key).mean()
+    # 0 is monday, 1 is tuesday etc...
+    days = its.data.groupby(lambda x: x.weekday).mean()
     popmean = its.data.mean()
     # p = tt(days, popmean)[1]
     p = scipy.stats.ttest_1samp(days, popmean)[1]
@@ -114,8 +114,8 @@ def check_days_of_week(its):
 
 # Indicative, hourly analogue to daily check
 def check_hours_of_day(its):
-    key = lambda x: x.hour  # 0 is midnight, 1 is 01:00 etc...
-    hours = its.data.groupby(key).mean()
+    # 0 is midnight, 1 is 01:00 etc...
+    hours = its.data.groupby(lambda x: x.hour).mean()
     popmean = its.data.mean()
     # p = tt(hours, popmean)[1]
     p = scipy.stats.ttest_1samp(hours, popmean)[1]
