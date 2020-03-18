@@ -65,15 +65,12 @@ import scipy.interpolate
 import datetime
 import os
 import zipfile
-import pickle
 import math
 import scipy.spatial as sp
 import subprocess
 # from scipy.stats import ttest_1samp as tt
 import scipy.stats
-import matplotlib.pyplot as plt
 from multiprocessing import Pool, Manager
-import sys
 import calendar
 import time
 
@@ -104,8 +101,8 @@ def check_k_largest(its):
 
 # Indicative, checks if proportions of rainfall in each day is significantly different
 def check_days_of_week(its):
-    key = lambda x: x.weekday  # 0 is monday, 1 is tuesday etc...
-    days = its.data.groupby(key).mean()
+    # 0 is monday, 1 is tuesday etc...
+    days = its.data.groupby(lambda x: x.weekday).mean()
     popmean = its.data.mean()
     # p = tt(days, popmean)[1]
     p = scipy.stats.ttest_1samp(days, popmean)[1]
@@ -117,8 +114,8 @@ def check_days_of_week(its):
 
 # Indicative, hourly analogue to daily check
 def check_hours_of_day(its):
-    key = lambda x: x.hour  # 0 is midnight, 1 is 01:00 etc...
-    hours = its.data.groupby(key).mean()
+    # 0 is midnight, 1 is 01:00 etc...
+    hours = its.data.groupby(lambda x: x.hour).mean()
     popmean = its.data.mean()
     # p = tt(hours, popmean)[1]
     p = scipy.stats.ttest_1samp(hours, popmean)[1]
@@ -311,11 +308,12 @@ def world_record_check_ts(its):
 
 
 """
-# Checks against ETCCDI indices +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+# Checks against ETCCDI indices ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 """
 
 
-# We are using [ETCCDI indicies](http://etccdi.pacificclimate.org/list_27_indices.shtml) to act as thresholds for expected hourly values.
+# We are using [ETCCDI indicies](http://etccdi.pacificclimate.org/list_27_indices.shtml)
+# to act as thresholds for expected hourly values.
 # In particular, we are using index 17:
 # Rx1day, Monthly maximum 1-day precipitation:
 # Here I'm just going to start by using the maximum of the annual maximums,
@@ -371,7 +369,7 @@ def prep_etccdi_variable(input_path, index_name, aggregation, data_source):
     vals = ds[index_name].values
     if index_name in ['CWD', 'CDD']:
         vals = ds[index_name].values.astype('timedelta64[s]')
-        vals = vals.astype('float32') / (86400.0)
+        vals = vals.astype('float32') / 86400.0
         vals[vals < 0.0] = np.nan
     vals = ma.masked_invalid(vals)
     if aggregation == 'max':
@@ -456,26 +454,26 @@ def get_etccdi_value(index_name, lon, lat):
 
 # ETCCDI utility function 3 - returns flag based on exceedence of parameters
 # Replaces Rx1dayCheck, R99pTOTCheck, PRCPTOTCheck
-def day_check(val, pMax, pMaxFilled):
-    if np.isnan(pMax):
-        if val >= pMaxFilled * 1.5:
+def day_check(val, p_max, p_max_filled):
+    if np.isnan(p_max):
+        if val >= p_max_filled * 1.5:
             return 8
-        elif val >= pMaxFilled * 1.33:
+        elif val >= p_max_filled * 1.33:
             return 7
-        elif val >= pMaxFilled * 1.2:
+        elif val >= p_max_filled * 1.2:
             return 6
-        elif val >= pMaxFilled:
+        elif val >= p_max_filled:
             return 5
         else:
             return 0
     else:
-        if val >= pMax * 1.5:
+        if val >= p_max * 1.5:
             return 4
-        elif val >= pMax * 1.33:
+        elif val >= p_max * 1.33:
             return 3
-        elif val >= pMax * 1.2:
+        elif val >= p_max * 1.2:
             return 2
-        elif val >= pMax:
+        elif val >= p_max:
             return 1
         else:
             return 0
@@ -494,16 +492,18 @@ def day_check(val, pMax, pMaxFilled):
 
 def rx_1_day_check_ts(its):
     # pMax, pMaxFilled = getRx1day(its.latitude, its.longitude)
-    pMax, pMaxFilled = get_etccdi_value('Rx1day', its.longitude, its.latitude)
+    p_max, p_max_filled = get_etccdi_value('Rx1day', its.longitude, its.latitude)
     df = its.data.to_frame("GSDR")
 
-    ''' If you have a high density of daily gauges, you can calculate Rx1day stats from that and compare them to a daily total from the hourly gauges. The ETCCDI gauge density is not high enough to do this so we use it as a threshold check for hourly values
+    ''' If you have a high density of daily gauges, you can calculate Rx1day stats from that and compare them to a daily
+        total from the hourly gauges. The ETCCDI gauge density is not high enough to do this so we use it as a threshold
+        check for hourly values
     
     df["roll"] = np.around(df.GSDR.rolling(window=24, center=False, min_periods=24).sum())
     df["r1dcts"] = df.roll.map(lambda x: dayCheck(x, pMax, pMaxFilled))
     '''
-    if np.isfinite(pMax) or np.isfinite(pMaxFilled):
-        df["r1dcts"] = df.GSDR.map(lambda x: day_check(x, pMax, pMaxFilled))
+    if np.isfinite(p_max) or np.isfinite(p_max_filled):
+        df["r1dcts"] = df.GSDR.map(lambda x: day_check(x, p_max, p_max_filled))
     else:
         df["r1dcts"] = np.nan
 
@@ -524,27 +524,28 @@ def rx_1_day_check_ts(its):
 
 def r99ptot_check_annual(its):
     # pMax, pMaxFilled = getR99pTOT(its.latitude, its.longitude) #pMax, pMaxFilled = 100, 100#
-    pMax, pMaxFilled = get_etccdi_value('R99p', its.longitude, its.latitude)
+    p_max, p_max_filled = get_etccdi_value('R99p', its.longitude, its.latitude)
 
-    if np.isfinite(pMax) or np.isfinite(pMaxFilled):
+    if np.isfinite(p_max) or np.isfinite(p_max_filled):
 
-        dailyTs = its.data.resample(
-            "D").sum()  # this changes depending on which version of pandas youre using. o.14 requires how agument, later requires .sum
+        daily_ts = its.data.resample(
+            "D").sum()  # this changes depending on which version of pandas youre using. o.14 requires how agument,
+        # later requires .sum
 
-        perc99 = dailyTs.groupby(pd.Grouper(freq='A')).quantile(.99)
+        perc99 = daily_ts.groupby(pd.Grouper(freq='A')).quantile(.99)
         py = list(perc99.index.year)
         pv = list(perc99)
-        pDict = {}
+        p_dict = {}
         for p in range(len(py)):
-            pDict[py[p]] = pv[p]
+            p_dict[py[p]] = pv[p]
         # print(pDict)
-        dailyDf = dailyTs.to_frame("daily")
-        dailyDf["year"] = dailyDf.index.year
-        dailyDf["p99"] = dailyDf.apply(lambda row: pDict[row.year], axis=1)
-        dailyDf["filtered"] = dailyDf.daily.where(dailyDf.daily >= dailyDf.p99)
-        perc99Tot = dailyDf.groupby(pd.Grouper(freq='A')).sum()
-        tots = list(perc99Tot.filtered)
-        checks = [day_check(t, pMax, pMaxFilled) for t in tots]
+        daily_df = daily_ts.to_frame("daily")
+        daily_df["year"] = daily_df.index.year
+        daily_df["p99"] = daily_df.apply(lambda row: p_dict[row.year], axis=1)
+        daily_df["filtered"] = daily_df.daily.where(daily_df.daily >= daily_df.p99)
+        perc99_tot = daily_df.groupby(pd.Grouper(freq='A')).sum()
+        tots = list(perc99_tot.filtered)
+        checks = [day_check(t, p_max, p_max_filled) for t in tots]
 
     else:
         checks = [np.nan]
@@ -561,12 +562,12 @@ def r99ptot_check_annual(its):
 
 def prcptot_check_annual(its):
     # pMax, pMaxFilled = getPRCPTOT(its.latitude, its.longitude)
-    pMax, pMaxFilled = get_etccdi_value('PRCPTOT', its.longitude, its.latitude)
+    p_max, p_max_filled = get_etccdi_value('PRCPTOT', its.longitude, its.latitude)
 
-    if np.isfinite(pMax) or np.isfinite(pMaxFilled):
-        annTots = its.data.groupby(pd.Grouper(freq='A')).sum()
-        tots = list(annTots)
-        checks = [day_check(t, pMax, pMaxFilled) for t in tots]
+    if np.isfinite(p_max) or np.isfinite(p_max_filled):
+        ann_tots = its.data.groupby(pd.Grouper(freq='A')).sum()
+        tots = list(ann_tots)
+        checks = [day_check(t, p_max, p_max_filled) for t in tots]
     else:
         checks = [np.nan]
 
@@ -585,26 +586,26 @@ def prcptot_check_annual(its):
 # Count the largest number of consecutive days where: RRij = 1mm
 
 # Helper function, flags data based on various thresholds
-def spell_check(val, longestWetPeriod, longestWetPeriodFilled):
-    if np.isnan(longestWetPeriod):
-        if val >= longestWetPeriodFilled * 24 * 1.5:
+def spell_check(val, longest_wet_period, longest_wet_period_filled):
+    if np.isnan(longest_wet_period):
+        if val >= longest_wet_period_filled * 24 * 1.5:
             return 8
-        elif val >= longestWetPeriodFilled * 24 * 1.33:
+        elif val >= longest_wet_period_filled * 24 * 1.33:
             return 7
-        elif val >= longestWetPeriodFilled * 24 * 1.2:
+        elif val >= longest_wet_period_filled * 24 * 1.2:
             return 6
-        elif val >= longestWetPeriodFilled * 24:
+        elif val >= longest_wet_period_filled * 24:
             return 5
         else:
             return 0
     else:
-        if val >= longestWetPeriod * 24 * 1.5:
+        if val >= longest_wet_period * 24 * 1.5:
             return 4
-        elif val >= longestWetPeriod * 24 * 1.33:
+        elif val >= longest_wet_period * 24 * 1.33:
             return 3
-        elif val >= longestWetPeriod * 24 * 1.2:
+        elif val >= longest_wet_period * 24 * 1.2:
             return 2
-        elif val >= longestWetPeriod * 24:
+        elif val >= longest_wet_period * 24:
             return 1
         else:
             return 0
@@ -620,64 +621,64 @@ def spell_check(val, longestWetPeriod, longestWetPeriodFilled):
 def get_wet_periods(vals):
     daily = vals.groupby(lambda x: x.floor('1D')).aggregate(lambda x: np.sum(x))
 
-    startDayIndexList = []
-    startIndexList = []
-    durationList = []
+    start_day_index_list = []
+    start_index_list = []
+    duration_list = []
 
-    wetFlag = 0
-    dayTicker = 0
+    wet_flag = 0
+    day_ticker = 0
 
     for i in range(len(daily)):
         v = daily.iloc[i]
 
         if v >= 1.0:
-            if wetFlag == 0:
-                startDayIndexList.append(daily.index[i])
-            dayTicker += 1
-            wetFlag = 1
+            if wet_flag == 0:
+                start_day_index_list.append(daily.index[i])
+            day_ticker += 1
+            wet_flag = 1
         else:
-            if wetFlag == 1:
-                durationList.append(dayTicker)
-            dayTicker = 0
-            wetFlag = 0
+            if wet_flag == 1:
+                duration_list.append(day_ticker)
+            day_ticker = 0
+            wet_flag = 0
 
         if i == len(daily) - 1:
-            if wetFlag == 1:
-                durationList.append(dayTicker)
+            if wet_flag == 1:
+                duration_list.append(day_ticker)
 
     # Convert date list to index list
-    for i in range(len(startDayIndexList)):
-        if ((i == 0) & (startDayIndexList[i] < vals.index[i])):
-            startIndexList.append(0)
+    for i in range(len(start_day_index_list)):
+        if (i == 0 & (start_day_index_list[i] < vals.index[i])):
+            start_index_list.append(0)
         else:
-            startIndexList.append(vals.index.get_loc(startDayIndexList[i]))
+            start_index_list.append(vals.index.get_loc(start_day_index_list[i]))
 
     # Convert day length to hourly length:
-    durationList = list(np.dot(24, durationList))
+    duration_list = list(np.dot(24, duration_list))
 
-    return [startIndexList, durationList]
+    return [start_index_list, duration_list]
 
 
 def cwd_check(its):
     vals = its.data
     # longestWetPeriod, longestWetPeriodFilled = getCWD(its.latitude, its.longitude)
-    longestWetPeriod, longestWetPeriodFilled = get_etccdi_value('CWD', its.longitude, its.latitude)
-    startIndexList, durationList = get_wet_periods(vals)
-    flagsList = [0 for i in range(len(vals))]
+    longest_wet_period, longest_wet_period_filled = get_etccdi_value('CWD', its.longitude, its.latitude)
+    start_index_list, duration_list = get_wet_periods(vals)
+    flags_list = [0 for i in range(len(vals))]
 
-    if np.isfinite(longestWetPeriod) or np.isfinite(longestWetPeriodFilled):
+    if np.isfinite(longest_wet_period) or np.isfinite(longest_wet_period_filled):
 
-        for wetPeriod in range(len(startIndexList)):
-            flag = spell_check(durationList[wetPeriod], longestWetPeriod, longestWetPeriodFilled)
+        for wetPeriod in range(len(start_index_list)):
+            flag = spell_check(duration_list[wetPeriod], longest_wet_period, longest_wet_period_filled)
 
-            for j in range(startIndexList[wetPeriod],
-                           min(startIndexList[wetPeriod] + durationList[wetPeriod], (len(flagsList) - 1)), 1):
-                flagsList[j] = flag
+            for j in range(start_index_list[wetPeriod],
+                           min(start_index_list[wetPeriod] + duration_list[wetPeriod], (len(flags_list) - 1)), 1):
+                flags_list[j] = flag
 
     else:
-        flagsList = [np.nan for i in range(len(vals))]
+        flags_list = [np.nan for i in range(len(vals))]
 
-    return flagsList
+    return flags_list
 
 
 # ### Long dry spells
@@ -695,57 +696,57 @@ def cwd_check(its):
 # return [EIndex, EIndexFilled]
 
 def get_dry_periods(vals):
-    startIndexList = []
-    durationList = []
+    start_index_list = []
+    duration_list = []
 
-    dryFlag = 0
-    hoursTicker = 0
+    dry_flag = 0
+    hours_ticker = 0
 
     for i in range(len(vals)):
         v = vals[i]
 
         if v == 0:
-            if dryFlag == 0:
-                startIndexList.append(i)
+            if dry_flag == 0:
+                start_index_list.append(i)
 
-            hoursTicker += 1
-            dryFlag = 1
+            hours_ticker += 1
+            dry_flag = 1
             if i == len(vals) - 1:
-                durationList.append(hoursTicker)
+                duration_list.append(hours_ticker)
 
         else:
-            if dryFlag == 1:
-                durationList.append(hoursTicker)
+            if dry_flag == 1:
+                duration_list.append(hours_ticker)
 
-            hoursTicker = 0
-            dryFlag = 0
+            hours_ticker = 0
+            dry_flag = 0
 
         if i == len(vals):
-            if dryFlag == 1:
-                durationList.append(hoursTicker)
+            if dry_flag == 1:
+                duration_list.append(hours_ticker)
 
-    return [startIndexList, durationList]
+    return [start_index_list, duration_list]
 
 
 def cdd_check(its):
     vals = list(its.data)
     # longestDryPeriod, longestDryPeriodFilled = getCDD(its.latitude, its.longitude)
-    longestDryPeriod, longestDryPeriodFilled = get_etccdi_value('CDD', its.longitude, its.latitude)
+    longest_dry_period, longest_dry_period_filled = get_etccdi_value('CDD', its.longitude, its.latitude)
 
-    startIndexList, durationList = get_dry_periods(vals)
-    flagsList = [0 for i in range(len(vals))]
+    start_index_list, duration_list = get_dry_periods(vals)
+    flags_list = [0 for i in range(len(vals))]
 
-    if np.isfinite(longestDryPeriod) or np.isfinite(longestDryPeriodFilled):
+    if np.isfinite(longest_dry_period) or np.isfinite(longest_dry_period_filled):
 
-        for dryPeriod in range(len(startIndexList)):
-            flag = spell_check(durationList[dryPeriod], longestDryPeriod, longestDryPeriodFilled)
+        for dryPeriod in range(len(start_index_list)):
+            flag = spell_check(duration_list[dryPeriod], longest_dry_period, longest_dry_period_filled)
 
-            for j in range(startIndexList[dryPeriod], startIndexList[dryPeriod] + durationList[dryPeriod], 1):
-                flagsList[j] = flag
+            for j in range(start_index_list[dryPeriod], start_index_list[dryPeriod] + duration_list[dryPeriod], 1):
+                flags_list[j] = flag
     else:
-        flagsList = [np.nan for i in range(len(vals))]
+        flags_list = [np.nan for i in range(len(vals))]
 
-    return flagsList
+    return flags_list
 
 
 """
@@ -799,26 +800,26 @@ def get_sdii(its):
 """
 
 
-def daily_accums_day_check(dayList, meanWetDayVal, meanWetDayValFilled):
+def daily_accums_day_check(day_list, mean_wet_day_val, mean_wet_day_val_filled):
     """
-    Suspect daily accumulations flagged where a recorded rainfall amount at these times is preceded by 23 hours with no rain.  
-    A threshold of 2x the mean wet day amount for the corresponding month is applied to increase the chance of identifying 
-    accumulated values at the expense of genuine, moderate events.
+    Suspect daily accumulations flagged where a recorded rainfall amount at these times is preceded by 23 hours with no
+    rain. A threshold of 2x the mean wet day amount for the corresponding month is applied to increase the chance of
+    identifying accumulated values at the expense of genuine, moderate events.
     """
 
-    # if dayList[23] > 0:
+    # if day_list[23] > 0:
     # dryHours = 0
     # for i in range(23):
-    # if dayList[i] <=0:
+    # if day_list[i] <=0:
     # dryHours +=1
     # if dryHours == 23:
-    # if np.isnan(meanWetDayVal):
-    # if dayList[23] > meanWetDayValFilled*2:
+    # if np.isnan(mean_wet_day_val):
+    # if day_list[23] > mean_wet_day_val_filled*2:
     # return 2
     # else:
     # return 0
     # else:
-    # if dayList[23] > meanWetDayVal*2:
+    # if day_list[23] > mean_wet_day_val*2:
     # return 1
     # else:
     # return 0
@@ -830,23 +831,23 @@ def daily_accums_day_check(dayList, meanWetDayVal, meanWetDayValFilled):
     # ---
     # Alternative implementation - same logic as above
 
-    if dayList[23] > 0:
-        dryHours = 0
+    if day_list[23] > 0:
+        dry_hours = 0
         for i in range(23):
-            if dayList[i] <= 0:
-                dryHours += 1
-        if dryHours == 23:
-            if np.isnan(meanWetDayVal):
-                # if dayList[23] > meanWetDayValFilled*2:
-                if dayList[23] > meanWetDayValFilled:
+            if day_list[i] <= 0:
+                dry_hours += 1
+        if dry_hours == 23:
+            if np.isnan(mean_wet_day_val):
+                # if day_list[23] > mean_wet_day_val_filled*2:
+                if day_list[23] > mean_wet_day_val_filled:
                     # return 2
                     flag = 2
                 else:
                     # return 0
                     flag = 0
             else:
-                # if dayList[23] > meanWetDayVal*2:
-                if dayList[23] > meanWetDayVal:
+                # if day_list[23] > mean_wet_day_val*2:
+                if day_list[23] > mean_wet_day_val:
                     # return 1
                     flag = 1
                 else:
@@ -866,13 +867,13 @@ def daily_accums_check(its):
     vals = list(its.data)
 
     # meanWetDayVal, meanWetDayValFilled = getSDII(its.latitude, its.longitude)
-    meanWetDayVal, meanWetDayValFilled = get_sdii(its)
+    mean_wet_day_val, mean_wet_day_val_filled = get_sdii(its)
 
     flags = [0 for i in range(len(vals))]
 
     for i in range(len(vals) - 24):
-        dayValList = vals[i:i + 24]
-        flag = daily_accums_day_check(dayValList, meanWetDayVal, meanWetDayValFilled)
+        day_val_list = vals[i:i + 24]
+        flag = daily_accums_day_check(day_val_list, mean_wet_day_val, mean_wet_day_val_filled)
         if flag > max(flags[i:i + 24]):
             flags[i:i + 24] = [flag for j in range(24)]
 
@@ -884,24 +885,24 @@ def daily_accums_check(its):
 """
 
 
-def monthly_accums_day_check(monthList, meanWetDayVal, meanWetDayValFilled):
+def monthly_accums_day_check(month_list, mean_wet_day_val, mean_wet_day_val_filled):
     """Suspect monthly accumulations.  
     Identified where only one hourly value is reported over a period of a month
     and that value exceeds the mean wet hour amount for the corresponding month."""
 
-    if monthList[719] > 0:
-        dryHours = 0
+    if month_list[719] > 0:
+        dry_hours = 0
         for i in range(719):
-            if monthList[i] <= 0:
-                dryHours += 1
-        if dryHours == 719:
-            if np.isnan(meanWetDayVal):
-                if monthList[719] > meanWetDayValFilled * 2:
+            if month_list[i] <= 0:
+                dry_hours += 1
+        if dry_hours == 719:
+            if np.isnan(mean_wet_day_val):
+                if month_list[719] > mean_wet_day_val_filled * 2:
                     return 2
                 else:
                     return 0
             else:
-                if monthList[719] > meanWetDayVal * 2:
+                if month_list[719] > mean_wet_day_val * 2:
                     return 1
                 else:
                     return 0
@@ -1268,16 +1269,16 @@ def geodetic_to_ecef(lat, lon, h):
     lamb = math.radians(lat)
     phi = math.radians(lon)
     s = math.sin(lamb)
-    N = a / math.sqrt(1 - e_sq * s * s)
+    n = a / math.sqrt(1 - e_sq * s * s)
 
     sin_lambda = math.sin(lamb)
     cos_lambda = math.cos(lamb)
     sin_phi = math.sin(phi)
     cos_phi = math.cos(phi)
 
-    x = (h + N) * cos_lambda * cos_phi
-    y = (h + N) * cos_lambda * sin_phi
-    z = (h + (1 - e_sq) * N) * sin_lambda
+    x = (h + n) * cos_lambda * cos_phi
+    y = (h + n) * cos_lambda * sin_phi
+    z = (h + (1 - e_sq) * n) * sin_lambda
 
     return x, y, z
 
@@ -1294,37 +1295,39 @@ def find_hourly_neighbours(target):
     except:
         elv = 100
 
-    converted_hourlyCoords = geodetic_to_ecef(target.latitude, target.longitude, elv)
-    dist, index = hourlynTree.query(converted_hourlyCoords,
-                                    k=30)  # K needs to be equal or less than the number of stations available in the database
+    converted_hourly_coords = geodetic_to_ecef(target.latitude, target.longitude, elv)
+    dist, index = hourly_n_tree.query(converted_hourly_coords,
+                                      k=30)
+    # K needs to be equal or less than the number
+    # of stations available in the database
     overlap = []
-    pairedStations = []
+    paired_stations = []
     distance = []
     paths = []
 
-    hourlyDates = (target.start_datetime, target.end_datetime)
+    hourly_dates = (target.start_datetime, target.end_datetime)
 
     counter = 0
     for i in range(len(dist)):
         dci = index[i]
-        pol, ol = calculate_overlap(hourlyDates, hourlynDates[dci])
-        ps = hourlynNames[dci]
+        pol, ol = calculate_overlap(hourly_dates, hourly_n_dates[dci])
+        ps = hourly_n_names[dci]
         di = dist[i]
-        pa = hourlynPaths[dci]
+        pa = hourly_n_paths[dci]
 
         if di < 50000:  # must be within 50km
             if ol > 365 * 3:  # must have at least 3 years overlap
                 # if counter < 10: #want to select the closest 10
                 if counter < 11:  # want to select the closest 10, but the first one is always the target itself
                     overlap.append(ol)
-                    pairedStations.append(ps)
+                    paired_stations.append(ps)
                     distance.append(di)
                     paths.append(pa)
                     counter += 1
                     # print("found one")
 
-    if len(pairedStations) >= 3:
-        return [pairedStations, paths]
+    if len(paired_stations) >= 3:
+        return [paired_stations, paths]
     else:
         # return None
         return [[], []]
@@ -1337,21 +1340,21 @@ def find_daily_neighbours(target):
     except:
         elv = 100
 
-    converted_hourlyCoords = geodetic_to_ecef(target.latitude, target.longitude, elv)
+    converted_hourly_coords = geodetic_to_ecef(target.latitude, target.longitude, elv)
 
-    dist, index = tree.query(converted_hourlyCoords, k=30)
+    dist, index = tree.query(converted_hourly_coords, k=30)
 
     overlap = []
-    pairedStations = []
+    paired_stations = []
     distance = []
 
-    hourlyDates = (target.start_datetime, target.end_datetime)
+    hourly_dates = (target.start_datetime, target.end_datetime)
 
     counter = 0
     for i in range(len(dist)):
         dci = index[i]
-        pol, ol = calculate_overlap(hourlyDates, dailyDates[dci])
-        ps = dailyNames[dci]
+        pol, ol = calculate_overlap(hourly_dates, daily_dates[dci])
+        ps = daily_names[dci]
         di = dist[i]
         # print(dci, ps, di, ol)
 
@@ -1359,12 +1362,12 @@ def find_daily_neighbours(target):
             if ol > 365 * 3:  # must have at least 3 years overlap
                 if counter < 10:  # want to select the closest 10
                     overlap.append(ol)
-                    pairedStations.append(ps)
+                    paired_stations.append(ps)
                     distance.append(di)
                     counter += 1
 
-    if len(pairedStations) >= 3:
-        return pairedStations
+    if len(paired_stations) >= 3:
+        return paired_stations
     else:
         # return None
         return []
@@ -1377,33 +1380,33 @@ def find_monthly_neighbours(target):
     except:
         elv = 100
 
-    converted_hourlyCoords = geodetic_to_ecef(target.latitude, target.longitude, elv)
+    converted_hourly_coords = geodetic_to_ecef(target.latitude, target.longitude, elv)
 
-    dist, index = monthlyTree.query(converted_hourlyCoords, k=30)
+    dist, index = monthly_tree.query(converted_hourly_coords, k=30)
 
     overlap = []
-    pairedStations = []
+    paired_stations = []
     distance = []
 
-    hourlyDates = (target.start_datetime, target.end_datetime)
+    hourly_dates = (target.start_datetime, target.end_datetime)
 
     counter = 0
     for i in range(len(dist)):
         mci = index[i]
-        pol, ol = calculate_overlap(hourlyDates, monthlyDates[mci])
-        ps = monthlyNames[mci]
+        pol, ol = calculate_overlap(hourly_dates, monthly_dates[mci])
+        ps = monthly_names[mci]
         di = dist[i]
 
         if di < 50000:  # must be within 50km
             if ol > 365 * 3:  # must have at least 3 years overlap
                 if counter < 10:  # want to select the closest 10
                     overlap.append(ol)
-                    pairedStations.append(ps)
+                    paired_stations.append(ps)
                     distance.append(di)
                     counter += 1
 
-    if len(pairedStations) >= 3:
-        return pairedStations
+    if len(paired_stations) >= 3:
+        return paired_stations
     else:
         return None
 
@@ -1467,15 +1470,16 @@ def calculate_overlap(period1, period2):
 """
 
 
-def get_gpcc(startYear, endYear, gpccId):
-    # p = subprocess.Popen(["get_zeitreihe_tw_by_id.sh", str(startYear), str(endYear), gpccId], cwd="/media/nas/x21971/GPCC_daily")
+def get_gpcc(start_year, end_year, gpcc_id):
+    # p = subprocess.Popen(["get_zeitreihe_tw_by_id.sh", str(start_year),
+    # str(end_year), gpcc_id], cwd="/media/nas/x21971/GPCC_daily")
     # p.wait()
-    gpcc_filename = "tw_" + gpccId + ".dat"
-    dat_path = "/media/nas/x21971/GPCC_daily2/tw_" + gpccId + ".dat"
-    zip_path = "/media/nas/x21971/GPCC_daily2/tw_" + gpccId + ".zip"
+    gpcc_filename = "tw_" + gpcc_id + ".dat"
+    dat_path = "/media/nas/x21971/GPCC_daily2/tw_" + gpcc_id + ".dat"
+    zip_path = "/media/nas/x21971/GPCC_daily2/tw_" + gpcc_id + ".zip"
     if not os.path.exists(zip_path):
         if not os.path.exists(dat_path):
-            p = subprocess.Popen(["get_zeitreihe_tw_by_id.sh", str(startYear), str(endYear), gpccId],
+            p = subprocess.Popen(["get_zeitreihe_tw_by_id.sh", str(start_year), str(end_year), gpcc_id],
                                  cwd="/media/nas/x21971/GPCC_daily2")
             p.wait()
             time.sleep(0.1)
@@ -1486,7 +1490,7 @@ def get_gpcc(startYear, endYear, gpccId):
             time.sleep(0.1)
             os.remove(dat_path)
 
-    # f = open("/media/nas/x21971/GPCC_daily/tw_" + gpccId + ".dat", "r")
+    # f = open("/media/nas/x21971/GPCC_daily/tw_" + gpcc_id + ".dat", "r")
     zf = zipfile.ZipFile(zip_path, "r")
     f = zf.open(gpcc_filename, "r")
     f.readline()
@@ -1497,10 +1501,10 @@ def get_gpcc(startYear, endYear, gpccId):
     file_format_error = 0
     try_again = 1
     for line in f:
-        lineList = line.rstrip().split()
+        line_list = line.rstrip().split()
         # inserted try as at least one file has a dubious second header line
         try:
-            dates.append(datetime.date(int(lineList[2]), int(lineList[1]), int(lineList[0])))
+            dates.append(datetime.date(int(line_list[2]), int(line_list[1]), int(line_list[0])))
             read_values = 1
         except:
             if try_again == 1:
@@ -1511,13 +1515,13 @@ def get_gpcc(startYear, endYear, gpccId):
                 read_values = 0
                 break
         if read_values == 1:
-            gotOne = 0
-            for v in lineList[3:]:
+            got_one = 0
+            for v in line_list[3:]:
                 if float(v) >= 0:
                     vals.append(float(v))
-                    gotOne = 1
+                    got_one = 1
                     break
-            if gotOne == 0:
+            if got_one == 0:
                 vals.append(np.nan)
 
     f.close()
@@ -1551,10 +1555,10 @@ def get_gpcc(startYear, endYear, gpccId):
 
 
 # Helper function to access Global Sub Daily Rainfall database (a.k.a. Intense Database)
-def get_gsdr(gsdrId, path):
+def get_gsdr(gsdr_id, path):
     zfh = zipfile.ZipFile(path, "r")
 
-    d = zfh.open(gsdrId + ".txt", mode="r")
+    d = zfh.open(gsdr_id + ".txt", mode="r")
     df = ex.read_intense(d, only_metadata=False, opened=True).data.to_frame("GSDR")
     d.close()
     zfh.close()
@@ -1565,28 +1569,29 @@ def get_gsdr(gsdrId, path):
 
     dfd = df[df.index.hour == 7]
     dts = list(dfd.index)
-    dailyVals = list(dfd.roll)
+    daily_vals = list(dfd.roll)
     dday = []
     for hday in dts:
         s0 = hday - datetime.timedelta(days=1)
         dday.append(datetime.date(s0.year, s0.month, s0.day))
 
-    gsdr = pd.Series(dailyVals, index=dday).to_frame("ts2")
+    gsdr = pd.Series(daily_vals, index=dday).to_frame("ts2")
 
     return gsdr
 
 
-# Helper function to access Global Precipitation Climatology Centre monthly data... Ask Liz what is needed to implement this!
-def get_monthly_gpcc(startYear, endYear, gpccId):  # Hey liz! Check this once you have access to monthly!
+# Helper function to access Global Precipitation Climatology Centre monthly data...
+# Ask Liz what is needed to implement this!
+def get_monthly_gpcc(start_year, end_year, gpcc_id):  # Hey liz! Check this once you have access to monthly!
 
-    # p = subprocess.Popen(["get_zeitreihe_mw_by_id.sh", str(startYear), str(endYear), gpccId], cwd="/media/nas/x21971/GPCC_monthly")
+    # p = subprocess.Popen(["get_zeitreihe_mw_by_id.sh", str(start_year), str(end_year), gpcc_id], cwd="/media/nas/x21971/GPCC_monthly")
     # p.wait()
-    gpcc_filename = "mw_" + gpccId + ".dat"
-    dat_path = "/media/nas/x21971/GPCC_monthly2/mw_" + gpccId + ".dat"
-    zip_path = "/media/nas/x21971/GPCC_monthly2/mw_" + gpccId + ".zip"
+    gpcc_filename = "mw_" + gpcc_id + ".dat"
+    dat_path = "/media/nas/x21971/GPCC_monthly2/mw_" + gpcc_id + ".dat"
+    zip_path = "/media/nas/x21971/GPCC_monthly2/mw_" + gpcc_id + ".zip"
     if not os.path.exists(zip_path):
         if not os.path.exists(dat_path):
-            p = subprocess.Popen(["get_zeitreihe_mw_by_id.sh", str(startYear), str(endYear), gpccId],
+            p = subprocess.Popen(["get_zeitreihe_mw_by_id.sh", str(start_year), str(end_year), gpcc_id],
                                  cwd="/media/nas/x21971/GPCC_monthly2")
             p.wait()
             time.sleep(0.1)
@@ -1597,7 +1602,7 @@ def get_monthly_gpcc(startYear, endYear, gpccId):  # Hey liz! Check this once yo
             time.sleep(0.1)
             os.remove(dat_path)
 
-    # f = open("/media/nas/x21971/GPCC_monthly/mw_" + gpccId + ".dat", "r")
+    # f = open("/media/nas/x21971/GPCC_monthly/mw_" + gpcc_id + ".dat", "r")
     zf = zipfile.ZipFile(zip_path, "r")
     f = zf.open(gpcc_filename, "r")
     f.readline()
@@ -1607,10 +1612,10 @@ def get_monthly_gpcc(startYear, endYear, gpccId):  # Hey liz! Check this once yo
 
     file_format_error = 0
     for line in f:
-        lineList = line.rstrip().split()
+        line_list = line.rstrip().split()
         try:
-            year = int(lineList[1])
-            month = int(lineList[0])
+            year = int(line_list[1])
+            month = int(line_list[0])
             read_values = 1
         except:
             file_format_error = 1
@@ -1620,13 +1625,13 @@ def get_monthly_gpcc(startYear, endYear, gpccId):  # Hey liz! Check this once yo
             day = calendar.monthrange(year, month)[1]
             # dates.append(datetime.date(int(lineList[1]), int(lineList[0]), 1))
             dates.append(datetime.date(year, month, day))
-            gotOne = 0
-            for v in lineList[2:]:
+            got_one = 0
+            for v in line_list[2:]:
                 if float(v) >= 0:
                     vals.append(float(v))
-                    gotOne = 1
+                    got_one = 1
                     break
-            if gotOne == 0:
+            if got_one == 0:
                 vals.append(np.nan)
 
     f.close()
@@ -1732,12 +1737,12 @@ def calculate_affinity_index_and_pearson(df1, df2):  # done
 
         if (match > 0) or (diff > 0):
             perc = match / (match + diff)
-            pCorr = df.ts1.corr(df.ts2)
+            p_corr = df.ts1.corr(df.ts2)
             df["factor"] = df.ts1 / df.ts2
             f = np.mean(df.loc[(df.ts1 > 0) & (df.ts2 > 0), "factor"].values)
         else:
             perc = 0
-            pCorr = 0
+            p_corr = 0
             f = 0
 
         # print(df)
@@ -1745,32 +1750,34 @@ def calculate_affinity_index_and_pearson(df1, df2):  # done
 
     else:
         perc = 0
-        pCorr = 0
+        p_corr = 0
         f = 0
 
-    return perc, pCorr, f
+    return perc, p_corr, f
 
 
 # Main helper function, used by checkNeighbour and checkNeighbourDry
 # def compareTargetToNeighbour(target, neighbour, highOrDry): #Liz check this still works with the ai>0.9 bit
-def compare_target_to_neighbour(target, neighbour, highOrDry, station=None, check_type=None,
-                                neighbour_id=None):  # last three args for output for normalised difference distribution checks
+def compare_target_to_neighbour(target, neighbour, high_or_dry, station=None, check_type=None,
+                                neighbour_id=None):
+    # last three args for output for
+    # normalised difference distribution checks
 
     '''
   After Upton and Rahimi 2003 https://www.sciencedirect.com/science/article/pii/S0022169403001422
   '''
-    checkFlag = 1  # default setting is to check
+    check_flag = 1  # default setting is to check
 
     # dp 31/12/2019 - this AI check should be redundant, because neighbours with
     # AI < 0.9 are filtered out before this function is called...
-    if highOrDry == "high":
+    if high_or_dry == "high":
         ai = calculate_affinity_index_and_pearson(target, neighbour)[0]
         if ai >= 0.9:
-            checkFlag = 1
+            check_flag = 1
         else:
-            checkFlag = 0
+            check_flag = 0
 
-    if checkFlag == 1:
+    if check_flag == 1:
 
         df = pd.concat([target, neighbour], axis=1, join='inner')
         df.columns = ["ts1", "ts2"]
@@ -1781,7 +1788,7 @@ def compare_target_to_neighbour(target, neighbour, highOrDry, station=None, chec
         if df.shape[0] >= 365:
 
             # Separate out high and dry checks as using slightly different approaches now
-            if highOrDry == "high":
+            if high_or_dry == "high":
 
                 # Normalise target and neighbour series by their respective min/max and
                 # find differences
@@ -1855,13 +1862,13 @@ def compare_target_to_neighbour(target, neighbour, highOrDry, station=None, chec
 
                     # *** dp 27/11/2019 *** - commented out line below so changed to default=0
                     # normalized_df['temp_flags'] = np.select(conditions, choices, default=np.nan)
-                    ##normalized_df['temp_flags'] = np.select(conditions, choices, default=0)
+                    # normalized_df['temp_flags'] = np.select(conditions, choices, default=0)
                     df['temp_flags'] = np.select(conditions, choices, default=0)
 
                     '''
           # ---
           # Outputs for checking thresholds for neighbour check flags
-          if highOrDry == "high":
+          if high_or_dry == "high":
           
               # For looking at distributions of normalised differences
               nvals = normalized_df['norm_diff'].count()
@@ -1910,13 +1917,13 @@ def compare_target_to_neighbour(target, neighbour, highOrDry, station=None, chec
           '''
 
                     # tempFlags = normalized_df['temp_flags']
-                    tempFlags = df['temp_flags']
-                    return tempFlags
+                    temp_flags = df['temp_flags']
+                    return temp_flags
 
                 else:
                     return pd.Series([])
 
-            elif highOrDry == "dry":
+            elif high_or_dry == "dry":
 
                 # Assign flags
                 # - consider only whether dry 15-day periods at the target are
@@ -1942,12 +1949,12 @@ def compare_target_to_neighbour(target, neighbour, highOrDry, station=None, chec
 
                 # *** dp 27/11/2019 *** - commented out line below so changed to default=0
                 # normalized_df['temp_flags'] = np.select(conditions, choices, default=np.nan)
-                ##normalized_df['temp_flags'] = np.select(conditions, choices, default=0)
+                # normalized_df['temp_flags'] = np.select(conditions, choices, default=0)
                 df['temp_flags'] = np.select(conditions, choices, default=0)
 
                 # tempFlags = normalized_df['temp_flags']
-                tempFlags = df['temp_flags']
-                return tempFlags
+                temp_flags = df['temp_flags']
+                return temp_flags
 
         else:
             return pd.Series([])
@@ -1987,9 +1994,9 @@ def compare_target_to_neighbour_monthly(target, neighbour):
     df['temp_flags'] = np.select(conditions, choices, default=np.nan)
 
     df.loc[np.isnan(df['ts1']), 'temp_flags'] = np.nan
-    tempFlags = df['temp_flags']
+    temp_flags = df['temp_flags']
 
-    conditionsF = [
+    conditions_f = [
         (df['factor_diff'] < 11) & (df['factor_diff'] > 9),  # hourly is approx 10x greater than monthly
         (df['factor_diff'] < 26) & (df['factor_diff'] > 24),  # hourly is approx 25.4x greater than monthly
         (df['factor_diff'] < 3) & (df['factor_diff'] > 2),  # hourly is approx 2.45x greater than monthly
@@ -1997,18 +2004,18 @@ def compare_target_to_neighbour_monthly(target, neighbour):
         (df['factor_diff'] > 1 / 26) & (df['factor_diff'] < 1 / 24),
         (df['factor_diff'] > 1 / 3) & (df['factor_diff'] < 1 / 2)]
 
-    choicesF = [1, 2, 3, 4, 5, 6]
+    choices_f = [1, 2, 3, 4, 5, 6]
 
     # df['factor_flags'] = np.select(conditionsF, choicesF, default=np.nan)
-    df['factor_flags'] = np.select(conditionsF, choicesF, default=0)
+    df['factor_flags'] = np.select(conditions_f, choices_f, default=0)
 
     df.loc[np.isnan(df['ts1']), 'factor_flags'] = np.nan
-    factorFlags = df['factor_flags']
+    factor_flags = df['factor_flags']
 
     # print(tempFlags.isnull().any(), factorFlags.isnull().any())
     # print(tempFlags.max(), factorFlags.max())
 
-    return [tempFlags, factorFlags]  # Hey Liz! Make sure theres a new thing for factor flags!
+    return [temp_flags, factor_flags]  # Hey Liz! Make sure theres a new thing for factor flags!
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -2018,7 +2025,7 @@ def check_neighbours(target, neighbours, station=None,
                      check_type=None):  # temporary extra args for checking neighbour stuff
 
     df = target
-    concatList = [df]
+    concat_list = [df]
 
     nid = 1  # temporary for neighbours checking
     for n in neighbours:
@@ -2026,11 +2033,11 @@ def check_neighbours(target, neighbours, station=None,
         if dfn.empty:
             pass
         else:
-            concatList.append(dfn)
+            concat_list.append(dfn)
         nid += 1
-    df = pd.concat(concatList, axis=1, join='outer')
+    df = pd.concat(concat_list, axis=1, join='outer')
 
-    cols = ["n" + str(i + 1) for i in range(len(concatList) - 1)]
+    cols = ["n" + str(i + 1) for i in range(len(concat_list) - 1)]
     cols2 = ["target"]
     cols2.extend(cols)
 
@@ -2038,8 +2045,8 @@ def check_neighbours(target, neighbours, station=None,
 
     # dp 28/11/2019 - changed assuming that looking for number of neighbours online
     # on any given day (similar to monthly neighbours)
-    ##df["online"] = len(concatList)-1 - df[cols].isnull().T.sum(axis=1)
-    df["online"] = len(concatList) - df[cols].isnull().sum(axis=1) - 1
+    # df["online"] = len(concatList)-1 - df[cols].isnull().T.sum(axis=1)
+    df["online"] = len(concat_list) - df[cols].isnull().sum(axis=1) - 1
 
     # print(df)
     # print(df['online'].min(), df['online'].median())
@@ -2081,7 +2088,7 @@ def check_neighbours(target, neighbours, station=None,
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Uses compareTargetToNeighbour function based on Upton and Rahimi(2003)
-def checkNeighboursDry(target, neighbours):  # Liz check this
+def check_neighbours_dry(target, neighbours):  # Liz check this
 
     df = convert_to_dry_spell(target)  # Liz, check column names
 
@@ -2094,25 +2101,25 @@ def checkNeighboursDry(target, neighbours):  # Liz check this
     # print(tmp.loc[tmp['val'] == 1])
     # sys.exit()
 
-    concatList = [df]
+    concat_list = [df]
     for n in neighbours:
         nn = convert_to_dry_spell(n)  # Liz check column names
         dfn = compare_target_to_neighbour(df, nn, "dry")
         if dfn.empty:
             pass
         else:
-            concatList.append(dfn)
+            concat_list.append(dfn)
 
-    df = pd.concat(concatList, axis=1, join='outer')
+    df = pd.concat(concat_list, axis=1, join='outer')
 
-    cols = ["n" + str(i + 1) for i in range(len(concatList) - 1)]
+    cols = ["n" + str(i + 1) for i in range(len(concat_list) - 1)]
     cols2 = ["target"]
     cols2.extend(cols)
     df.columns = cols2
 
     # dp 28/11/2019 - again assumed want count of number of neighbours online
     # df["online"] = len(concatList) -1 - df.isnull().sum(axis=1)
-    df["online"] = len(concatList) - df[cols].isnull().sum(axis=1) - 1
+    df["online"] = len(concat_list) - df[cols].isnull().sum(axis=1) - 1
 
     df["flags"] = np.floor(df[cols].sum(axis=1) / df.online)
 
@@ -2141,7 +2148,7 @@ def checkNeighboursDry(target, neighbours):  # Liz check this
     df.flags = df.flags.replace([np.inf, -np.inf], -999)
     df.loc[df.online < 3, "flags"] = -999
     # df.loc[df.target > 0, "flags"] = -999
-    ##df.loc[df.target < 1, "flags"] = -999
+    # df.loc[df.target < 1, "flags"] = -999
     df.flags = df.flags.astype(int)
     df.flags = df.flags.replace(-999, np.nan)
     dfr = df.flags
@@ -2152,25 +2159,25 @@ def checkNeighboursDry(target, neighbours):  # Liz check this
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 def check_m_neighbours(target, neighbours):
     df = target
-    concatList = [df]
+    concat_list = [df]
     ticker = 0
     for n in neighbours:
         dfn, dff = compare_target_to_neighbour_monthly(df, n)
-        concatList.append(dfn)
+        concat_list.append(dfn)
         if ticker == 0:
-            dfFactor = dff.copy()
+            df_factor = dff.copy()
         ticker += 1
 
-    df = pd.concat(concatList, axis=1, join='outer')
+    df = pd.concat(concat_list, axis=1, join='outer')
 
-    cols = ["n" + str(i + 1) for i in range(len(concatList) - 1)]
+    cols = ["n" + str(i + 1) for i in range(len(concat_list) - 1)]
     cols2 = ["target"]
     cols2.extend(cols)
 
     df.columns = cols2
 
     # df["online"] = len(concatList) -1 - df[cols].isnull().T.sum(axis=1)
-    df["online"] = len(concatList) - df[cols].isnull().sum(axis=1) - 1
+    df["online"] = len(concat_list) - df[cols].isnull().sum(axis=1) - 1
     conditions = [
         ((df[cols] == -3).T.sum() == df.online),
         ((df[cols] <= -2).T.sum() == df.online),
@@ -2255,7 +2262,7 @@ def check_m_neighbours(target, neighbours):
     # print(len(neighbours))
     # sys.exit()
 
-    return [dfr, dfFactor]
+    return [dfr, df_factor]
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -2268,7 +2275,7 @@ def check_hourly_neighbours(target):
     df["roll"] = np.around(df.target.rolling(window=24, center=False, min_periods=24).sum(), 1)
     dfd = df[df.index.hour == 7]
     dts = list(dfd.index)
-    dailyVals = list(dfd.roll)
+    daily_vals = list(dfd.roll)
 
     # print(df.loc[df['target'] >= 0.1, 'target'].min())
     # print(df.loc[df['roll'] >= 0.1, 'roll'].min())
@@ -2278,7 +2285,7 @@ def check_hourly_neighbours(target):
     for dt in dts:
         s0 = dt - datetime.timedelta(days=1)
         dts0.append(datetime.date(s0.year, s0.month, s0.day))
-    ts0 = pd.Series(dailyVals, index=dts0)
+    ts0 = pd.Series(daily_vals, index=dts0)
 
     # print(df)
     # print(dfd)
@@ -2294,7 +2301,8 @@ def check_hourly_neighbours(target):
     if len(neighbours) > 1:
 
         # ---
-        # *** dp 30/11/2019 temporarily remove any ISD neighbours just for neighbour difference distribution checking ***
+        # *** dp 30/11/2019 temporarily remove any ISD neighbours
+        # just for neighbour difference distribution checking ***
         '''
     #if len(neighbours) > 0:
     tmp = []
@@ -2313,12 +2321,12 @@ def check_hourly_neighbours(target):
     """
         # get GSDR
         # print("gettingGSDR")
-        neighbourDfs = []
+        neighbour_dfs = []
         for nId in range(len(neighbours)):
             if nId == 0:
                 pass
             else:
-                neighbourDfs.append(get_gsdr(neighbours[nId], paths[nId]))
+                neighbour_dfs.append(get_gsdr(neighbours[nId], paths[nId]))
         # get matching stats for nearest gauge and offset calculateAffinityIndexAndPearson(ts1, ts2) -> returns a flag
 
         # do neighbour check
@@ -2327,17 +2335,17 @@ def check_hourly_neighbours(target):
         #  print(nb)
 
         # filter out gauges with AI < 0.9
-        neighbourDfs2 = []
-        for ndf in neighbourDfs:
-            nAI, nR2, nf = calculate_affinity_index_and_pearson(ts0.to_frame("ts1"), ndf)
+        neighbour_dfs2 = []
+        for ndf in neighbour_dfs:
+            nai, nr2, nf = calculate_affinity_index_and_pearson(ts0.to_frame("ts1"), ndf)
             # nId = neighbourDfs[neighbourDfs.index(ndf)]
             # print(nAI, nR2, nf, ndf.shape[0])
-            if nAI > 0.9:
-                neighbourDfs2.append(ndf)
+            if nai > 0.9:
+                neighbour_dfs2.append(ndf)
             else:
                 pass
 
-        flagsDf = check_neighbours(ts0.to_frame("ts1"), neighbourDfs2, target.station_id, 'hourly')
+        flags_df = check_neighbours(ts0.to_frame("ts1"), neighbour_dfs2, target.station_id, 'hourly')
 
         # ---
         # dp (11/12/2019) - temporary to save normalised differences and examine fit to some distributions
@@ -2365,8 +2373,8 @@ def check_hourly_neighbours(target):
     '''
         # ---
 
-        flagsDates = list(flagsDf.index.values)
-        flagsVals = list(flagsDf)
+        flags_dates = list(flags_df.index.values)
+        flags_vals = list(flags_df)
 
         # tmp = flagsDf.to_frame('val')
         # print(tmp.loc[tmp['val'] > 0])
@@ -2376,9 +2384,9 @@ def check_hourly_neighbours(target):
         # sys.exit()
 
         # do neighbour check for dry periods and flag the whole 15 day period
-        dryFlagsDf = checkNeighboursDry(ts0.to_frame("ts1"), neighbourDfs2)
-        dryFlagsDates = list(dryFlagsDf.index.values)
-        dryFlagsVals = list(dryFlagsDf)
+        dry_flags_df = check_neighbours_dry(ts0.to_frame("ts1"), neighbour_dfs2)
+        dry_flags_dates = list(dry_flags_df.index.values)
+        dry_flags_vals = list(dry_flags_df)
 
         # tmp = dryFlagsDf.to_frame('vals')
         # print(tmp.loc[tmp['vals']==0])
@@ -2392,33 +2400,33 @@ def check_hourly_neighbours(target):
         i2 = []
         i3 = []
 
-        for i in range(len(dryFlagsVals)):
-            if dryFlagsVals[i] == 1:
+        for i in range(len(dry_flags_vals)):
+            if dry_flags_vals[i] == 1:
                 for j in range(15):
                     i1.append(i - j)
-            elif dryFlagsVals[i] == 2:
+            elif dry_flags_vals[i] == 2:
                 for j in range(15):
                     i2.append(i - j)
-            elif dryFlagsVals[i] == 3:
+            elif dry_flags_vals[i] == 3:
                 for j in range(15):
                     i3.append(i - j)
             else:
                 pass
 
         for i in i1:
-            dryFlagsVals[i] = 1
+            dry_flags_vals[i] = 1
         for i in i2:
-            dryFlagsVals[i] = 2
+            dry_flags_vals[i] = 2
         for i in i3:
-            dryFlagsVals[i] = 3
+            dry_flags_vals[i] = 3
 
         # add daily flags back onto hourly
-        flagsDt = [datetime.datetime(d.year, d.month, d.day, 7) for d in flagsDates]
-        flagsDf = pd.Series(flagsVals, index=flagsDt).to_frame("flags")
-        dryFlagsDt = [datetime.datetime(d.year, d.month, d.day, 7) for d in dryFlagsDates]
-        dryFlagsDf = pd.Series(dryFlagsVals, index=dryFlagsDt).to_frame("dryFlags")
+        flags_dt = [datetime.datetime(d.year, d.month, d.day, 7) for d in flags_dates]
+        flags_df = pd.Series(flags_vals, index=flags_dt).to_frame("flags")
+        dry_flags_dt = [datetime.datetime(d.year, d.month, d.day, 7) for d in dry_flags_dates]
+        dry_flags_df = pd.Series(dry_flags_vals, index=dry_flags_dt).to_frame("dryFlags")
 
-        df = pd.concat([df, flagsDf, dryFlagsDf], axis=1, join_axes=[df.index])
+        df = pd.concat([df, flags_df, dry_flags_df], axis=1, join_axes=[df.index])
         df.flags = df.flags.fillna(method="ffill", limit=23)
         df.dryFlags = df.dryFlags.fillna(method="ffill", limit=23)
         df.fillna(-999, inplace=True)
@@ -2440,7 +2448,7 @@ def check_daily_neighbours(target):
     df["roll"] = np.around(df.target.rolling(window=24, center=False, min_periods=24).sum(), 1)
     dfd = df[df.index.hour == 7]
     dts = list(dfd.index)
-    dailyVals = list(dfd.roll)
+    daily_vals = list(dfd.roll)
 
     # offset by one day in either direction
     dtsm1 = []
@@ -2455,9 +2463,9 @@ def check_daily_neighbours(target):
         dts0.append(datetime.date(s0.year, s0.month, s0.day))
         dtsp1.append(datetime.date(sp1.year, sp1.month, sp1.day))
 
-    tsm1 = pd.Series(dailyVals, index=dtsm1)
-    ts0 = pd.Series(dailyVals, index=dts0)
-    tsp1 = pd.Series(dailyVals, index=dtsp1)
+    tsm1 = pd.Series(daily_vals, index=dtsm1)
+    ts0 = pd.Series(daily_vals, index=dts0)
+    tsp1 = pd.Series(daily_vals, index=dtsp1)
 
     # find neighbours
     # print("finding neighbours")
@@ -2476,21 +2484,21 @@ def check_daily_neighbours(target):
 
         # get gpcc
         # print("gettingGPCC")
-        neighbourDfs = []
+        neighbour_dfs = []
         for nId in neighbours:
             # neighbourDfs.append(getGPCC(dts0[0].year, dts0[-1].year, nId))
-            neighbour_start_year = dailyDates[dailyNames.index(nId)][0].year
-            neighbour_end_year = dailyDates[dailyNames.index(nId)][1].year
-            neighbourDfs.append(get_gpcc(neighbour_start_year, neighbour_end_year, nId))
+            neighbour_start_year = daily_dates[daily_names.index(nId)][0].year
+            neighbour_end_year = daily_dates[daily_names.index(nId)][1].year
+            neighbour_dfs.append(get_gpcc(neighbour_start_year, neighbour_end_year, nId))
 
         # get matching stats for nearest gauge and offset calculateAffinityIndexAndPearson(ts1, ts2) -> returns a flag
-        nearest = neighbourDfs[0].rename(columns={"GPCC": "ts2"})
-        sm1AI, sm1R2, sm1f = calculate_affinity_index_and_pearson(tsm1.to_frame("ts1"), nearest)
-        s0AI, s0R2, s0f = calculate_affinity_index_and_pearson(ts0.to_frame("ts1"), nearest)
-        sp1AI, sp1R2, sp1f = calculate_affinity_index_and_pearson(tsp1.to_frame("ts1"), nearest)
+        nearest = neighbour_dfs[0].rename(columns={"GPCC": "ts2"})
+        sm1ai, sm1r2, sm1f = calculate_affinity_index_and_pearson(tsm1.to_frame("ts1"), nearest)
+        s0ai, s0r2, s0f = calculate_affinity_index_and_pearson(ts0.to_frame("ts1"), nearest)
+        sp1ai, sp1r2, sp1f = calculate_affinity_index_and_pearson(tsp1.to_frame("ts1"), nearest)
 
-        ais = [sm1AI, s0AI, sp1AI]
-        r2s = [sm1R2, s0R2, sp1R2]
+        ais = [sm1ai, s0ai, sp1ai]
+        r2s = [sm1r2, s0r2, sp1r2]
 
         # print(ais)
         # print(r2s)
@@ -2511,22 +2519,22 @@ def check_daily_neighbours(target):
         # - for now check placed in calculate AI etc function
 
         # filter out gauges with AI < 0.9
-        neighbourDfs2 = []
-        for nId, ndf in zip(neighbours, neighbourDfs):
+        neighbour_dfs2 = []
+        for nId, ndf in zip(neighbours, neighbour_dfs):
             ndf2 = ndf.rename(columns={"GPCC": "ts2"})
             # print(nId)
             # print(ndf2)
-            nAI, nR2, nf = calculate_affinity_index_and_pearson(ts0.to_frame("ts1"), ndf2)
+            nai, nr2, nf = calculate_affinity_index_and_pearson(ts0.to_frame("ts1"), ndf2)
             # print(nId, nAI, nR2, nf)
-            if nAI > 0.9:
-                neighbourDfs2.append(ndf)
+            if nai > 0.9:
+                neighbour_dfs2.append(ndf)
             else:
                 pass
 
         # flagsDf = checkNeighbours(ts0.to_frame("ts1"), neighbourDfs, target.station_id, 'daily')
-        flagsDf = check_neighbours(ts0.to_frame("ts1"), neighbourDfs2, target.station_id, 'daily')
-        flagsDates = list(flagsDf.index.values)
-        flagsVals = list(flagsDf)
+        flags_df = check_neighbours(ts0.to_frame("ts1"), neighbour_dfs2, target.station_id, 'daily')
+        flags_dates = list(flags_df.index.values)
+        flags_vals = list(flags_df)
 
         # ---
         # dp (11/12/2019) - temporary to save normalised differences and examine fit to some distributions
@@ -2560,45 +2568,45 @@ def check_daily_neighbours(target):
 
         # do neighbour check for dry periods and flag the whole 15 day period
         # dryFlagsDf = checkNeighboursDry(ts0.to_frame("ts1"), neighbourDfs)
-        dryFlagsDf = checkNeighboursDry(ts0.to_frame("ts1"), neighbourDfs2)
-        dryFlagsDates = list(dryFlagsDf.index.values)
-        dryFlagsVals = list(dryFlagsDf)
+        dry_flags_df = check_neighbours_dry(ts0.to_frame("ts1"), neighbour_dfs2)
+        dry_flags_dates = list(dry_flags_df.index.values)
+        dry_flags_vals = list(dry_flags_df)
 
         i1 = []
         i2 = []
         i3 = []
 
-        for i in range(len(dryFlagsVals)):
-            if dryFlagsVals[i] == 1:
+        for i in range(len(dry_flags_vals)):
+            if dry_flags_vals[i] == 1:
                 for j in range(15):
                     i1.append(i - j)
-            elif dryFlagsVals[i] == 2:
+            elif dry_flags_vals[i] == 2:
                 for j in range(15):
                     i2.append(i - j)
-            elif dryFlagsVals[i] == 3:
+            elif dry_flags_vals[i] == 3:
                 for j in range(15):
                     i3.append(i - j)
             else:
                 pass
 
         for i in i1:
-            dryFlagsVals[i] = 1
+            dry_flags_vals[i] = 1
         for i in i2:
-            dryFlagsVals[i] = 2
+            dry_flags_vals[i] = 2
         for i in i3:
-            dryFlagsVals[i] = 3
+            dry_flags_vals[i] = 3
 
         # add daily flags back onto hourly
-        flagsDt = [datetime.datetime(d.year, d.month, d.day, 7) for d in flagsDates]
-        flagsDf = pd.Series(flagsVals, index=flagsDt).to_frame("flags")
-        dryFlagsDt = [datetime.datetime(d.year, d.month, d.day, 7) for d in dryFlagsDates]
-        dryFlagsDf = pd.Series(dryFlagsVals, index=dryFlagsDt).to_frame("dryFlags")
+        flags_dt = [datetime.datetime(d.year, d.month, d.day, 7) for d in flags_dates]
+        flags_df = pd.Series(flags_vals, index=flags_dt).to_frame("flags")
+        dry_flags_dt = [datetime.datetime(d.year, d.month, d.day, 7) for d in dry_flags_dates]
+        dry_flags_df = pd.Series(dry_flags_vals, index=dry_flags_dt).to_frame("dryFlags")
 
-        df = pd.concat([df, flagsDf, dryFlagsDf], axis=1, join_axes=[df.index])
+        df = pd.concat([df, flags_df, dry_flags_df], axis=1, join_axes=[df.index])
         df.flags = df.flags.fillna(method="ffill", limit=23)
         df.dryFlags = df.dryFlags.fillna(method="ffill", limit=23)
         df.fillna(-999, inplace=True)
-        return [list(df.flags.astype(int)), offset_flag, s0AI, s0R2, s0f, list(df.dryFlags.astype(int))]
+        return [list(df.flags.astype(int)), offset_flag, s0ai, s0r2, s0f, list(df.dryFlags.astype(int))]
 
     # -999 if no neighbours
     else:
@@ -2607,18 +2615,19 @@ def check_daily_neighbours(target):
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-def convert_to_dry_spell(dailyDf):
+def convert_to_dry_spell(daily_df):
     # dp 29/11/2019 - it would make sense to remove np.around so fractional not binary,
     # but this will require a change to how the flagging is done for it to make sense
     # i think (i.e. do all stations agree the period is wet when the target is dry?)
     # should the threshold for dry be larger than just zero?
 
-    # dailyDf["fracDryDays"] = np.around(dailyDf.rolling(15, min_periods=15).apply(lambda window: (window == 0).sum()/15))
-    dailyDf["fracDryDays"] = dailyDf.rolling(15, min_periods=15).apply(lambda window: (window == 0).sum() / 15)
+    # daily_df["fracDryDays"] = np.around(daily_df.rolling(15, min_periods=15).apply(lambda window: (window ==
+    # 0).sum()/15))
+    daily_df["fracDryDays"] = daily_df.rolling(15, min_periods=15).apply(lambda window: (window == 0).sum() / 15)
 
-    convertedDf = dailyDf["fracDryDays"]
-    convertedDf.columns = ["ts1"]
-    return convertedDf
+    converted_df = daily_df["fracDryDays"]
+    converted_df.columns = ["ts1"]
+    return converted_df
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -2628,12 +2637,12 @@ def check_monthly_neighbours(
 
     # convert hourly to daily 7am-7am
     # print("converting to monthly")
-    ##dfm = df.resample('M').sum()
+    # dfm = df.resample('M').sum()
     dfm = df.resample("M", label='right', closed='right').apply(lambda x: x.values.sum())
     # dts0 = [datetime.datetime.utcfromtimestamp(x.astype(datetime.datetime)) for x in list(dfm.index.values)]
 
-    startYear = datetime.datetime.strptime(str(dfm.iloc[0].name), "%Y-%m-%d %H:%M:%S").year
-    endYear = datetime.datetime.strptime(str(dfm.iloc[-1].name), "%Y-%m-%d %H:%M:%S").year
+    # startYear = datetime.datetime.strptime(str(dfm.iloc[0].name), "%Y-%m-%d %H:%M:%S").year
+    # endYear = datetime.datetime.strptime(str(dfm.iloc[-1].name), "%Y-%m-%d %H:%M:%S").year
     # find neighbours
     # print("finding neighbours")
     neighbours = find_monthly_neighbours(target)
@@ -2647,66 +2656,66 @@ def check_monthly_neighbours(
         neighbours = tmp.copy()
 
     if neighbours is None:
-        hourlyFlagsS = df.copy()
-        hourlyFlagsS['flags'] = -999
-        hourlyFactorFlagsS = df.copy()
-        hourlyFactorFlagsS['factor_flags'] = -999
+        hourly_flags_s = df.copy()
+        hourly_flags_s['flags'] = -999
+        hourly_factor_flags_s = df.copy()
+        hourly_factor_flags_s['factor_flags'] = -999
     else:
 
         # get gpcc
         # print("gettingGPCC")
-        neighbourDfs = []
-        for nId in neighbours:
-            # neighbourDfs.append(getMonthlyGPCC(startYear, endYear, nId))
-            neighbour_start_year = monthlyDates[monthlyNames.index(nId)][0].year
-            neighbour_end_year = monthlyDates[monthlyNames.index(nId)][1].year
-            neighbourDfs.append(get_monthly_gpcc(neighbour_start_year, neighbour_end_year, nId))
+        neighbour_dfs = []
+        for n_id in neighbours:
+            # neighbourDfs.append(getMonthlyGPCC(startYear, endYear, n_id))
+            neighbour_start_year = monthly_dates[monthly_names.index(n_id)][0].year
+            neighbour_end_year = monthly_dates[monthly_names.index(n_id)][1].year
+            neighbour_dfs.append(get_monthly_gpcc(neighbour_start_year, neighbour_end_year, n_id))
         # get matching stats for nearest gauge and offset calculateAffinityIndexAndPearson(ts1, ts2) -> returns a flag
 
         # do neighbour check
         # print("doing neighbour check")
         # print(neighbours)
 
-        flagsDf, factorFlagsDf = check_m_neighbours(dfm, neighbourDfs)
+        flags_df, factor_flags_df = check_m_neighbours(dfm, neighbour_dfs)
 
         # set dates to be at 2300 (rather than 0000) so bfill works
-        flagsDf.index += datetime.timedelta(hours=23)
-        factorFlagsDf.index += datetime.timedelta(hours=23)
+        flags_df.index += datetime.timedelta(hours=23)
+        factor_flags_df.index += datetime.timedelta(hours=23)
 
-        origDates = list(df.index.values)
-        hourlyFlagsS = flagsDf.reindex(origDates, method="bfill")
-        hourlyFactorFlagsS = factorFlagsDf.reindex(origDates, method="bfill")
+        orig_dates = list(df.index.values)
+        hourly_flags_s = flags_df.reindex(orig_dates, method="bfill")
+        hourly_factor_flags_s = factor_flags_df.reindex(orig_dates, method="bfill")
 
         # count valid values within month and set flag as nan if more than 5% of data is missing
         # - hourly percentage differences
-        hourlyFlagsS = hourlyFlagsS.to_frame()
-        hourlyFlagsS['count'] = hourlyFlagsS.groupby([hourlyFlagsS.index.year, hourlyFlagsS.index.month]).transform(
-            'count')
-        hourlyFlagsS['expected'] = hourlyFlagsS.index.days_in_month * 24
-        hourlyFlagsS['frac_complete'] = hourlyFlagsS['count'] / hourlyFlagsS['expected']
-        hourlyFlagsS.loc[hourlyFlagsS['frac_complete'] < 0.95, 'flags'] = np.nan
-        hourlyFlagsS.drop(['count', 'expected', 'frac_complete'], axis=1, inplace=True)
+        hourly_flags_s = hourly_flags_s.to_frame()
+        hourly_flags_s['count'] = hourly_flags_s.groupby(
+            [hourly_flags_s.index.year, hourly_flags_s.index.month]).transform('count')
+        hourly_flags_s['expected'] = hourly_flags_s.index.days_in_month * 24
+        hourly_flags_s['frac_complete'] = hourly_flags_s['count'] / hourly_flags_s['expected']
+        hourly_flags_s.loc[hourly_flags_s['frac_complete'] < 0.95, 'flags'] = np.nan
+        hourly_flags_s.drop(['count', 'expected', 'frac_complete'], axis=1, inplace=True)
         # - hourly factor differences
         # print(hourlyFactorFlagsS)
-        hourlyFactorFlagsS = hourlyFactorFlagsS.to_frame()
-        hourlyFactorFlagsS['count'] = hourlyFactorFlagsS.groupby(
-            [hourlyFactorFlagsS.index.year, hourlyFactorFlagsS.index.month]).transform('count')
-        hourlyFactorFlagsS['expected'] = hourlyFactorFlagsS.index.days_in_month * 24
-        hourlyFactorFlagsS['frac_complete'] = hourlyFactorFlagsS['count'] / hourlyFactorFlagsS['expected']
-        hourlyFactorFlagsS.loc[hourlyFactorFlagsS['frac_complete'] < 0.95, 'factor_flags'] = np.nan
-        hourlyFactorFlagsS.drop(['count', 'expected', 'frac_complete'], axis=1, inplace=True)
+        hourly_factor_flags_s = hourly_factor_flags_s.to_frame()
+        hourly_factor_flags_s['count'] = hourly_factor_flags_s.groupby(
+            [hourly_factor_flags_s.index.year, hourly_factor_flags_s.index.month]).transform('count')
+        hourly_factor_flags_s['expected'] = hourly_factor_flags_s.index.days_in_month * 24
+        hourly_factor_flags_s['frac_complete'] = hourly_factor_flags_s['count'] / hourly_factor_flags_s['expected']
+        hourly_factor_flags_s.loc[hourly_factor_flags_s['frac_complete'] < 0.95, 'factor_flags'] = np.nan
+        hourly_factor_flags_s.drop(['count', 'expected', 'frac_complete'], axis=1, inplace=True)
         # print(hourlyFactorFlagsS)
         # print(hourlyFactorFlagsS.loc[hourlyFactorFlagsS['factor_flags'].notnull()])
         # print(hourlyFactorFlagsS['factor_flags'].min(), hourlyFactorFlagsS['factor_flags'].max())
 
-        hourlyFlagsS.fillna(-999, inplace=True)
-        hourlyFactorFlagsS.fillna(-999, inplace=True)
+        hourly_flags_s.fillna(-999, inplace=True)
+        hourly_factor_flags_s.fillna(-999, inplace=True)
 
         # print(np.unique(hourlyFlagsS.loc[hourlyFlagsS['flags'].notnull(), 'flags'], return_counts=True))
         # sys.exit()
 
     # return [list(hourlyFlagsS.astype(int)), list(hourlyFactorFlagsS.astype(int))]
-    return [list(hourlyFlagsS['flags'].astype(int)), list(hourlyFactorFlagsS['factor_flags'].astype(int))]
+    return [list(hourly_flags_s['flags'].astype(int)), list(hourly_factor_flags_s['factor_flags'].astype(int))]
 
 
 """
@@ -2721,8 +2730,7 @@ def get_flags(ito):  # pass intense object
         # print("hourly neighbours")
         ito.QC_hourly_neighbours, ito.QC_hourly_neighbours_dry = check_hourly_neighbours(ito)
         # print("daily neighbours")
-        ito.QC_daily_neighbours, ito.QC_offset, ito.QC_preQC_affinity_index, ito.QC_preQC_pearson_coefficient, ito.QC_factor_daily, ito.QC_daily_neighbours_dry = check_daily_neighbours(
-            ito)
+        ito.QC_daily_neighbours, ito.QC_offset, ito.QC_preQC_affinity_index, ito.QC_preQC_pearson_coefficient, ito.QC_factor_daily, ito.QC_daily_neighbours_dry = check_daily_neighbours(ito)
         # print("monthly neighbours")
         ito.QC_monthly_neighbours, ito.QC_factor_monthly = check_monthly_neighbours(ito)
     # print("world record")
@@ -2764,73 +2772,74 @@ def get_flags(ito):  # pass intense object
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 # Process a folder (country) - q argument used in multiprocessing
 
-def process_folder(folderToCheck, q=None):
-    print(folderToCheck)
-    if not os.path.exists(qcFolder + "/" + folderToCheck[:-4]):
-        os.makedirs(qcFolder + "/" + folderToCheck[:-4])
-    # errorPath = "/media/nas/x21971/QualityControlledData_v7/error_" + folderToCheck[:-4] + ".txt"
-    errorPath = qcFolder + '/' + folderToCheck[:-4] + "/error_" + folderToCheck[:-4] + ".txt"
-    if not os.path.exists(errorPath):
-        errorFile = open(errorPath, "w")
+def process_folder(folder_to_check, q=None):
+    print(folder_to_check)
+    if not os.path.exists(qc_folder + "/" + folder_to_check[:-4]):
+        os.makedirs(qc_folder + "/" + folder_to_check[:-4])
+    # errorPath = "/media/nas/x21971/QualityControlledData_v7/error_" + folder_to_check[:-4] + ".txt"
+    error_path = qc_folder + '/' + folder_to_check[:-4] + "/error_" + folder_to_check[:-4] + ".txt"
+    if not os.path.exists(error_path):
+        error_file = open(error_path, "w")
     else:
-        errorFile = open(errorPath, "a")
-    existingFiles = os.listdir(qcFolder + "/" + folderToCheck[:-4])
-    zf = zipfile.ZipFile(origFolder + "/" + folderToCheck, "r")
-    filesList = zf.namelist()
-    for file in filesList:
+        error_file = open(error_path, "a")
+    existing_files = os.listdir(qc_folder + "/" + folder_to_check[:-4])
+    zf = zipfile.ZipFile(orig_folder + "/" + folder_to_check, "r")
+    files_list = zf.namelist()
+    for file in files_list:
         if file == "France/":
             pass
-        elif file[:-4] + "_QC.txt" in existingFiles:
+        elif file[:-4] + "_QC.txt" in existing_files:
             print("already done")
         else:
             try:
                 d = zf.open(file, mode="r")
                 qc = ex.read_intense(d, only_metadata=False, opened=True)
                 qc = get_flags(qc)
-                # ex.Series.write_QC(qc, qcFolder + "/" + folderToCheck[:-4])
+                # ex.Series.write_QC(qc, qc_folder + "/" + folder_to_check[:-4])
             except:
-                errorFile.write(file + "\n")
-    errorFile.close()
+                error_file.write(file + "\n")
+    error_file.close()
     zf.close()
 
 
-def find_files_to_process(foldersToCheck):
-    filesToProcess = []
-    fileFolders = []
-    for folderToCheck in foldersToCheck:
+def find_files_to_process(folders_to_check):
+    files_to_process = []
+    file_folders = []
+    for folderToCheck in folders_to_check:
 
         # Check for existence of output folder - make if need be
-        if not os.path.exists(qcFolder + "/" + folderToCheck[:-4] + "/Flags"):
-            os.makedirs(qcFolder + "/" + folderToCheck[:-4] + "/Flags")
-        existingFiles = os.listdir(qcFolder + "/" + folderToCheck[:-4] + "/Flags")
+        if not os.path.exists(qc_folder + "/" + folderToCheck[:-4] + "/Flags"):
+            os.makedirs(qc_folder + "/" + folderToCheck[:-4] + "/Flags")
+        existing_files = os.listdir(qc_folder + "/" + folderToCheck[:-4] + "/Flags")
 
-        # dp 13/12/2019 (01o1) - temporarily altered existingFiles for assessing normalised differences in 01o1 (i.e. different output folder)
+        # dp 13/12/2019 (01o1) - temporarily altered existingFiles for
+        # assessing normalised differences in 01o1 (i.e. different output folder)
         # - uncomment line below and remove the line after to get back to normal use
-        # existingFiles = os.listdir(qcFolder + "/" + folderToCheck[:-4] + '/' +
+        # existingFiles = os.listdir(qc_folder + "/" + folderToCheck[:-4] + '/' +
         #    qc_version + '/Flags/')
         ##existingFiles = []
 
         # Get list of raw (formatted) files to process
-        zf = zipfile.ZipFile(origFolder + "/" + folderToCheck, "r")
-        filesList = zf.namelist()
-        for file in filesList:
+        zf = zipfile.ZipFile(orig_folder + "/" + folderToCheck, "r")
+        files_list = zf.namelist()
+        for file in files_list:
             # if file == "France/":
             #    pass
             # elif file[:-4] + "_QC.txt" in existingFiles:
-            if file[:-4] + "_QC.txt" in existingFiles:
+            if file[:-4] + "_QC.txt" in existing_files:
                 pass
             else:
-                filesToProcess.append(file)
-                fileFolders.append(folderToCheck)
+                files_to_process.append(file)
+                file_folders.append(folderToCheck)
         zf.close()
-    return filesToProcess, fileFolders
+    return files_to_process, file_folders
 
 
 def process_file(file, q=None):
     # work out file index with a counter and pass as argument
     # print(file)
-    folderToCheck = fileFolders[filesToProcess.index(file)]
-    zf = zipfile.ZipFile(origFolder + "/" + folderToCheck, "r")
+    folder_to_check = file_folders[files_to_process.index(file)]
+    zf = zipfile.ZipFile(orig_folder + "/" + folder_to_check, "r")
     ##try:
     d = zf.open(file, mode="r")
 
@@ -2848,14 +2857,14 @@ def process_file(file, q=None):
 
     if successful_read:
         qc = get_flags(qc)
-        # ex.Series.write_QC(qc, qcFolder + "/" + folderToCheck[:-4]) # *** old - use line below to put in flags folder ***
+        # ex.Series.write_QC(qc, qc_folder + "/" + folderToCheck[:-4]) # *** old - use line below to put in flags folder ***
 
         # for testing
-        ## ex.Series.write_QC(qc, qcFolder + "/" + folderToCheck[:-4] + '/' + 
+        ## ex.Series.write_QC(qc, qc_folder + "/" + folderToCheck[:-4] + '/' +
         ##    qc_version + '/Flags/')
 
         # for global run
-        ex.Series.write_qc(qc, qcFolder + "/" + folderToCheck[:-4] + "/Flags")
+        ex.Series.write_qc(qc, qc_folder + "/" + folder_to_check[:-4] + "/Flags")
 
     ##except:
     # errorFile.write(file + "\n")
@@ -2905,20 +2914,20 @@ for data_source in etccdi_data.keys():
 
 # create kd tree of monthly gauges ++++++++++++++++++++++++++++++++++++++
 
-##THIS_FOLDER = os.path.dirname(os.path.abspath(__file__))
+# THIS_FOLDER = os.path.dirname(os.path.abspath(__file__))
 THIS_FOLDER = '/media/nas/x21971/PythonLessons/Python_3'
 my_file = os.path.join(THIS_FOLDER, 'statlex_monthly.dat')
-##print(os.path.isfile(my_file)) 
-monthlyInfo = open(my_file, "r")
+# print(os.path.isfile(my_file))
+monthly_info = open(my_file, "r")
 
-monthlyNames = []
-monthlyDates = []
-monthlyCoords = []
+monthly_names = []
+monthly_dates = []
+monthly_coords = []
 
-monthlyInfo = open(my_file, "r")  # "/fish://extelewi@oflxs809/media/nas/x21971/statlex_monthly.dat"
-monthlyInfo.readline()
+monthly_info = open(my_file, "r")  # "/fish://extelewi@oflxs809/media/nas/x21971/statlex_monthly.dat"
+monthly_info.readline()
 
-for line in monthlyInfo:
+for line in monthly_info:
     lineList = [line[0:10], line[11:54], line[54:62], line[62:73], line[73:79], line[125:135], line[137:147]]
     sid, name, lat, lon, elv, sd, ed = [l.strip() for l in lineList]
     try:
@@ -2933,15 +2942,15 @@ for line in monthlyInfo:
     else:
         elv = float(elv)
 
-    if sd == None or ed == None:
+    if sd is None or ed is None:
         pass
     else:
-        monthlyNames.append(sid)
-        monthlyDates.append((sd, ed))
-        monthlyCoords.append((float(lat), float(lon), elv))
+        monthly_names.append(sid)
+        monthly_dates.append((sd, ed))
+        monthly_coords.append((float(lat), float(lon), elv))
 
-converted_monthlyCoords = [geodetic_to_ecef(a, b, c) for a, b, c in monthlyCoords]
-monthlyTree = sp.KDTree(converted_monthlyCoords)
+converted_monthly_coords = [geodetic_to_ecef(a, b, c) for a, b, c in monthly_coords]
+monthly_tree = sp.KDTree(converted_monthly_coords)
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -2951,15 +2960,15 @@ monthlyTree = sp.KDTree(converted_monthlyCoords)
 THIS_FOLDER = '/media/nas/x21971/PythonLessons/Python_3'
 my_file = os.path.join(THIS_FOLDER, 'statlex_daily')
 ##print(os.path.isfile(my_file)) 
-dailyInfo = open(my_file, "r")
+daily_info = open(my_file, "r")
 
-dailyNames = []
-dailyDates = []
-dailyCoords = []
+daily_names = []
+daily_dates = []
+daily_coords = []
 
-dailyInfo.readline()
+daily_info.readline()
 
-for line in dailyInfo:
+for line in daily_info:
     lineList = [line[0:10], line[11:54], line[54:62], line[62:73], line[73:79], line[125:135], line[137:147]]
     sid, name, lat, lon, elv, sd, ed = [l.strip() for l in lineList]
     try:
@@ -2974,14 +2983,14 @@ for line in dailyInfo:
     else:
         elv = float(elv)
 
-    if sd == None or ed == None:
+    if sd is None or ed is None:
         pass
     else:
-        dailyNames.append(sid)
-        dailyDates.append((sd, ed))
-        dailyCoords.append((float(lat), float(lon), elv))
+        daily_names.append(sid)
+        daily_dates.append((sd, ed))
+        daily_coords.append((float(lat), float(lon), elv))
 
-converted_dailyCoords = [geodetic_to_ecef(a, b, c) for a, b, c in dailyCoords]
+converted_dailyCoords = [geodetic_to_ecef(a, b, c) for a, b, c in daily_coords]
 tree = sp.KDTree(converted_dailyCoords)
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -2994,22 +3003,22 @@ THIS_FOLDER = '/media/nas/x21971/PythonLessons/Python_3'
 # my_file = os.path.join(THIS_FOLDER, 'statlex_hourly.dat')
 my_file = os.path.join(THIS_FOLDER, 'statlex_hourly_200108.dat')
 ##print(os.path.isfile(my_file)) 
-hourlynInfo = open(my_file, "r")
+hourlyn_info = open(my_file, "r")
 
-hourlynNames = []
-hourlynDates = []
-hourlynCoords = []
-hourlynPaths = []
-converted_hourlynCoords = []
+hourly_n_names = []
+hourly_n_dates = []
+hourly_n_coords = []
+hourly_n_paths = []
+converted_hourly_n_coords = []
 
-hourlynNamesT = []
-hourlynDatesT = []
-hourlynCoordsT = []
-hourlynPathsT = []
+hourly_n_names_t = []
+hourly_n_dates_t = []
+hourly_n_coords_t = []
+hourly_n_paths_t = []
 
-hourlynInfo.readline()
+hourlyn_info.readline()
 
-for line in hourlynInfo:
+for line in hourlyn_info:
     sid, lat, lon, sd, ed, elv, hpath = line.rstrip().split(",")
 
     try:
@@ -3029,7 +3038,7 @@ for line in hourlynInfo:
         except:
             elv = 100
 
-    if sd == None or ed == None:
+    if sd is None or ed is None:
         pass
     else:
 
@@ -3038,28 +3047,28 @@ for line in hourlynInfo:
         # - Also ensure that no duplicates arising from e.g. duplicates in Australia1min.zip
         date_diff = ed - sd
         if date_diff.days >= 3 * 365:
-            if sid not in hourlynNamesT:
-                hourlynNamesT.append(sid)
-                hourlynDatesT.append((sd, ed))
-                hourlynCoordsT.append((float(lat), float(lon), elv))
-                hourlynPathsT.append(hpath)
+            if sid not in hourly_n_names_t:
+                hourly_n_names_t.append(sid)
+                hourly_n_dates_t.append((sd, ed))
+                hourly_n_coords_t.append((float(lat), float(lon), elv))
+                hourly_n_paths_t.append(hpath)
 
-converted_hourlynCoordsT = [geodetic_to_ecef(a, b, c) for a, b, c in hourlynCoordsT]
+converted_hourly_n_coords_t = [geodetic_to_ecef(a, b, c) for a, b, c in hourly_n_coords_t]
 
-for i in range(len(converted_hourlynCoordsT)):
+for i in range(len(converted_hourly_n_coords_t)):
     addIt = 1
-    for j in converted_hourlynCoordsT[i]:
+    for j in converted_hourly_n_coords_t[i]:
         if np.isnan(j):
             addIt = 0
 
     if addIt == 1:
-        hourlynNames.append(hourlynNamesT[i])
-        hourlynDates.append(hourlynDatesT[i])
-        hourlynCoords.append(hourlynCoordsT[i])
-        hourlynPaths.append(hourlynPathsT[i])
-        converted_hourlynCoords.append(converted_hourlynCoordsT[i])
+        hourly_n_names.append(hourly_n_names_t[i])
+        hourly_n_dates.append(hourly_n_dates_t[i])
+        hourly_n_coords.append(hourly_n_coords_t[i])
+        hourly_n_paths.append(hourly_n_paths_t[i])
+        converted_hourly_n_coords.append(converted_hourly_n_coords_t[i])
 
-hourlynTree = sp.KDTree(converted_hourlynCoords)
+hourly_n_tree = sp.KDTree(converted_hourly_n_coords)
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -3069,29 +3078,29 @@ hourlynTree = sp.KDTree(converted_hourlynCoords)
 # https://wmo.asu.edu/content/world-meteorological-organization-global-weather-climate-extremes-archive
 world_records = {'hourly': 401.0, 'daily': 1825.0}  # mm
 
-origFolder = "/media/nas/x21971/QualityControlledData"
-# qcFolder = "/media/nas/x21971/QualityControlledData_v7"
-qcFolder = "/media/nas/x21971/QC_10"
+orig_folder = "/media/nas/x21971/QualityControlledData"
+# qc_folder = "/media/nas/x21971/QualityControlledData_v7"
+qc_folder = "/media/nas/x21971/QC_10"
 ##errorFile = open("/media/nas/x21971/QualityControlledData_v7/error.txt", "w")
-numProcesses = 4
+num_processes = 4
 
 # Paths for testing
-# qcFolder = "/media/nas/x21971/DP/QC_Checks"
+# qc_folder = "/media/nas/x21971/DP/QC_Checks"
 # qc_version = '01qz'
 
-foldersToCheck = []
-for file in os.listdir(origFolder):
+folders_to_check = []
+for file in os.listdir(orig_folder):
     if file.endswith(".zip"):
-        foldersToCheck.append(file)
-##foldersToCheck = ["Germany.zip", "Japan.zip", "Australia5min"]
-# foldersToCheck = ['NewZealand.zip'] # ['Germany.zip']
+        folders_to_check.append(file)
+##folders_to_check = ["Germany.zip", "Japan.zip", "Australia5min"]
+# folders_to_check = ['NewZealand.zip'] # ['Germany.zip']
 
 # Multiprocessing by folder (country)
 # if __name__ == '__main__':
-# pool = Pool(processes=numProcesses)
+# pool = Pool(processes=num_processes)
 # m = Manager()
 # q = m.Queue()
-# for folderToCheck in foldersToCheck:
+# for folderToCheck in folders_to_check:
 # pool.apply_async(processFolder, [folderToCheck, q])
 # pool.close()
 # pool.join()
@@ -3107,12 +3116,12 @@ for file in os.listdir(origFolder):
 # '''
 # Multiprocessing by file (gauge)
 # - first get lists of files to process and corresponding folder (country)
-filesToProcess, fileFolders = find_files_to_process(foldersToCheck)
+files_to_process, file_folders = find_files_to_process(folders_to_check)
 if __name__ == '__main__':
-    pool = Pool(processes=numProcesses)
+    pool = Pool(processes=num_processes)
     m = Manager()
     q = m.Queue()
-    for file in filesToProcess:
+    for file in files_to_process:
         pool.apply_async(process_file, [file, q])
     pool.close()
     pool.join()
@@ -3128,8 +3137,8 @@ if __name__ == '__main__':
 # '''
 # Additional sweep(s) with serial processing
 time.sleep(60)
-filesToProcess, fileFolders = find_files_to_process(foldersToCheck)
-for file in filesToProcess:
+files_to_process, file_folders = find_files_to_process(folders_to_check)
+for file in files_to_process:
     process_file(file)
 # '''
 
@@ -3141,7 +3150,7 @@ for file in filesToProcess:
 # For checks
 
 # Paths
-# qcFolder = "/media/nas/x21971/DP/QC_Checks"
+# qc_folder = "/media/nas/x21971/DP/QC_Checks"
 # qc_version = '01l'
 
 # File to save number of valid neighbours
@@ -3167,40 +3176,40 @@ fh_thrsh.write("Station,Check,Neighbour,Statistic,Value\n")
 '''
 
 # Process a file(s)
-##filesToProcess = ['MY_negeri sembilan_2921013.txt'] # ['MY_kuala lumpur_3016103.txt'] # ['MY_pahang_2834001.txt'] # ['MY_johor_1541139.txt'] # ['MY_pahang_4419047.txt'] # ['MY_johor_1437116.txt'] # ['MY_kuala lumpur_3116003.txt'] # ['MY_terengganu_5328043.txt'] # ['DE_03098.txt'] # ['MY_kuala lumpur_3016102.txt']
-##fileFolders = ['Malaysia.zip'] # ['Germany.zip'] # 
-##filesToProcess = ['DE_01605.txt'] # ['DE_02483.txt'] # ['DE_00599.txt'] # ['DE_00596.txt'] # ['DE_02483.txt'] # ['DE_15207.txt'] # 
-##fileFolders = ['Germany.zip']
-##processFile(filesToProcess[0])
-# filesToProcess = [
+##files_to_process = ['MY_negeri sembilan_2921013.txt'] # ['MY_kuala lumpur_3016103.txt'] # ['MY_pahang_2834001.txt'] # ['MY_johor_1541139.txt'] # ['MY_pahang_4419047.txt'] # ['MY_johor_1437116.txt'] # ['MY_kuala lumpur_3116003.txt'] # ['MY_terengganu_5328043.txt'] # ['DE_03098.txt'] # ['MY_kuala lumpur_3016102.txt']
+##file_folders = ['Malaysia.zip'] # ['Germany.zip'] #
+##files_to_process = ['DE_01605.txt'] # ['DE_02483.txt'] # ['DE_00599.txt'] # ['DE_00596.txt'] # ['DE_02483.txt'] # ['DE_15207.txt'] #
+##file_folders = ['Germany.zip']
+##processFile(files_to_process[0])
+# files_to_process = [
 #    'DE_00596.txt', 'DE_00691.txt', 'DE_00991.txt', 'DE_01050.txt', 'DE_01051.txt',
 #    'DE_01346.txt', 'DE_01769.txt', 'DE_01832.txt', 'DE_01848.txt', 'DE_02174.txt',
 #    'DE_02175.txt', 'DE_02272.txt', 'DE_02578.txt', 'DE_02749.txt', 'DE_02890.txt',
 #    'DE_03279.txt', 'DE_03740.txt', 'DE_04600.txt', 'DE_07323.txt', 'DE_07333.txt',
 #    'DE_07343.txt', 'DE_13654.txt', 'DE_13688.txt']
-# fileFolders = ['Germany.zip' for i in range(len(filesToProcess))]
-# filesToProcess = ['IT_684.txt'] # ['NZ_40980.txt'] # ['AU_022843.txt']
-# fileFolders = ['Italy.zip'] # ['NewZealand.zip'] # ['Australia1min.zip']
-# for file in filesToProcess:
+# file_folders = ['Germany.zip' for i in range(len(files_to_process))]
+# files_to_process = ['IT_684.txt'] # ['NZ_40980.txt'] # ['AU_022843.txt']
+# file_folders = ['Italy.zip'] # ['NewZealand.zip'] # ['Australia1min.zip']
+# for file in files_to_process:
 #    processFile(file)
 # sys.exit()
 
 # Process a country
-# output_path = qcFolder + fileFolders[filesToProcess.index(file)][:-4] + "/" + file.replace(".txt", "_QC.txt") 
-# foldersToCheck = ['Malaysia.zip']
-# foldersToCheck = ['NewZealand.zip'] # ['Germany.zip'] #
-# filesToProcess, fileFolders = findFilesToProcess(foldersToCheck)
-# print(len(filesToProcess))
+# output_path = qc_folder + file_folders[files_to_process.index(file)][:-4] + "/" + file.replace(".txt", "_QC.txt")
+# folders_to_check = ['Malaysia.zip']
+# folders_to_check = ['NewZealand.zip'] # ['Germany.zip'] #
+# files_to_process, file_folders = findFilesToProcess(folders_to_check)
+# print(len(files_to_process))
 # input()
-# for file in filesToProcess:
+# for file in files_to_process:
 #    processFile(file)
 '''
 # --
 import numpy.random
-inds = np.random.choice(len(filesToProcess), 100)
-for file in filesToProcess:
-    i = filesToProcess.index(file)
-    #output_path = qcFolder + fileFolders[filesToProcess.index(file)][:-4] + "/" + file.replace(".txt", "_QC.txt") 
+inds = np.random.choice(len(files_to_process), 100)
+for file in files_to_process:
+    i = files_to_process.index(file)
+    #output_path = qc_folder + file_folders[files_to_process.index(file)][:-4] + "/" + file.replace(".txt", "_QC.txt") 
     if i in inds:
         processFile(file)
 # --

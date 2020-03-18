@@ -23,7 +23,6 @@ June 2019
 import intense as ex
 import pandas as pd
 import numpy as np
-import datetime
 import os
 import sys
 # from multiprocessing import Pool, Manager
@@ -31,9 +30,9 @@ import multiprocessing as mp
 
 
 # def apply_rulebase(filePath,directory):
-def apply_rulebase(filePath, outPath, q=None):
+def apply_rulebase(file_path, out_path, q=None):
     # try:
-    s = ex.read_intense_qc(filePath)
+    s = ex.read_intense_qc(file_path)
     print(s.station_id)
     ''' #hashing these out because redundant
     # Helper function 1: station metadata summary
@@ -219,11 +218,12 @@ def apply_rulebase(filePath, outPath, q=None):
     ##s.data.loc[s.data['QC_world_record'] >0, 'vals'] = np.nan
     s.data.loc[s.data['QC_world_record'] > 0, 'R7'] = 1
 
-    # R8: Exclude Rx1day any level <- changed to exclude it and previous 23 hours as well (remember this checks if hour exceeds ETCCDI daily max)
+    # R8: Exclude Rx1day any level <- changed to exclude it and previous 23 hours as well
+    # (remember this checks if hour exceeds ETCCDI daily max)
     s.data["R8"] = 0
     rx1_to_exclude = s.data['QC_Rx1day'] > 0
     for i in range(1, s.data.shape[0] - 1):
-        if rx1_to_exclude.iloc[i] == True and rx1_to_exclude.iloc[
+        if rx1_to_exclude.iloc[i] is True and rx1_to_exclude.iloc[
             i - 1] == False:  # Will only change previous flags if state changes from F -> T
             rx1_to_exclude.iloc[range(i - 23, i)] = True
 
@@ -367,8 +367,8 @@ def apply_rulebase(filePath, outPath, q=None):
     s.percent_missing_data = s.data.vals.isnull().sum() * 100 / len(s.data.vals.values)
 
     # Write file in INTENSE format
-    # s.write(outPath)
-    output_folder = outPath + "/QCd_Data/"
+    # s.write(out_path)
+    output_folder = out_path + "/QCd_Data/"
     if not os.path.exists(output_folder):
         os.mkdir(output_folder)
     s.write(output_folder)
@@ -376,10 +376,10 @@ def apply_rulebase(filePath, outPath, q=None):
 
     # 08/10/2019 (DP)
     # Write out station file as csv
-    if not os.path.exists(outPath + "/RuleFlags/"):
-        os.mkdir(outPath + "/RuleFlags/")
-    # output_path = outPath + "/RuleFlags/" + s.station_id + "_v7a_ruleflags.csv"
-    output_path = outPath + "/RuleFlags/" + s.station_id + ".csv"
+    if not os.path.exists(out_path + "/RuleFlags/"):
+        os.mkdir(out_path + "/RuleFlags/")
+    # output_path = out_path + "/RuleFlags/" + s.station_id + "_v7a_ruleflags.csv"
+    output_path = out_path + "/RuleFlags/" + s.station_id + ".csv"
     if not os.path.exists(output_path):
         s.data.to_csv(output_path, index_label="DateTime", na_rep="nan")
 
@@ -436,7 +436,7 @@ def apply_rulebase(filePath, outPath, q=None):
     # For multiprocessing
     output_list = df1["Value"].tolist()
     output_list.extend([s.station_id, s.latitude, s.longitude, s.number_of_records,
-                        filePath, s.start_datetime, s.end_datetime])
+                        file_path, s.start_datetime, s.end_datetime])
     output_line = ",".join(str(x) for x in output_list)
     q.put(output_line)
     return output_line
@@ -559,10 +559,10 @@ def processFolder(country, q=None):
 
 ##processFolder(countryList[0])
 
-numProcesses = 4
+num_processes = 4
 
 if __name__ == '__main__':
-    pool = Pool(processes=numProcesses)
+    pool = Pool(processes=num_processes)
     m = Manager()
     q = m.Queue()
     for folderToCheck in countryList:

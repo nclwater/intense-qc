@@ -21,10 +21,10 @@ June 2019
 """
 
 from __future__ import division
-import os  #
-import sys
-import numpy as np  #
-import pandas as pd  #
+import os
+import numpy as np
+import pandas as pd
+import netCDF4
 
 """
 ------------------------------- INTENSE Series definition -------------------------------
@@ -220,46 +220,48 @@ class Series:
                 "Pre QC Pearson coefficient: {self.QC_preQC_pearson_coefficient}\n"
                 "Factor against nearest daily gauge: {self.QC_factor_daily}\n".format(self=self))
 
-            if self.QC_hourly_neighbours == None:
-                self.QC_hourly_neighbours = [-999 for a in range(len(self.data))]
+            empty_series = np.full(len(self.data), self.no_data_value, dtype=int)
 
-            if self.QC_hourly_neighbours_dry == None:
-                self.QC_hourly_neighbours_dry = [-999 for a in range(len(self.data))]
+            if self.QC_hourly_neighbours is None:
+                self.QC_hourly_neighbours = empty_series
 
-            if self.QC_daily_neighbours == None:
-                self.QC_daily_neighbours = [-999 for a in range(len(self.data))]
+            if self.QC_hourly_neighbours_dry is None:
+                self.QC_hourly_neighbours_dry = empty_series
 
-            if self.QC_daily_neighbours_dry == None:
-                self.QC_daily_neighbours_dry = [-999 for a in range(len(self.data))]
+            if self.QC_daily_neighbours is None:
+                self.QC_daily_neighbours = empty_series
 
-            if self.QC_monthly_neighbours == None:
-                self.QC_monthly_neighbours = [-999 for a in range(len(self.data))]
+            if self.QC_daily_neighbours_dry is None:
+                self.QC_daily_neighbours_dry = np.full(len(self.data), self.no_data_value, dtype=int)
 
-            if self.QC_world_record == None:
-                self.QC_world_record = [-999 for a in range(len(self.data))]
+            if self.QC_monthly_neighbours is None:
+                self.QC_monthly_neighbours = np.full(len(self.data), self.no_data_value, dtype=int)
 
-            if self.QC_Rx1day == None:
-                self.QC_Rx1day = [-999 for a in range(len(self.data))]
+            if self.QC_world_record is None:
+                self.QC_world_record = empty_series
 
-            if self.QC_CWD == None:
-                self.QC_CWD = [-999 for a in range(len(self.data))]
+            if self.QC_Rx1day is None:
+                self.QC_Rx1day = empty_series
 
-            if self.QC_CDD == None:
-                self.QC_CDD = [-999 for a in range(len(self.data))]
+            if self.QC_CWD is None:
+                self.QC_CWD = empty_series
 
-            if self.QC_daily_accumualtions == None:
-                self.QC_daily_accumualtions = [-999 for a in range(len(self.data))]
+            if self.QC_CDD is None:
+                self.QC_CDD = empty_series
 
-            if self.QC_monthly_accumulations == None:
-                self.QC_monthly_accumulations = [-999 for a in range(len(self.data))]
+            if self.QC_daily_accumualtions is None:
+                self.QC_daily_accumualtions = empty_series
 
-            if self.QC_streaks == None:
-                self.QC_streaks = [-999 for a in range(len(self.data))]
+            if self.QC_monthly_accumulations is None:
+                self.QC_monthly_accumulations = empty_series
 
-            if self.QC_factor_monthly == None:
-                self.QC_factor_monthly = [-999 for a in range(len(self.data))]
+            if self.QC_streaks is None:
+                self.QC_streaks = empty_series
 
-            self.data.fillna(-999, inplace=True)
+            if self.QC_factor_monthly is None:
+                self.QC_factor_monthly = empty_series
+
+            self.data.fillna(self.no_data_value, inplace=True)
             vals_flags = zip([float(format(v, '.3f')) for v in self.data.values],
                              self.QC_hourly_neighbours,
                              self.QC_hourly_neighbours_dry,
@@ -281,42 +283,41 @@ class Series:
         return self.masked.groupby(pd.TimeGrouper('M')).max()
 
 
-def try_float(testVal):
+def try_float(test_val):
     try:
-        v = float(testVal)
+        v = float(test_val)
     except:
         v = np.nan
     return v
 
 
-def try_int(testVal):
+def try_int(test_val):
     try:
-        v = int(testVal)
+        v = int(test_val)
     except:
         v = np.nan
     return v
 
 
-def try_strptime(testVal):
+def try_strptime(test_val):
     try:
-        v = pd.datetime.strptime(testVal, '%Y%m%d%H')
+        v = pd.datetime.strptime(test_val, '%Y%m%d%H')
     except:
         v = np.nan
     return v
 
 
-def try_list(testList):
+def try_list(test_list):
     try:
-        v = [try_int(i) for i in testList[1:-1].split(", ")]
+        v = [try_int(i) for i in test_list[1:-1].split(", ")]
     except:
         v = np.nan
     return v
 
 
 def read_intense_qc(path, only_metadata=False, opened=False):
-    import pandas as pd
     metadata = []
-    if opened == False:
+    if not opened:
         try:
             with open(path, 'rb') as f:
                 while True:
@@ -349,7 +350,6 @@ def read_intense_qc(path, only_metadata=False, opened=False):
                     data = None
                 else:
                     data = f.readlines()
-
 
     else:
         f = path
@@ -424,7 +424,8 @@ def read_intense_qc(path, only_metadata=False, opened=False):
     s.QC_R99pTOT = try_list(metadata['r99ptot checks'])
     s.QC_PRCPTOT = try_list(metadata['prcptot checks'])
 
-    # s.QC_change_min_value = [tryInt(metadata['years where min value changes'].split(", ")[0][1:]), tryList(metadata['years where min value changes'].split(", ")[1][:-1])]
+    # s.QC_change_min_value = [tryInt(metadata['years where min value changes'].split(", ")[0][1:]),
+    # tryList(metadata['years where min value changes'].split(", ")[1][:-1])]
     tmp = metadata['years where min value changes']
     change_flag = try_int(tmp.split(", ")[0][1:])
     if change_flag == 0:
@@ -443,9 +444,8 @@ def read_intense_qc(path, only_metadata=False, opened=False):
 
 
 def read_intense(path, only_metadata=False, opened=False):
-    import pandas as pd
     metadata = []
-    if opened == False:
+    if not opened:
         try:
             with open(path, 'rb') as f:
                 while True:
@@ -531,9 +531,6 @@ def read_intense(path, only_metadata=False, opened=False):
 
 
 def convert_isd(in_path, out_path):
-    import netCDF4
-    import pandas as pd
-    import numpy as np
     if not os.path.exists(out_path):
         os.mkdir(out_path)
     f = netCDF4.Dataset(in_path)
@@ -559,7 +556,7 @@ def convert_isd(in_path, out_path):
             data[pd.isnull(data)] = -999
 
             series = Series(station_id='ISD_%s' % f.station_id,
-                            path_to_original_data=r'\\campus\RDW\civg01\Projects\INTENSE\INTENSE data\Original data\World\ISD\isd_precipitation_files.tar',
+                            path_to_original_data=in_path,
                             latitude=f.latitude,
                             longitude=f.longitude,
                             original_timestep='%shr' % period,
