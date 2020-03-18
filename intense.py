@@ -164,17 +164,11 @@ class Series:
                 "Resolution: {self.resolution:.2f}\n"
                 "Other: {self.other}\n".format(self=self))
 
-            # try:
-            # o.writelines([('%f' % v).rstrip('0').rstrip('.') + '\n' for v in self.data.values])
-            # except:
-            # o.writelines([('%f' % v).rstrip('0').rstrip('.') + '\n' for v in self.data.vals.values])
-
             try:
                 output_data = self.data.vals.values.copy()
             except:
                 output_data = self.data.values.copy()
             output_data[np.isnan(output_data)] = -999
-            # output_data2 = [int(x) if x == -999 else x for x in output_data]
             o.writelines([('%f' % v).rstrip('0').rstrip('.') + '\n' for v in output_data])
 
     def write_qc(self, directory):
@@ -374,7 +368,6 @@ def read_intense_qc(path, only_metadata=False, opened=False):
         if variable not in metadata.keys():
             metadata[variable] = 'NA'
     if data is not None:
-        # data = [i.rstrip().split(", ") for i in data]
         try:
             data = [i.rstrip().split(", ") for i in data]
         except:
@@ -391,7 +384,6 @@ def read_intense_qc(path, only_metadata=False, opened=False):
                                      "QC_CWD", "QC_CDD", "QC_daily_accumualtions", "QC_monthly_accumulations",
                                      "QC_streaks", "QC_factor_monthly"])
 
-        # data = data.where(data>=0)
         data = data.where(data != -999)
 
     s = Series(station_id=metadata['station id'],
@@ -424,8 +416,6 @@ def read_intense_qc(path, only_metadata=False, opened=False):
     s.QC_R99pTOT = try_list(metadata['r99ptot checks'])
     s.QC_PRCPTOT = try_list(metadata['prcptot checks'])
 
-    # s.QC_change_min_value = [tryInt(metadata['years where min value changes'].split(", ")[0][1:]),
-    # tryList(metadata['years where min value changes'].split(", ")[1][:-1])]
     tmp = metadata['years where min value changes']
     change_flag = try_int(tmp.split(", ")[0][1:])
     if change_flag == 0:
@@ -544,7 +534,6 @@ def convert_isd(in_path, out_path):
     for period in np.unique(periods)[np.unique(periods) > 0]:
         mask = np.logical_and(periods == period, precip >= 0)
 
-        # mask = mask and
         if len(precip[mask]) > 1:
             times = netCDF4.num2date(time[mask], f.variables['time'].units)
             datetimes = pd.date_range(start=min(times), end=max(times), freq=str(period) + 'H')
