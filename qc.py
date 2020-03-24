@@ -399,7 +399,7 @@ def day_check(val, p_max, p_max_filled):
 # ++++++++ Rx1day: check hourly values against maximum 1-day precipitation   ++++++++
 
 
-def rx_1_day_check_ts(its):
+def rx1day_check_ts(its):
     p_max, p_max_filled = get_etccdi_value('Rx1day', its.longitude, its.latitude)
     df = its.data.to_frame("GSDR")
 
@@ -1002,6 +1002,9 @@ def find_hourly_neighbours(target):
     paths = []
 
     hourly_dates = (target.start_datetime, target.end_datetime)
+    
+    dist = [d for d in dist if np.isfinite(d)]
+    index = [i for i,d in zip(index,dist) if np.isfinite(d)]
 
     counter = 0
     for i in range(len(dist)):
@@ -2073,14 +2076,14 @@ def get_flags(ito):  # pass intense object
     # Ensure non-nan lat/lon before neighbour checks (issue for some Sicily stations)
     if np.isfinite(ito.latitude) and np.isfinite(ito.longitude):
         ito.QC_hourly_neighbours, ito.QC_hourly_neighbours_dry = check_hourly_neighbours(ito)
-
-        ito.QC_daily_neighbours, ito.QC_offset, ito.QC_preQC_affinity_index, ito.QC_preQC_pearson_coefficient, ito.QC_factor_daily, ito.QC_daily_neighbours_dry = check_daily_neighbours(ito)
-
-        ito.QC_monthly_neighbours, ito.QC_factor_monthly = check_monthly_neighbours(ito)
+        if use_daily_neighbours:
+            ito.QC_daily_neighbours, ito.QC_offset, ito.QC_preQC_affinity_index, ito.QC_preQC_pearson_coefficient, ito.QC_factor_daily, ito.QC_daily_neighbours_dry = check_daily_neighbours(ito)
+        if use_monthly_neighbours:
+            ito.QC_monthly_neighbours, ito.QC_factor_monthly = check_monthly_neighbours(ito)
 
     ito.QC_world_record = world_record_check_ts(ito)
 
-    ito.QC_Rx1day = rx_1_day_check_ts(ito)
+    ito.QC_Rx1day = rx1day_check_ts(ito)
 
     ito.QC_CDD = cdd_check(ito)
 
@@ -2112,37 +2115,6 @@ def get_flags(ito):  # pass intense object
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-# Process a folder (country) - q argument used in multiprocessing
-
-def process_folder(folder_to_check, q=None):
-    print(folder_to_check)
-    if not os.path.exists(qc_folder + "/" + folder_to_check[:-4]):
-        os.makedirs(qc_folder + "/" + folder_to_check[:-4])
-
-    error_path = qc_folder + '/' + folder_to_check[:-4] + "/error_" + folder_to_check[:-4] + ".txt"
-    if not os.path.exists(error_path):
-        error_file = open(error_path, "w")
-    else:
-        error_file = open(error_path, "a")
-    existing_files = os.listdir(qc_folder + "/" + folder_to_check[:-4])
-    zf = zipfile.ZipFile(orig_folder + "/" + folder_to_check, "r")
-    files_list = zf.namelist()
-    for file in files_list:
-        if file == "France/":
-            pass
-        elif file[:-4] + "_QC.txt" in existing_files:
-            print("already done")
-        else:
-            try:
-                d = zf.open(file, mode="r")
-                qc = ex.read_intense(d, only_metadata=False, opened=True)
-                qc = get_flags(qc)
-
-            except:
-                error_file.write(file + "\n")
-    error_file.close()
-    zf.close()
-
 
 def find_files_to_process(folders_to_check):
     files_to_process = []
@@ -2169,7 +2141,6 @@ def find_files_to_process(folders_to_check):
 
 
 def process_file(file, q=None):
-    # work out file index with a counter and pass as argument
 
     folder_to_check = file_folders[files_to_process.index(file)]
     zf = zipfile.ZipFile(orig_folder + "/" + folder_to_check, "r")
@@ -2193,179 +2164,184 @@ def process_file(file, q=None):
     d.close()
     zf.close()
 
-
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-# prepare ETCCDI variables
-
-etccdi_data = {"GHCNDEX": {}, "HADEX2": {}}
-etccdi_data_folder = '/media/nas/x21971/ETCCDI_02/'
-etccdi_indices = ['CWD', 'CDD', 'R99p', 'PRCPTOT', 'SDII', 'Rx1day']
-periods = {"GHCNDEX": '1951-2018', "HADEX2": '1951-2010'}
-aggregations = {}
-for index in etccdi_indices:
-    aggregations[index] = 'max'
-aggregations['SDII'] = 'mean'
-for data_source in etccdi_data.keys():
+# Prepare ETCCDI variables
+def read_etccdi_data():
+    etccdi_data = {"GHCNDEX": {}, "HADEX2": {}}
+    etccdi_data_folder = './etccdi_data'
+    etccdi_indices = ['CWD', 'CDD', 'R99p', 'PRCPTOT', 'SDII', 'Rx1day']
+    periods = {"GHCNDEX": '1951-2018', "HADEX2": '1951-2010'}
+    aggregations = {}
     for index in etccdi_indices:
-        etccdi_data_path = (etccdi_data_folder + 'RawData_' + data_source +
-                            '_' + index + '_' + periods[data_source] +
-                            '_ANN_from-90to90_from-180to180.nc')
-        etccdi_data[data_source][index] = prep_etccdi_variable(etccdi_data_path,
-                                                               index, aggregations[index], data_source)
+        aggregations[index] = 'max'
+    aggregations['SDII'] = 'mean'
+    for data_source in etccdi_data.keys():
+        for index in etccdi_indices:
+            etccdi_data_path = (etccdi_data_folder + '/RawData_' + data_source +
+                                '_' + index + '_' + periods[data_source] +
+                                '_ANN_from-90to90_from-180to180.nc')
+            etccdi_data[data_source][index] = prep_etccdi_variable(etccdi_data_path,
+                                                                   index, aggregations[index], data_source)
+    return etccdi_data
 
 # create kd tree of monthly gauges ++++++++++++++++++++++++++++++++++++++
+def create_kdtree_monthly_data():
+    # THIS_FOLDER = os.path.dirname(os.path.abspath(__file__))
+    THIS_FOLDER = '/media/nas/x21971/PythonLessons/Python_3'
+    my_file = os.path.join(THIS_FOLDER, 'statlex_monthly.dat')
 
-# THIS_FOLDER = os.path.dirname(os.path.abspath(__file__))
-THIS_FOLDER = '/media/nas/x21971/PythonLessons/Python_3'
-my_file = os.path.join(THIS_FOLDER, 'statlex_monthly.dat')
+    monthly_info = open(my_file, "r")
 
-monthly_info = open(my_file, "r")
+    monthly_names = []
+    monthly_dates = []
+    monthly_coords = []
 
-monthly_names = []
-monthly_dates = []
-monthly_coords = []
+    monthly_info = open(my_file, "r")
+    monthly_info.readline()
 
-monthly_info = open(my_file, "r")
-monthly_info.readline()
+    for line in monthly_info:
+        line_list = [line[0:10], line[11:54], line[54:62], line[62:73], line[73:79], line[125:135], line[137:147]]
+        sid, name, lat, lon, elv, sd, ed = [l.strip() for l in line_list]
+        try:
+            sd = datetime.datetime.strptime(sd, "%d.%m.%Y")
+            ed = datetime.datetime.strptime(ed, "%d.%m.%Y")
+        except:
+            sd = None
+            ed = None
 
-for line in monthly_info:
-    line_list = [line[0:10], line[11:54], line[54:62], line[62:73], line[73:79], line[125:135], line[137:147]]
-    sid, name, lat, lon, elv, sd, ed = [l.strip() for l in line_list]
-    try:
-        sd = datetime.datetime.strptime(sd, "%d.%m.%Y")
-        ed = datetime.datetime.strptime(ed, "%d.%m.%Y")
-    except:
-        sd = None
-        ed = None
+        if elv == "-999":
+            elv = 100  # use 100m above seal level as a default elevation
+        else:
+            elv = float(elv)
 
-    if elv == "-999":
-        elv = 100  # use 100m above seal level as a default elevation
-    else:
-        elv = float(elv)
+        if sd is None or ed is None:
+            pass
+        else:
+            monthly_names.append(sid)
+            monthly_dates.append((sd, ed))
+            monthly_coords.append((float(lat), float(lon), elv))
 
-    if sd is None or ed is None:
-        pass
-    else:
-        monthly_names.append(sid)
-        monthly_dates.append((sd, ed))
-        monthly_coords.append((float(lat), float(lon), elv))
-
-converted_monthly_coords = [geodetic_to_ecef(a, b, c) for a, b, c in monthly_coords]
-monthly_tree = sp.KDTree(converted_monthly_coords)
+    converted_monthly_coords = [geodetic_to_ecef(a, b, c) for a, b, c in monthly_coords]
+    monthly_tree = sp.KDTree(converted_monthly_coords)
+    return monthly_names, monthly_dates, monthly_coords, monthly_tree
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 # create kd tree of daily gauges ++++++++++++++++++++++++++++++++++++++
+def create_kdtree_daily_data():
+    THIS_FOLDER = '/media/nas/x21971/PythonLessons/Python_3'
+    my_file = os.path.join(THIS_FOLDER, 'statlex_daily')
+    daily_info = open(my_file, "r")
 
-THIS_FOLDER = '/media/nas/x21971/PythonLessons/Python_3'
-my_file = os.path.join(THIS_FOLDER, 'statlex_daily')
-daily_info = open(my_file, "r")
+    daily_names = []
+    daily_dates = []
+    daily_coords = []
 
-daily_names = []
-daily_dates = []
-daily_coords = []
+    daily_info.readline()
 
-daily_info.readline()
+    for line in daily_info:
+        line_list = [line[0:10], line[11:54], line[54:62], line[62:73], line[73:79], line[125:135], line[137:147]]
+        sid, name, lat, lon, elv, sd, ed = [l.strip() for l in line_list]
+        try:
+            sd = datetime.datetime.strptime(sd, "%d.%m.%Y")
+            ed = datetime.datetime.strptime(ed, "%d.%m.%Y")
+        except:
+            sd = None
+            ed = None
 
-for line in daily_info:
-    line_list = [line[0:10], line[11:54], line[54:62], line[62:73], line[73:79], line[125:135], line[137:147]]
-    sid, name, lat, lon, elv, sd, ed = [l.strip() for l in line_list]
-    try:
-        sd = datetime.datetime.strptime(sd, "%d.%m.%Y")
-        ed = datetime.datetime.strptime(ed, "%d.%m.%Y")
-    except:
-        sd = None
-        ed = None
+        if elv == "-999":
+            elv = 100  # use 100m above sea level as a default elevation
+        else:
+            elv = float(elv)
 
-    if elv == "-999":
-        elv = 100  # use 100m above sea level as a default elevation
-    else:
-        elv = float(elv)
+        if sd is None or ed is None:
+            pass
+        else:
+            daily_names.append(sid)
+            daily_dates.append((sd, ed))
+            daily_coords.append((float(lat), float(lon), elv))
 
-    if sd is None or ed is None:
-        pass
-    else:
-        daily_names.append(sid)
-        daily_dates.append((sd, ed))
-        daily_coords.append((float(lat), float(lon), elv))
-
-converted_dailyCoords = [geodetic_to_ecef(a, b, c) for a, b, c in daily_coords]
-tree = sp.KDTree(converted_dailyCoords)
+    converted_dailyCoords = [geodetic_to_ecef(a, b, c) for a, b, c in daily_coords]
+    tree = sp.KDTree(converted_dailyCoords)
+    
+    return daily_names, daily_dates, daily_coords, tree
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
 # create kd tree of hourly gauges ++++++++++++++++++++++++++++++++++++++
+def create_kdtree_hourly_data():
+    THIS_FOLDER = './sample_data'
+    my_file = os.path.join(THIS_FOLDER, 'statlex_hourly.dat')
+    hourlyn_info = open(my_file, "r")
 
-THIS_FOLDER = '/media/nas/x21971/PythonLessons/Python_3'
-my_file = os.path.join(THIS_FOLDER, 'statlex_hourly_200108.dat')
-hourlyn_info = open(my_file, "r")
+    hourly_n_names = []
+    hourly_n_dates = []
+    hourly_n_coords = []
+    hourly_n_paths = []
+    converted_hourly_n_coords = []
 
-hourly_n_names = []
-hourly_n_dates = []
-hourly_n_coords = []
-hourly_n_paths = []
-converted_hourly_n_coords = []
+    hourly_n_names_t = []
+    hourly_n_dates_t = []
+    hourly_n_coords_t = []
+    hourly_n_paths_t = []
 
-hourly_n_names_t = []
-hourly_n_dates_t = []
-hourly_n_coords_t = []
-hourly_n_paths_t = []
+    hourlyn_info.readline()
 
-hourlyn_info.readline()
+    for line in hourlyn_info:
+        sid, lat, lon, sd, ed, elv, hpath = line.rstrip().split(",")
 
-for line in hourlyn_info:
-    sid, lat, lon, sd, ed, elv, hpath = line.rstrip().split(",")
-
-    try:
-        sd = datetime.datetime.strptime(sd, "%Y%m%d%H")
-        ed = datetime.datetime.strptime(ed, "%Y%m%d%H")
-    except:
-        sd = None
-        ed = None
-
-    if elv.lower() == "na" or elv == "m" or elv == "nam" or elv == "nan":
-        elv = 100  # use 100m above sea level as a default elevation
-    else:
-        if elv.endswith("m"):
-            elv = elv[:-1]
         try:
-            elv = float(elv)
+            sd = datetime.datetime.strptime(sd, "%Y%m%d%H")
+            ed = datetime.datetime.strptime(ed, "%Y%m%d%H")
         except:
-            elv = 100
+            sd = None
+            ed = None
 
-    if sd is None or ed is None:
-        pass
-    else:
+        if elv.lower() == "na" or elv == "m" or elv == "nam" or elv == "nan":
+            elv = 100  # use 100m above sea level as a default elevation
+        else:
+            if elv.endswith("m"):
+                elv = elv[:-1]
+            try:
+                elv = float(elv)
+            except:
+                elv = 100
 
-        # Only append if >=3 years of record (no point having potential neighbours
-        # without substantial data)
-        # - Also ensure that no duplicates arising from e.g. duplicates in Australia1min.zip
-        date_diff = ed - sd
-        if date_diff.days >= 3 * 365:
-            if sid not in hourly_n_names_t:
-                hourly_n_names_t.append(sid)
-                hourly_n_dates_t.append((sd, ed))
-                hourly_n_coords_t.append((float(lat), float(lon), elv))
-                hourly_n_paths_t.append(hpath)
+        if sd is None or ed is None:
+            pass
+        else:
 
-converted_hourly_n_coords_t = [geodetic_to_ecef(a, b, c) for a, b, c in hourly_n_coords_t]
+            # Only append if >=3 years of record (no point having potential neighbours
+            # without substantial data)
+            # - Also ensure that no duplicates arising from e.g. duplicates in Australia1min.zip
+            date_diff = ed - sd
+            if date_diff.days >= 3 * 365:
+                if sid not in hourly_n_names_t:
+                    hourly_n_names_t.append(sid)
+                    hourly_n_dates_t.append((sd, ed))
+                    hourly_n_coords_t.append((float(lat), float(lon), elv))
+                    hourly_n_paths_t.append(hpath)
 
-for i in range(len(converted_hourly_n_coords_t)):
-    addIt = 1
-    for j in converted_hourly_n_coords_t[i]:
-        if np.isnan(j):
-            addIt = 0
+    converted_hourly_n_coords_t = [geodetic_to_ecef(a, b, c) for a, b, c in hourly_n_coords_t]
 
-    if addIt == 1:
-        hourly_n_names.append(hourly_n_names_t[i])
-        hourly_n_dates.append(hourly_n_dates_t[i])
-        hourly_n_coords.append(hourly_n_coords_t[i])
-        hourly_n_paths.append(hourly_n_paths_t[i])
-        converted_hourly_n_coords.append(converted_hourly_n_coords_t[i])
+    for i in range(len(converted_hourly_n_coords_t)):
+        addIt = 1
+        for j in converted_hourly_n_coords_t[i]:
+            if np.isnan(j):
+                addIt = 0
 
-hourly_n_tree = sp.KDTree(converted_hourly_n_coords)
+        if addIt == 1:
+            hourly_n_names.append(hourly_n_names_t[i])
+            hourly_n_dates.append(hourly_n_dates_t[i])
+            hourly_n_coords.append(hourly_n_coords_t[i])
+            hourly_n_paths.append(hourly_n_paths_t[i])
+            converted_hourly_n_coords.append(converted_hourly_n_coords_t[i])
+
+    hourly_n_tree = sp.KDTree(converted_hourly_n_coords)
+    
+    return hourly_n_names, hourly_n_dates, hourly_n_coords, hourly_n_paths, hourly_n_tree
 
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -2375,36 +2351,46 @@ hourly_n_tree = sp.KDTree(converted_hourly_n_coords)
 # https://wmo.asu.edu/content/world-meteorological-organization-global-weather-climate-extremes-archive
 world_records = {'hourly': 401.0, 'daily': 1825.0}  # mm
 
-orig_folder = "/media/nas/x21971/QualityControlledData"
-qc_folder = "/media/nas/x21971/QC_10"
+orig_folder = "./sample_data"
+qc_folder = "./test_output"
+if not os.path.exists(qc_folder):
+    os.mkdir(qc_folder)
 num_processes = 4
+use_daily_neighbours = False
+use_monthly_neighbours = False
 
 folders_to_check = []
 for file in os.listdir(orig_folder):
     if file.endswith(".zip"):
         folders_to_check.append(file)
 
-# Multiprocessing by file (gauge)
-# - first get lists of files to process and corresponding folder (country)
-files_to_process, file_folders = find_files_to_process(folders_to_check)
-if __name__ == '__main__':
-    pool = Pool(processes=num_processes)
-    m = Manager()
-    q = m.Queue()
-    for file in files_to_process:
-        pool.apply_async(process_file, [file, q])
-    pool.close()
-    pool.join()
+etccdi_data = read_etccdi_data()
+hourly_n_names, hourly_n_dates, hourly_n_coords, hourly_n_paths, hourly_n_tree = create_kdtree_hourly_data()
+if use_daily_neighbours:
+    daily_names, daily_dates, daily_coords, tree = create_kdtree_daily_data()
+if use_monthly_neighbours:
+    monthly_names, monthly_dates, monthly_coords, monthly_tree = create_kdtree_monthly_data()
 
-    results = []
-    while not q.empty():
-        try:
-            results.append(q.get())
-        except:
-            pass
+# # Multiprocessing by file (gauge)
+# # - first get lists of files to process and corresponding folder (country)
+# files_to_process, file_folders = find_files_to_process(folders_to_check)
+# if __name__ == '__main__':
+#     pool = Pool(processes=num_processes)
+#     m = Manager()
+#     q = m.Queue()
+#     for file in files_to_process:
+#         pool.apply_async(process_file, [file, q])
+#     pool.close()
+#     pool.join()
+# 
+#     results = []
+#     while not q.empty():
+#         try:
+#             results.append(q.get())
+#         except:
+#             pass
 
 # Additional sweep(s) with serial processing
-time.sleep(60)
 files_to_process, file_folders = find_files_to_process(folders_to_check)
 for file in files_to_process:
     process_file(file)
