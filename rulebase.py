@@ -28,7 +28,7 @@ import sys
 import multiprocessing as mp
 
 
-def apply_rulebase(file_path, out_path, q=None):
+def apply_rulebase(file_path, root_output_folder, q=None):
     s = ex.read_intense_qc(file_path)
     print(s.station_id)
     # ----------------------------------- Rulebase -----------------------------------
@@ -156,19 +156,20 @@ def apply_rulebase(file_path, out_path, q=None):
     s.percent_missing_data = s.data.vals.isnull().sum() * 100 / len(s.data.vals.values)
 
     # Write file in INTENSE format
-    output_folder = out_path + "/QCd_Data/"
+    output_folder = root_output_folder + "/QCd_Data/"
     if not os.path.exists(output_folder):
         os.mkdir(output_folder)
     s.write(output_folder)
 
     # 08/10/2019 (DP)
     # Write out station file as csv
-    if not os.path.exists(out_path + "/RuleFlags/"):
-        os.mkdir(out_path + "/RuleFlags/")
-    # output_path = out_path + "/RuleFlags/" + s.station_id + "_v7a_ruleflags.csv"
-    output_path = out_path + "/RuleFlags/" + s.station_id + ".csv"
-    if not os.path.exists(output_path):
-        s.data.to_csv(output_path, index_label="DateTime", na_rep="nan")
+    if write_rulebase_gauge_files:
+        if not os.path.exists(root_output_folder + "/RuleFlags/"):
+            os.mkdir(root_output_folder + "/RuleFlags/")
+        # output_path = root_output_folder + "/RuleFlags/" + s.station_id + "_v7a_ruleflags.csv"
+        output_path = root_output_folder + "/RuleFlags/" + s.station_id + ".csv"
+        if not os.path.exists(output_path):
+            s.data.to_csv(output_path, index_label="DateTime", na_rep="nan")
 
     # **********
     # FOR MULTI-PROCESSING WITH RULE FLAG SUMMARY
@@ -287,19 +288,12 @@ def main():
     pool.close()
     pool.join()
 
-
 # -----------------------------------------------------------------------------
 
-flags_version = "10"  # sys.argv[1] # '01c'
-rulebase_version = "10"  # 'v7e' # sys.argv[2]
-root_folder = '/media/nas/x21971/QC_10'
-summary_path = ('/media/nas/x21971/QC_10/Rulebase_Summary_FL' + flags_version +
-                '_RB' + rulebase_version + '_01.csv')
-num_processes = 5  # 4
-
-if os.path.exists(summary_path):
-    print('summary file already exists -', flags_version)
-    sys.exit()
+root_folder = './test_output'
+summary_path = './test_output/Rulebase_Summary.csv'
+num_processes = 4
+write_rulebase_gauge_files = False
 
 if __name__ == "__main__":
     main()
