@@ -1,0 +1,7 @@
+dependencies:
+  - python==3.7
+  - pandas
+  - rpy2
+  - xarray
+  - scipy
+  - netCDF4

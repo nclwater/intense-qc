@@ -72,8 +72,22 @@ import scipy.stats
 from multiprocessing import Pool, Manager
 import calendar
 import time
+from rpy2.robjects.vectors import StrVector
+from rpy2.rinterface import RRuntimeError
 
-trend = importr('trend')
+
+def install_r_package(package_name):
+    utils = importr('utils')
+    utils.install_packages(StrVector([package_name]), repos ='http://cran.us.r-project.org')
+
+
+try:
+    trend = importr('trend')
+except RRuntimeError:
+    # Had to run line below on macOS:
+    # sudo installer -pkg /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg -target /
+    install_r_package('trend')
+    trend = importr('trend')
 
 """
 +++++++++++++++++++++++++++++++++++++++++++ Basic checks +++++++++++++++++++++++++++++++++++++++++++
@@ -237,7 +251,6 @@ def check_break_point(its):
         return 1
     else:
         return 0
-
 
 """
 ++++++++++++++++++++++++++++++++++ Threshold Checks +++++++++++++++++++++++++++++++++++
