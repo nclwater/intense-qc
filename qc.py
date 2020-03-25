@@ -246,14 +246,11 @@ def check_break_point(its):
 
     # using the pettitt test
     pettitt = robjects.r['pettitt.test']
-    pet = pettitt(x)
-    y = pet.rx('p.value')  # gives the p-value if p-value is below 0.05 (or 0.01) there might be a change point
-    p = np.asarray(y)[0][0]
+    p = pettitt(x).rx('p.value')[0][0]  # gives the p-value if p-value is below 0.05 (or 0.01) there might be a change point
     if p < 0.01:  # different
         return 1
     else:
         return 0
-
 
 """
 ++++++++++++++++++++++++++++++++++ Threshold Checks +++++++++++++++++++++++++++++++++++
