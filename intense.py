@@ -25,6 +25,7 @@ import os
 import numpy as np
 import pandas as pd
 import netCDF4
+from datetime import datetime
 
 """
 ------------------------------- INTENSE Series definition -------------------------------
@@ -295,7 +296,7 @@ def try_int(test_val):
 
 def try_strptime(test_val):
     try:
-        v = pd.datetime.strptime(test_val, '%Y%m%d%H')
+        v = datetime.strptime(test_val, '%Y%m%d%H')
     except:
         v = np.nan
     return v
@@ -376,8 +377,8 @@ def read_intense_qc(path, only_metadata=False, opened=False):
             data = [i.rstrip().decode().split(", ") for i in data]
 
         data = np.array(data)
-        data = pd.DataFrame(data, pd.date_range(start=pd.datetime.strptime(metadata['start datetime'], '%Y%m%d%H'),
-                                                end=pd.datetime.strptime(metadata['end datetime'], '%Y%m%d%H'),
+        data = pd.DataFrame(data, pd.date_range(start=datetime.strptime(metadata['start datetime'], '%Y%m%d%H'),
+                                                end=datetime.strptime(metadata['end datetime'], '%Y%m%d%H'),
                                                 freq=metadata['new timestep'][:-2] + 'H'), dtype=float,
                             columns=["vals", "QC_hourly_neighbours", "QC_hourly_neighbours_dry", "QC_daily_neighbours",
                                      "QC_daily_neighbours_dry", "QC_monthly_neighbours", "QC_world_record", "QC_Rx1day",
@@ -482,15 +483,15 @@ def read_intense(path, only_metadata=False, opened=False):
     if data is not None:
         try:  # Exception built for when a nan is added to end of data after applying rulebase
             data = pd.Series(data,
-                             pd.date_range(start=pd.datetime.strptime(metadata['start datetime'], '%Y%m%d%H'),
-                                           end=pd.datetime.strptime(metadata['end datetime'], '%Y%m%d%H'),
+                             pd.date_range(start=datetime.strptime(metadata['start datetime'], '%Y%m%d%H'),
+                                           end=datetime.strptime(metadata['end datetime'], '%Y%m%d%H'),
                                            freq=metadata['new timestep'][:-2] + 'H'),
                              dtype=float)
         except:  # Modification adds extra hour at end of series to accomodate nan value
             # Drop nan alternative: (keeps all series same length)
             data = pd.Series(data[:-1],
-                             pd.date_range(start=pd.datetime.strptime(metadata['start datetime'], '%Y%m%d%H'),
-                                           end=pd.datetime.strptime(metadata['end datetime'], '%Y%m%d%H'),
+                             pd.date_range(start=datetime.strptime(metadata['start datetime'], '%Y%m%d%H'),
+                                           end=datetime.strptime(metadata['end datetime'], '%Y%m%d%H'),
                                            freq=metadata['new timestep'][:-2] + 'H'),
                              dtype=float)
         data = data.where(data >= 0)
