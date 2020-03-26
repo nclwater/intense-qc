@@ -4,4 +4,6 @@ dependencies:
   - rpy2
   - xarray
   - scipy
-  - netCDF4
+  - pip
+  - pip:
+      - netCDF4
