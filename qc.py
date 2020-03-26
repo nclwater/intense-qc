@@ -10,8 +10,8 @@ This QC code will use the INTENSE module to create QC object
 
 Data is read in by the INTENSE module as 
     data = pd.Series(data, 
-                     pd.date_range(start=pd.datetime.strptime(metadata['start datetime'],'%Y%m%d%H'),
-                     end=pd.datetime.strptime(metadata['end datetime'],'%Y%m%d%H'),
+                     pd.date_range(start=datetime.strptime(metadata['start datetime'],'%Y%m%d%H'),
+                     end=datetime.strptime(metadata['end datetime'],'%Y%m%d%H'),
                      freq=metadata['new timestep'][:-2]+'H'),
                      dtype=float)
     
