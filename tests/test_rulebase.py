@@ -1,7 +1,7 @@
 import unittest
 from intense import rulebase
 
-root_folder = 'tests/test_output'
+root_folder = 'tests/sample_data'
 summary_path = 'tests/test_output/Rulebase_Summary.csv'
 
 

@@ -211,7 +211,7 @@ def apply_rulebase(file_path, root_output_folder, q=None, write_rulebase_gauge_f
 # FOR MULTI-PROCESSING WITH RULE FLAG SUMMARY
 
 
-def find_files(root_folder):
+def find_files(root_folder, overwrite=True):
     folders_to_check = sorted(os.listdir(root_folder))
     folders_to_check = [f for f in folders_to_check if f not in ['qcDebug', 'Superseded']]
 
@@ -232,7 +232,7 @@ def find_files(root_folder):
             output_folder = root_folder + "/" + folder
             qcd_data_path = output_folder + "/QCd_Data/" + f.replace("_QC.txt", ".txt")
 
-            if not os.path.exists(qcd_data_path):
+            if not os.path.exists(qcd_data_path) or overwrite:
                 tmp = [input_path, output_folder]
                 file_paths.append(tmp)
 
