@@ -16,3 +16,4 @@ jobs:
 
       - name: run tests
         run: '%CONDA%\Scripts\activate.bat intense & python -m unittest discover'
+        shell: cmd
