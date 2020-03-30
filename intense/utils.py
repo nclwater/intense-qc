@@ -1103,7 +1103,7 @@ def create_kdtree_hourly_data(path):
     # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 
-def find_files_to_process(folders_to_check, qc_folder, orig_folder):
+def find_files_to_process(folders_to_check, qc_folder, orig_folder, overwrite=True):
     files_to_process = []
     file_folders = []
     for folderToCheck in folders_to_check:
@@ -1118,7 +1118,7 @@ def find_files_to_process(folders_to_check, qc_folder, orig_folder):
         files_list = zf.namelist()
         for file in files_list:
 
-            if file[:-4] + "_QC.txt" in existing_files:
+            if file[:-4] + "_QC.txt" in existing_files and not overwrite:
                 pass
             else:
                 files_to_process.append(file)
