@@ -13,3 +13,6 @@ jobs:
       - name: create environment
         run: '%CONDA%\Scripts\activate.bat & conda env create -n intense -f environment.yml'
         shell: cmd
+
+      - name: run tests
+        run: '%CONDA%\Scripts\activate.bat intense & python -m unittest discover'
