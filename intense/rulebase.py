@@ -24,11 +24,10 @@ from . import intense as ex
 import pandas as pd
 import numpy as np
 import os
-import sys
 import multiprocessing as mp
 
 
-def apply_rulebase(file_path, root_output_folder, q=None):
+def apply_rulebase(file_path, root_output_folder, q=None, write_rulebase_gauge_files=False):
     s = ex.read_intense_qc(file_path)
     print(s.station_id)
     # ----------------------------------- Rulebase -----------------------------------
@@ -212,7 +211,7 @@ def apply_rulebase(file_path, root_output_folder, q=None):
 # FOR MULTI-PROCESSING WITH RULE FLAG SUMMARY
 
 
-def find_files():
+def find_files(root_folder):
     folders_to_check = sorted(os.listdir(root_folder))
     folders_to_check = [f for f in folders_to_check if f not in ['qcDebug', 'Superseded']]
 
@@ -240,7 +239,7 @@ def find_files():
     return file_paths
 
 
-def listener(q):
+def listener(q, summary_path):
     """listens for messages on the q, writes to file. """
 
     with open(summary_path, 'w') as f:
@@ -261,17 +260,17 @@ def listener(q):
             f.flush()
 
 
-def main():
+def main(root_folder, summary_path, num_processes=4):
     # must use Manager queue here, or will not work
     manager = mp.Manager()
     q = manager.Queue()
     pool = mp.Pool(num_processes)
 
     # put listener to work first
-    pool.apply_async(listener, (q,))
+    pool.apply_async(listener, (q, summary_path))
 
     # get list of files to process
-    file_paths = find_files()
+    file_paths = find_files(root_folder)
 
     # fire off workers
     jobs = []
@@ -288,12 +287,3 @@ def main():
     pool.close()
     pool.join()
 
-# -----------------------------------------------------------------------------
-
-root_folder = './test_output'
-summary_path = './test_output/Rulebase_Summary.csv'
-num_processes = 4
-write_rulebase_gauge_files = False
-
-if __name__ == "__main__":
-    main()
