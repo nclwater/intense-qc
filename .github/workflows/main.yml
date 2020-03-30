@@ -1,11 +1,10 @@
-name: conda
+name: tests
 on: [push]
 
 
 jobs:
   conda:
     runs-on: windows-latest
-    name: conda
     steps:
       - name: checkout
         uses: actions/checkout@v2
