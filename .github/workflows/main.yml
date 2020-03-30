@@ -1,0 +1,15 @@
+name: conda
+on: [push]
+
+
+jobs:
+  conda:
+    runs-on: windows-latest
+    name: conda
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - name: create environment
+        run: '%CONDA%\Scripts\activate.bat & conda env create -n intense -f environment.yml'
+        shell: cmd
