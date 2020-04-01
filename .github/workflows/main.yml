@@ -1,0 +1,18 @@
+name: tests
+on: [push]
+
+
+jobs:
+  conda:
+    runs-on: windows-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v2
+
+      - name: create environment
+        run: '%CONDA%\Scripts\activate.bat & conda env create -n intense -f environment.yml'
+        shell: cmd
+
+      - name: run tests
+        run: '%CONDA%\Scripts\activate.bat intense & python -m unittest discover'
+        shell: cmd
