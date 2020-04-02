@@ -54,15 +54,19 @@ June 2019
 """
 
 ##import intense.intense as ex
+import os
+from datetime import datetime, timedelta, date
+
 import pandas as pd
 import numpy as np
 import rpy2.robjects as robjects
 from rpy2.robjects.packages import importr
 import scipy.interpolate
-import datetime
 import scipy.stats
 from rpy2.robjects.vectors import StrVector
 from rpy2.rinterface import RRuntimeError
+
+from intense.intense import Series, try_float, try_strptime, try_list, try_int
 from .intense import Series
 from intense import utils
 
@@ -89,12 +93,12 @@ class Qc:
 
     def __init__(self,
                  series: Series,
-                 etccdi_data_folder,
-                 hourly_n_names,
-                 hourly_n_dates,
-                 hourly_n_coords,
-                 hourly_n_paths,
-                 hourly_n_tree,
+                 etccdi_data_folder=None,
+                 hourly_n_names=None,
+                 hourly_n_dates=None,
+                 hourly_n_coords=None,
+                 hourly_n_paths=None,
+                 hourly_n_tree=None,
                  use_daily_neighbours=False,
                  daily_names=None,
                  daily_dates=None,
@@ -104,10 +108,41 @@ class Qc:
                  monthly_names=None,
                  monthly_dates=None,
                  monthly_coords=None,
-                 monthly_tree=None
+                 monthly_tree=None,
+
+                 hourly_neighbours=None,
+                 hourly_neighbours_dry=None,
+                 daily_neighbours=None,
+                 daily_neighbours_dry=None,
+                 monthly_neighbours=None,
+                 world_record=None,
+                 Rx1day=None,
+                 CWD=None,
+                 CDD=None,
+                 daily_accumualtions=None,
+                 monthly_accumulations=None,
+                 streaks=None,
+                 percentiles=["NA", "NA"],
+                 k_largest=["NA", "NA", "NA"],
+                 days_of_week="NA",
+                 hours_of_day="NA",
+                 intermittency="NA",
+                 breakpoint="NA",
+                 R99pTOT="NA",
+                 PRCPTOT="NA",
+                 change_min_value="NA",
+                 offset="NA",
+                 preQC_affinity_index="NA",
+                 preQC_pearson_coefficient="NA",
+                 factor_daily="NA",
+                 factor_monthly=None
+                 
                  ):
         self.series = series
-        self.etcdii_data = utils.read_etccdi_data(etccdi_data_folder)
+
+        self.etcdii_data = etccdi_data_folder
+        if etccdi_data_folder is not None:
+            self.etcdii_data = utils.read_etccdi_data(etccdi_data_folder)
 
         self.hourly_n_names = hourly_n_names
         self.hourly_n_dates = hourly_n_dates
@@ -124,6 +159,33 @@ class Qc:
         self.monthly_dates = monthly_dates
         self.monthly_coords = monthly_coords
         self.monthly_tree = monthly_tree
+
+        self.hourly_neighbours = hourly_neighbours
+        self.hourly_neighbours_dry = hourly_neighbours_dry
+        self.daily_neighbours = daily_neighbours
+        self.daily_neighbours_dry = daily_neighbours_dry
+        self.monthly_neighbours = monthly_neighbours
+        self.world_record = world_record
+        self.Rx1day = Rx1day
+        self.CWD = CWD
+        self.CDD = CDD
+        self.daily_accumualtions = daily_accumualtions
+        self.monthly_accumulations = monthly_accumulations
+        self.streaks = streaks
+        self.percentiles = percentiles
+        self.k_largest = k_largest
+        self.days_of_week = days_of_week
+        self.hours_of_day = hours_of_day
+        self.intermittency = intermittency
+        self.breakpoint = breakpoint
+        self.R99pTOT = R99pTOT
+        self.PRCPTOT = PRCPTOT
+        self.change_min_value = change_min_value
+        self.offset = offset
+        self.preQC_affinity_index = preQC_affinity_index
+        self.preQC_pearson_coefficient = preQC_pearson_coefficient
+        self.factor_daily = factor_daily
+        self.factor_monthly = factor_monthly
 
     # Indicative check to flag years with 95th or 99th percentiles equal to zero.
     def check_percentiles(self):
@@ -909,8 +971,8 @@ class Qc:
 
         dts0 = []
         for dt in dts:
-            s0 = dt - datetime.timedelta(days=1)
-            dts0.append(datetime.date(s0.year, s0.month, s0.day))
+            s0 = dt - timedelta(days=1)
+            dts0.append(date(s0.year, s0.month, s0.day))
         ts0 = pd.Series(daily_vals, index=dts0)
 
         neighbours, paths = self.find_hourly_neighbours()
@@ -975,9 +1037,9 @@ class Qc:
                 dry_flags_vals[i] = 3
 
             # add daily flags back onto hourly
-            flags_dt = [datetime.datetime(d.year, d.month, d.day, 7) for d in flags_dates]
+            flags_dt = [datetimetime(d.year, d.month, d.day, 7) for d in flags_dates]
             flags_df = pd.Series(flags_vals, index=flags_dt).to_frame("flags")
-            dry_flags_dt = [datetime.datetime(d.year, d.month, d.day, 7) for d in dry_flags_dates]
+            dry_flags_dt = [datetime(d.year, d.month, d.day, 7) for d in dry_flags_dates]
             dry_flags_df = pd.Series(dry_flags_vals, index=dry_flags_dt).to_frame("dryFlags")
 
             df = pd.concat([df, flags_df, dry_flags_df], axis=1, join_axes=[df.index])
@@ -1006,13 +1068,13 @@ class Qc:
         dts0 = []
         dtsp1 = []
         for dt in dts:
-            sm1 = dt - datetime.timedelta(days=2)
-            s0 = dt - datetime.timedelta(days=1)
+            sm1 = dt - timedelta(days=2)
+            s0 = dt - timedelta(days=1)
             sp1 = dt
 
-            dtsm1.append(datetime.date(sm1.year, sm1.month, sm1.day))
-            dts0.append(datetime.date(s0.year, s0.month, s0.day))
-            dtsp1.append(datetime.date(sp1.year, sp1.month, sp1.day))
+            dtsm1.append(date(sm1.year, sm1.month, sm1.day))
+            dts0.append(date(s0.year, s0.month, s0.day))
+            dtsp1.append(date(sp1.year, sp1.month, sp1.day))
 
         tsm1 = pd.Series(daily_vals, index=dtsm1)
         ts0 = pd.Series(daily_vals, index=dts0)
@@ -1106,9 +1168,9 @@ class Qc:
                 dry_flags_vals[i] = 3
 
             # add daily flags back onto hourly
-            flags_dt = [datetime.datetime(d.year, d.month, d.day, 7) for d in flags_dates]
+            flags_dt = [datetime(d.year, d.month, d.day, 7) for d in flags_dates]
             flags_df = pd.Series(flags_vals, index=flags_dt).to_frame("flags")
-            dry_flags_dt = [datetime.datetime(d.year, d.month, d.day, 7) for d in dry_flags_dates]
+            dry_flags_dt = [datetime(d.year, d.month, d.day, 7) for d in dry_flags_dates]
             dry_flags_df = pd.Series(dry_flags_vals, index=dry_flags_dt).to_frame("dryFlags")
 
             df = pd.concat([df, flags_df, dry_flags_df], axis=1, join_axes=[df.index])
@@ -1164,8 +1226,8 @@ class Qc:
             flags_df, factor_flags_df = utils.check_m_neighbours(dfm, neighbour_dfs)
 
             # set dates to be at 2300 (rather than 0000) so bfill works
-            flags_df.index += datetime.timedelta(hours=23)
-            factor_flags_df.index += datetime.timedelta(hours=23)
+            flags_df.index += timedelta(hours=23)
+            factor_flags_df.index += timedelta(hours=23)
 
             orig_dates = list(df.index.values)
             hourly_flags_s = flags_df.reindex(orig_dates, method="bfill")
@@ -1202,47 +1264,279 @@ class Qc:
 
         # Ensure non-nan lat/lon before neighbour checks (issue for some Sicily stations)
         if np.isfinite(self.series.latitude) and np.isfinite(self.series.longitude):
-            self.series.QC_hourly_neighbours, self.series.QC_hourly_neighbours_dry = self.check_hourly_neighbours()
+            self.hourly_neighbours, self.hourly_neighbours_dry = self.check_hourly_neighbours()
             if self.use_daily_neighbours:
-                self.series.QC_daily_neighbours, self.series.QC_offset, self.series.QC_preQC_affinity_index, self.series.QC_preQC_pearson_coefficient, self.series.QC_factor_daily, self.series.QC_daily_neighbours_dry = self.check_daily_neighbours()
+                self.daily_neighbours, self.offset, self.preQC_affinity_index, self.preQC_pearson_coefficient, self.factor_daily, self.daily_neighbours_dry = self.check_daily_neighbours()
             if self.use_monthly_neighbours:
-                self.series.QC_monthly_neighbours, self.series.QC_factor_monthly = self.check_monthly_neighbours()
+                self.monthly_neighbours, self.factor_monthly = self.check_monthly_neighbours()
 
-        self.series.QC_world_record = self.world_record_check_ts()
+        self.world_record = self.world_record_check_ts()
 
-        self.series.QC_Rx1day = self.rx1day_check_ts()
+        self.Rx1day = self.rx1day_check_ts()
 
-        self.series.QC_CDD = self.cdd_check()
+        self.CDD = self.cdd_check()
 
-        self.series.QC_daily_accumualtions = self.daily_accums_check()
+        self.daily_accumualtions = self.daily_accums_check()
 
-        self.series.QC_monthly_accumulations = self.monthly_accums_check()
+        self.monthly_accumulations = self.monthly_accums_check()
 
-        self.series.QC_streaks = self.streaks_check()
+        self.streaks = self.streaks_check()
 
-        self.series.QC_percentiles = self.check_percentiles()
+        self.percentiles = self.check_percentiles()
 
-        self.series.QC_k_largest = self.check_k_largest()
+        self.k_largest = self.check_k_largest()
 
-        self.series.QC_days_of_week = self.check_days_of_week()
+        self.days_of_week = self.check_days_of_week()
 
-        self.series.QC_hours_of_day = self.check_hours_of_day()
+        self.hours_of_day = self.check_hours_of_day()
 
-        self.series.QC_intermittency = self.check_intermittency()
+        self.intermittency = self.check_intermittency()
 
-        self.series.QC_breakpoint = self.check_break_point()
+        self.breakpoint = self.check_break_point()
 
-        self.series.QC_R99pTOT = self.r99ptot_check_annual()
+        self.R99pTOT = self.r99ptot_check_annual()
 
-        self.series.QC_PRCPTOT = self.prcptot_check_annual()
+        self.PRCPTOT = self.prcptot_check_annual()
 
-        self.series.QC_change_min_value = self.change_in_min_val_check()
+        self.change_min_value = self.change_in_min_val_check()
 
         return self
 
+    def write(self, directory):
+        if not os.path.exists(directory):
+            os.mkdir(directory)
+        with open(os.path.join(directory, self.series.station_id) + '_QC.txt', 'w') as o:
+            o.write(
+                "Station ID: {self.series.station_id}\n"
+                "Country: {self.series.country}\n"
+                "Original Station Number: {self.series.original_station_number}\n"
+                "Original Station Name: {self.series.original_station_name}\n"
+                "Path to original data: {self.series.path_to_original_data}\n"
+                "Latitude: {self.series.latitude}\n"
+                "Longitude: {self.series.longitude}\n"
+                "Start datetime: {self.series.start_datetime:%Y%m%d%H}\n"
+                "End datetime: {self.series.end_datetime:%Y%m%d%H}\n"
+                "Elevation: {self.series.elevation}\n"
+                "Number of records: {self.series.number_of_records}\n"
+                "Percent missing data: {self.series.percent_missing_data:.2f}\n"
+                "Original Timestep: {self.series.original_timestep}\n"
+                "New Timestep: {self.series.new_timestep}\n"
+                "Original Units: {self.series.original_units}\n"
+                "New Units: {self.series.new_units}\n"
+                "Time Zone: {self.series.time_zone}\n"
+                "Daylight Saving info: {self.series.daylight_saving_info}\n"
+                "No data value: {self.series.no_data_value}\n"
+                "Resolution: {self.series.resolution:.2f}\n"
+                "Other: {self.series.other}\n"
+                "Years where Q95 equals 0: {self.percentiles[0]}\n"
+                "Years where Q99 equals 0: {self.percentiles[1]}\n"
+                "Years where k1 equals 0: {self.k_largest[0]}\n"
+                "Years where k5 equals 0: {self.k_largest[1]}\n"
+                "Years where k10 equals 0: {self.k_largest[2]}\n"
+                "Uneven distribution of rain over days of the week: {self.days_of_week}\n"
+                "Uneven distribution of rain over hours of the day: {self.hours_of_day}\n"
+                "Years with intermittency issues: {self.intermittency}\n"
+                "Break point detected: {self.breakpoint}\n"
+                "R99pTOT checks: {self.R99pTOT}\n"
+                "PRCPTOT checks: {self.PRCPTOT}\n"
+                "Years where min value changes: {self.change_min_value}\n"
+                "Optimum offset: {self.offset}\n"
+                "Pre QC Affinity Index: {self.preQC_affinity_index}\n"
+                "Pre QC Pearson coefficient: {self.preQC_pearson_coefficient}\n"
+                "Factor against nearest daily gauge: {self.factor_daily}\n".format(self=self))
 
-    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+            empty_series = np.full(len(self.series.data), self.series.no_data_value, dtype=int)
 
-    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+            if self.hourly_neighbours is None:
+                self.hourly_neighbours = empty_series
 
-    # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+            if self.hourly_neighbours_dry is None:
+                self.hourly_neighbours_dry = empty_series
+
+            if self.daily_neighbours is None:
+                self.daily_neighbours = empty_series
+
+            if self.daily_neighbours_dry is None:
+                self.daily_neighbours_dry = np.full(len(self.series.data), self.series.no_data_value, dtype=int)
+
+            if self.monthly_neighbours is None:
+                self.monthly_neighbours = np.full(len(self.series.data), self.series.no_data_value, dtype=int)
+
+            if self.world_record is None:
+                self.world_record = empty_series
+
+            if self.Rx1day is None:
+                self.Rx1day = empty_series
+
+            if self.CWD is None:
+                self.CWD = empty_series
+
+            if self.CDD is None:
+                self.CDD = empty_series
+
+            if self.daily_accumualtions is None:
+                self.daily_accumualtions = empty_series
+
+            if self.monthly_accumulations is None:
+                self.monthly_accumulations = empty_series
+
+            if self.streaks is None:
+                self.streaks = empty_series
+
+            if self.factor_monthly is None:
+                self.factor_monthly = empty_series
+
+            self.series.data.fillna(self.series.no_data_value, inplace=True)
+            vals_flags = zip([float(format(v, '.3f')) for v in self.series.data.values],
+                             self.hourly_neighbours,
+                             self.hourly_neighbours_dry,
+                             self.daily_neighbours,
+                             self.daily_neighbours_dry,
+                             self.monthly_neighbours,
+                             self.world_record,
+                             self.Rx1day,
+                             self.CWD,
+                             self.CDD,
+                             self.daily_accumualtions,
+                             self.monthly_accumulations,
+                             self.streaks,
+                             self.factor_monthly)
+            print(vals_flags)
+            o.writelines(str(a)[1:-1] + "\n" for a in vals_flags)
+
+
+def read_intense_qc(path, only_metadata=False, opened=False):
+    metadata = []
+    if not opened:
+        try:
+            with open(path, 'rb') as f:
+                while True:
+                    try:
+                        key, val = f.readline().strip().split(':', maxsplit=1)
+                        key = key.lower()
+                        metadata.append((key.strip(), val.strip()))
+                    except:
+                        key = "other"
+                        val = ""
+                    if 'factor against nearest daily gauge' in metadata[-1][0].lower():
+                        break
+                if only_metadata:
+                    data = None
+                else:
+                    data = f.readlines()
+        except:
+            with open(path, 'r') as f:
+                while True:
+                    try:
+                        key, val = f.readline().strip().split(':', maxsplit=1)
+                        key = key.lower()
+                        metadata.append((key.strip(), val.strip()))
+                    except:
+                        key = "other"
+                        val = ""
+                    if 'factor against nearest daily gauge' in metadata[-1][0].lower():
+                        break
+                if only_metadata:
+                    data = None
+                else:
+                    data = f.readlines()
+
+    else:
+        f = path
+        while True:
+            try:
+                key, val = str(f.readline().strip())[2:-1].split(':', maxsplit=1)
+                key = key.lower()
+                metadata.append((key.strip(), val.strip()))
+            except:
+                key = "other"
+                val = ""
+            if 'factor against nearest daily gauge' in metadata[-1][0].lower():
+                break
+        if only_metadata:
+            data = None
+        else:
+            data = f.readlines()
+    metadata = dict(metadata)
+
+    for variable in ['country', 'elevation', 'time zone', 'daylight saving info', 'original station name',
+                     'original station number']:
+        if variable not in metadata.keys():
+            metadata[variable] = 'NA'
+    if data is not None:
+        try:
+            data = [i.rstrip().split(", ") for i in data]
+        except:
+            # working on files written from linux (DWD server), it seems to work
+            # without specifying "utf-8" as argument for decode...
+            data = [i.rstrip().decode().split(", ") for i in data]
+
+        data = np.array(data)
+        data = pd.DataFrame(data, pd.date_range(start=datetime.strptime(metadata['start datetime'], '%Y%m%d%H'),
+                                                end=datetime.strptime(metadata['end datetime'], '%Y%m%d%H'),
+                                                freq=metadata['new timestep'][:-2] + 'H'), dtype=float,
+                            columns=["vals", "hourly_neighbours", "hourly_neighbours_dry", "daily_neighbours",
+                                     "daily_neighbours_dry", "monthly_neighbours", "world_record", "Rx1day",
+                                     "CWD", "CDD", "daily_accumualtions", "monthly_accumulations",
+                                     "streaks", "factor_monthly"])
+
+        data = data.where(data != -999)
+
+    s = Series(station_id=metadata['station id'],
+               path_to_original_data=metadata['path to original data'],
+               latitude=try_float(metadata['latitude']),
+               longitude=try_float(metadata['longitude']),
+               original_timestep=metadata['original timestep'],
+               original_units=metadata['original units'],
+               new_units=metadata['new units'],
+               new_timestep=metadata['new timestep'],
+               data=data.vals,
+               elevation=metadata['elevation'],
+               country=metadata['country'],
+               original_station_number=metadata['original station number'],
+               original_station_name=metadata['original station name'],
+               time_zone=metadata['time zone'])
+
+    tmp = metadata['years where min value changes']
+    change_flag = try_int(tmp.split(", ")[0][1:])
+    if change_flag == 0:
+        change_list = [np.nan]
+    elif change_flag == 1:
+        years = tmp[5:-2]
+        years = years.split(", ")
+        change_list = [int(y) for y in years]
+    
+    qc = Qc(
+        series=s,
+        percentiles=[try_list(metadata['years where q95 equals 0']), try_list(metadata['years where q99 equals 0'])],
+        k_largest=[try_list(metadata['years where k1 equals 0']), try_list(metadata['years where k5 equals 0']),
+                     try_list(metadata['years where k10 equals 0'])],
+        days_of_week=try_int(metadata['uneven distribution of rain over days of the week']),
+        hours_of_day=try_int(metadata['uneven distribution of rain over hours of the day']),
+        intermittency=try_list(metadata['years with intermittency issues']),
+        breakpoint=try_int(metadata['break point detected']),
+        R99pTOT=try_list(metadata['r99ptot checks']),
+        PRCPTOT=try_list(metadata['prcptot checks']),
+        change_min_value=[change_flag, change_list],
+        offset=try_int(metadata['optimum offset']),
+        preQC_affinity_index=try_float(metadata['pre qc affinity index']),
+        preQC_pearson_coefficient=try_float(metadata['pre qc pearson coefficient']),
+        factor_daily=try_float(metadata['factor against nearest daily gauge']),
+
+        hourly_neighbours=data.hourly_neighbours,
+        hourly_neighbours_dry=data.hourly_neighbours_dry,
+        daily_neighbours=data.daily_neighbours,
+        daily_neighbours_dry=data.daily_neighbours_dry,
+        monthly_neighbours=data.monthly_neighbours,
+        world_record=data.world_record,
+        Rx1day=data.Rx1day,
+        CWD=data.CWD,
+        CDD=data.CDD,
+        daily_accumualtions=data.daily_accumualtions,
+        monthly_accumulations=data.monthly_accumulations,
+        streaks=data.streaks,
+        factor_monthly=data.factor_monthly
+        
+    )
+    
+    return qc
