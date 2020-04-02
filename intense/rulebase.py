@@ -41,11 +41,8 @@ def apply_rulebase(file_path, root_output_folder, q=None, write_rulebase_gauge_f
     rules["R1"] = 0  # for rulebase flags
     for i in range(3):
         for year in qc.k_largest[i]:
-            try:
-                year = int(year)
-                rules['R1', qc.series.data.index.year == year] = 1
-            except:
-                pass
+            year = int(year)
+            rules.loc[qc.series.data.index.year == year, 'R1'] = 1
 
     # R2: Exclude years where Q99/95 = 0
     # Now we only want to run it for Q99
