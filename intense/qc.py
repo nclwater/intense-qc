@@ -53,7 +53,6 @@ Publication to be cited:
 June 2019 
 """
 
-##import intense.intense as ex
 import os
 from datetime import datetime, timedelta, date
 
@@ -66,7 +65,7 @@ import scipy.stats
 from rpy2.robjects.vectors import StrVector
 from rpy2.rinterface import RRuntimeError
 
-from intense.intense import Series, try_float, try_strptime, try_list, try_int
+from intense.intense import try_float, try_list, try_int
 from .intense import Series
 from intense import utils
 
