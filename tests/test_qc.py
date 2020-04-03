@@ -47,7 +47,7 @@ class TestQc(unittest.TestCase):
             qc.get_flags()
 
             # for global run
-            qc.series.write_qc(qc_folder + "/" + folder[:-4] + "/Flags")
+            qc.write(qc_folder + "/" + folder[:-4] + "/Flags")
 
 
 if __name__ == '__main__':
