@@ -1036,7 +1036,7 @@ class Qc:
                 dry_flags_vals[i] = 3
 
             # add daily flags back onto hourly
-            flags_dt = [datetimetime(d.year, d.month, d.day, 7) for d in flags_dates]
+            flags_dt = [datetime(d.year, d.month, d.day, 7) for d in flags_dates]
             flags_df = pd.Series(flags_vals, index=flags_dt).to_frame("flags")
             dry_flags_dt = [datetime(d.year, d.month, d.day, 7) for d in dry_flags_dates]
             dry_flags_df = pd.Series(dry_flags_vals, index=dry_flags_dt).to_frame("dryFlags")
