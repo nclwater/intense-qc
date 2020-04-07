@@ -1,7 +1,7 @@
 import unittest
 
-import sys
-sys.path.append(".")
+#import sys
+#sys.path.append(".")
 
 from intense import utils
 from intense.qc import Qc
