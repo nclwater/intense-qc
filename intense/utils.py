@@ -987,6 +987,9 @@ def create_kdtree_monthly_data():
 
     converted_monthly_coords = [geodetic_to_ecef(a, b, c) for a, b, c in monthly_coords]
     monthly_tree = sp.KDTree(converted_monthly_coords)
+    
+    monthly_info.close()
+    
     return monthly_names, monthly_dates, monthly_coords, monthly_tree
 
 # create kd tree of daily gauges ++++++++++++++++++++++++++++++++++++++
@@ -1025,6 +1028,8 @@ def create_kdtree_daily_data():
 
     converted_dailyCoords = [geodetic_to_ecef(a, b, c) for a, b, c in daily_coords]
     tree = sp.KDTree(converted_dailyCoords)
+    
+    daily_info.close()
 
     return daily_names, daily_dates, daily_coords, tree
 
@@ -1096,6 +1101,8 @@ def create_kdtree_hourly_data(path):
             converted_hourly_n_coords.append(converted_hourly_n_coords_t[i])
 
     hourly_n_tree = sp.KDTree(converted_hourly_n_coords)
+    
+    hourlyn_info.close()
 
     return hourly_n_names, hourly_n_dates, hourly_n_coords, hourly_n_paths, hourly_n_tree
 

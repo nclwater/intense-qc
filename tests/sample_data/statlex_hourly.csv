@@ -1,0 +1,12 @@
+Station_ID,Latitude,Longitude,Start_datetime,End_datetime,Elevation,path
+DE_06264,51.4143,8.6498,2004060100,2016030523,457m,/media/nas/x21971/QualityControlledData/Germany.zip
+DE_04313,51.4966,8.4342,2004080100,2016030523,361m,/media/nas/x21971/QualityControlledData/Germany.zip
+DE_04488,51.2129,8.2672,2006080100,2016030523,443m,/media/nas/x21971/QualityControlledData/Germany.zip
+DE_01300,51.254,8.1565,2004060100,2016030523,351m,/media/nas/x21971/QualityControlledData/Germany.zip
+DE_02718,51.288,8.7928,2002110106,2016030523,458m,/media/nas/x21971/QualityControlledData/Germany.zip
+DE_00390,50.9837,8.3679,2004070100,2016030523,610m,/media/nas/x21971/QualityControlledData/Germany.zip
+DE_02483,51.1803,8.4891,1995101214,2016030523,839m,/media/nas/x21971/QualityControlledData/Germany.zip
+DE_00310,51.0662,8.5373,2004110100,2016030523,590m,/media/nas/x21971/QualityControlledData/Germany.zip
+DE_00389,51.0148,8.4318,2009110100,2016030523,436m,/media/nas/x21971/QualityControlledData/Germany.zip
+DE_06303,51.2884,8.5907,2003030806,2016030523,588m,/media/nas/x21971/QualityControlledData/Germany.zip
+DE_03215,51.1681,8.7129,2007060100,2016030523,380m,/media/nas/x21971/QualityControlledData/Germany.zip
