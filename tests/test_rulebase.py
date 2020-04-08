@@ -7,7 +7,4 @@ summary_path = 'tests/test_output/Rulebase_Summary.csv'
 
 class TestRuleBase(TestCase):
     def test_main(self):
-        rulebase.main(root_folder, summary_path, 1)
-
-if __name__ == '__main__':
-    unittest.main()
+        rulebase.main(root_folder, summary_path)

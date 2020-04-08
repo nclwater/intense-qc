@@ -1031,7 +1031,7 @@ def create_kdtree_daily_data():
 
 # create kd tree of hourly gauges ++++++++++++++++++++++++++++++++++++++
 def create_kdtree_hourly_data(path):
-    with open(my_file, "r") as hourlyn_info:
+    with open(path, "r") as hourlyn_info:
 
         hourly_n_names = []
         hourly_n_dates = []
