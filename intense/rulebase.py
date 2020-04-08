@@ -205,30 +205,23 @@ def apply_rulebase(file_path, root_output_folder, write_rulebase_gauge_files=Fal
 
 
 def find_files(root_folder, overwrite=True):
-    folders_to_check = sorted(os.listdir(root_folder))
-    folders_to_check = [f for f in folders_to_check if f not in ['qcDebug', 'Superseded']]
 
-    # RB09 - added to ensure only looking at folders, not e.g. RB summary files
-    folders_to_check = [f for f in folders_to_check if os.path.isdir(root_folder + '/' + f)]
+    folders_in_root_folder = [f for f in sorted(os.listdir(root_folder)) if
+                            f not in ['qcDebug', 'Superseded'] and
+                            os.path.isdir(root_folder + '/' + f)]
+
 
     file_paths = []
 
-    for folder in folders_to_check:
+    for folder in folders_in_root_folder:
 
         # List of QC flag files
-        flag_folder = root_folder + "/" + folder + "/Flags/"
-        file_names = sorted(os.listdir(flag_folder))
+        flag_folder = os.path.join(root_folder, folder, 'Flags')
+        flag_files = sorted(os.listdir(flag_folder))
 
         # Equivalent list of paths
-        for f in file_names:
-            input_path = flag_folder + f
-            output_folder = root_folder + "/" + folder
-            qcd_data_path = output_folder + "/QCd_Data/" + f.replace("_QC.txt", ".txt")
-
-            if not os.path.exists(qcd_data_path) or overwrite:
-                tmp = [input_path, output_folder]
-                file_paths.append(tmp)
-
+        for f in flag_files:
+            file_paths.append(os.path.join(flag_folder, f))
     return file_paths
 
 
@@ -247,5 +240,5 @@ def main(root_folder, summary_path, ):
         headers = ",".join(headers)
         f.write(headers + "\n")
 
-        for input_path, output_folder in file_paths:
-            f.write(apply_rulebase(input_path, output_folder) + '\n')
+        for input_path in file_paths:
+            f.write(apply_rulebase(input_path, os.path.dirname(summary_path)) + '\n')
