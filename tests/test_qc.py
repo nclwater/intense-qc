@@ -1,14 +1,12 @@
-import unittest
-
 from intense import utils
 from intense.qc import Qc
 from intense import intense as ex
 import os
+from . import TestCase
 
-# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
+class TestQc(TestCase):
 
-class TestQc(unittest.TestCase):
     def test_get_flags(self):
 
         orig_folder = "tests/sample_data"
@@ -48,7 +46,3 @@ class TestQc(unittest.TestCase):
 
             # for global run
             qc.write(qc_folder + "/" + folder[:-4] + "/Flags")
-
-
-if __name__ == '__main__':
-    unittest.main()
