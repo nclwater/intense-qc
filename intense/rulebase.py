@@ -23,10 +23,9 @@ from .qc import read_intense_qc
 import pandas as pd
 import numpy as np
 import os
-import multiprocessing as mp
 
 
-def apply_rulebase(file_path, root_output_folder, q=None, write_rulebase_gauge_files=False):
+def apply_rulebase(file_path, root_output_folder, write_rulebase_gauge_files=False):
     qc = read_intense_qc(file_path)
     rules = pd.DataFrame(index=qc.series.data.index)
     print(qc.series.station_id)
@@ -202,12 +201,7 @@ def apply_rulebase(file_path, root_output_folder, q=None, write_rulebase_gauge_f
     output_list.extend([qc.series.station_id, qc.series.latitude, qc.series.longitude, qc.series.number_of_records,
                         file_path, qc.series.start_datetime, qc.series.end_datetime])
     output_line = ",".join(str(x) for x in output_list)
-    if q:
-        q.put(output_line)
     return output_line
-
-# -----------------------------------------------------------------------------
-# FOR MULTI-PROCESSING WITH RULE FLAG SUMMARY
 
 
 def find_files(root_folder, overwrite=True):
@@ -238,8 +232,10 @@ def find_files(root_folder, overwrite=True):
     return file_paths
 
 
-def listener(q, summary_path):
-    """listens for messages on the q, writes to file. """
+def main(root_folder, summary_path, ):
+
+    # get list of files to process
+    file_paths = find_files(root_folder)
 
     with open(summary_path, 'w') as f:
 
@@ -251,46 +247,5 @@ def listener(q, summary_path):
         headers = ",".join(headers)
         f.write(headers + "\n")
 
-        while True:
-            m = q.get()
-            if m == 'kill':
-                break
-            f.write(str(m) + '\n')
-            f.flush()
-
-
-def main(root_folder, summary_path, num_processes=4):
-
-    # get list of files to process
-    file_paths = find_files(root_folder)
-
-    if num_processes > 1:
-        # must use Manager queue here, or will not work
-        manager = mp.Manager()
-        q = manager.Queue()
-        pool = mp.Pool(num_processes)
-
-        # put listener to work first
-        pool.apply_async(listener, (q, summary_path))
-
-
-        # fire off workers
-        jobs = []
-        for fn in file_paths:
-            job = pool.apply_async(apply_rulebase, (fn[0], fn[1], q))
-            jobs.append(job)
-
-        # collect results from the workers through the pool result queue
-        for job in jobs:
-            job.get()
-
-        # now we are done, kill the listener
-        q.put('kill')
-        pool.close()
-        pool.join()
-
-    else:
-        for fn in file_paths:
-            apply_rulebase(fn[0], fn[1])
-
-
+        for input_path, output_folder in file_paths:
+            f.write(apply_rulebase(input_path, output_folder) + '\n')
