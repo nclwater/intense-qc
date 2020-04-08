@@ -14,7 +14,7 @@ jobs:
         shell: cmd
 
       - name: run tests
-        run: '%CONDA%\Scripts\activate.bat intense & coverage run -m unittest discover'
+        run: '%CONDA%\Scripts\activate.bat intense & coverage run -m unittest discover & coverage xml'
         shell: cmd
 
       - uses: codecov/codecov-action@v1
