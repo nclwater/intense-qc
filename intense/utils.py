@@ -954,41 +954,39 @@ def create_kdtree_monthly_data():
     THIS_FOLDER = '/media/nas/x21971/PythonLessons/Python_3'
     my_file = os.path.join(THIS_FOLDER, 'statlex_monthly.dat')
 
-    monthly_info = open(my_file, "r")
+    with open(my_file, "r") as monthly_info:
 
-    monthly_names = []
-    monthly_dates = []
-    monthly_coords = []
+        monthly_names = []
+        monthly_dates = []
+        monthly_coords = []
 
-    monthly_info = open(my_file, "r")
-    monthly_info.readline()
+        monthly_info = open(my_file, "r")
+        monthly_info.readline()
 
-    for line in monthly_info:
-        line_list = [line[0:10], line[11:54], line[54:62], line[62:73], line[73:79], line[125:135], line[137:147]]
-        sid, name, lat, lon, elv, sd, ed = [l.strip() for l in line_list]
-        try:
-            sd = datetime.datetime.strptime(sd, "%d.%m.%Y")
-            ed = datetime.datetime.strptime(ed, "%d.%m.%Y")
-        except:
-            sd = None
-            ed = None
+        for line in monthly_info:
+            line_list = [line[0:10], line[11:54], line[54:62], line[62:73], line[73:79], line[125:135], line[137:147]]
+            sid, name, lat, lon, elv, sd, ed = [l.strip() for l in line_list]
+            try:
+                sd = datetime.datetime.strptime(sd, "%d.%m.%Y")
+                ed = datetime.datetime.strptime(ed, "%d.%m.%Y")
+            except:
+                sd = None
+                ed = None
 
-        if elv == "-999":
-            elv = 100  # use 100m above seal level as a default elevation
-        else:
-            elv = float(elv)
+            if elv == "-999":
+                elv = 100  # use 100m above seal level as a default elevation
+            else:
+                elv = float(elv)
 
-        if sd is None or ed is None:
-            pass
-        else:
-            monthly_names.append(sid)
-            monthly_dates.append((sd, ed))
-            monthly_coords.append((float(lat), float(lon), elv))
+            if sd is None or ed is None:
+                pass
+            else:
+                monthly_names.append(sid)
+                monthly_dates.append((sd, ed))
+                monthly_coords.append((float(lat), float(lon), elv))
 
-    converted_monthly_coords = [geodetic_to_ecef(a, b, c) for a, b, c in monthly_coords]
-    monthly_tree = sp.KDTree(converted_monthly_coords)
-    
-    monthly_info.close()
+        converted_monthly_coords = [geodetic_to_ecef(a, b, c) for a, b, c in monthly_coords]
+        monthly_tree = sp.KDTree(converted_monthly_coords)
     
     return monthly_names, monthly_dates, monthly_coords, monthly_tree
 
@@ -996,113 +994,109 @@ def create_kdtree_monthly_data():
 def create_kdtree_daily_data():
     THIS_FOLDER = '/media/nas/x21971/PythonLessons/Python_3'
     my_file = os.path.join(THIS_FOLDER, 'statlex_daily')
-    daily_info = open(my_file, "r")
+    with open(my_file, "r") as daily_info:
 
-    daily_names = []
-    daily_dates = []
-    daily_coords = []
+        daily_names = []
+        daily_dates = []
+        daily_coords = []
 
-    daily_info.readline()
+        daily_info.readline()
 
-    for line in daily_info:
-        line_list = [line[0:10], line[11:54], line[54:62], line[62:73], line[73:79], line[125:135], line[137:147]]
-        sid, name, lat, lon, elv, sd, ed = [l.strip() for l in line_list]
-        try:
-            sd = datetime.datetime.strptime(sd, "%d.%m.%Y")
-            ed = datetime.datetime.strptime(ed, "%d.%m.%Y")
-        except:
-            sd = None
-            ed = None
+        for line in daily_info:
+            line_list = [line[0:10], line[11:54], line[54:62], line[62:73], line[73:79], line[125:135], line[137:147]]
+            sid, name, lat, lon, elv, sd, ed = [l.strip() for l in line_list]
+            try:
+                sd = datetime.datetime.strptime(sd, "%d.%m.%Y")
+                ed = datetime.datetime.strptime(ed, "%d.%m.%Y")
+            except:
+                sd = None
+                ed = None
 
-        if elv == "-999":
-            elv = 100  # use 100m above sea level as a default elevation
-        else:
-            elv = float(elv)
+            if elv == "-999":
+                elv = 100  # use 100m above sea level as a default elevation
+            else:
+                elv = float(elv)
 
-        if sd is None or ed is None:
-            pass
-        else:
-            daily_names.append(sid)
-            daily_dates.append((sd, ed))
-            daily_coords.append((float(lat), float(lon), elv))
+            if sd is None or ed is None:
+                pass
+            else:
+                daily_names.append(sid)
+                daily_dates.append((sd, ed))
+                daily_coords.append((float(lat), float(lon), elv))
 
-    converted_dailyCoords = [geodetic_to_ecef(a, b, c) for a, b, c in daily_coords]
-    tree = sp.KDTree(converted_dailyCoords)
-    
-    daily_info.close()
+        converted_dailyCoords = [geodetic_to_ecef(a, b, c) for a, b, c in daily_coords]
+        tree = sp.KDTree(converted_dailyCoords)
 
     return daily_names, daily_dates, daily_coords, tree
 
 # create kd tree of hourly gauges ++++++++++++++++++++++++++++++++++++++
 def create_kdtree_hourly_data(path):
-    hourlyn_info = open(path, "r")
+    with open(my_file, "r") as hourlyn_info:
 
-    hourly_n_names = []
-    hourly_n_dates = []
-    hourly_n_coords = []
-    hourly_n_paths = []
-    converted_hourly_n_coords = []
+        hourly_n_names = []
+        hourly_n_dates = []
+        hourly_n_coords = []
+        hourly_n_paths = []
+        converted_hourly_n_coords = []
 
-    hourly_n_names_t = []
-    hourly_n_dates_t = []
-    hourly_n_coords_t = []
-    hourly_n_paths_t = []
+        hourly_n_names_t = []
+        hourly_n_dates_t = []
+        hourly_n_coords_t = []
+        hourly_n_paths_t = []
 
-    hourlyn_info.readline()
+        hourlyn_info.readline()
 
-    for line in hourlyn_info:
-        sid, lat, lon, sd, ed, elv, hpath = line.rstrip().split(",")
+        for line in hourlyn_info:
+            sid, lat, lon, sd, ed, elv, hpath = line.rstrip().split(",")
 
-        try:
-            sd = datetime.datetime.strptime(sd, "%Y%m%d%H")
-            ed = datetime.datetime.strptime(ed, "%Y%m%d%H")
-        except:
-            sd = None
-            ed = None
-
-        if elv.lower() == "na" or elv == "m" or elv == "nam" or elv == "nan":
-            elv = 100  # use 100m above sea level as a default elevation
-        else:
-            if elv.endswith("m"):
-                elv = elv[:-1]
             try:
-                elv = float(elv)
+                sd = datetime.datetime.strptime(sd, "%Y%m%d%H")
+                ed = datetime.datetime.strptime(ed, "%Y%m%d%H")
             except:
-                elv = 100
+                sd = None
+                ed = None
 
-        if sd is None or ed is None:
-            pass
-        else:
+            if elv.lower() == "na" or elv == "m" or elv == "nam" or elv == "nan":
+                elv = 100  # use 100m above sea level as a default elevation
+            else:
+                if elv.endswith("m"):
+                    elv = elv[:-1]
+                try:
+                    elv = float(elv)
+                except:
+                    elv = 100
 
-            # Only append if >=3 years of record (no point having potential neighbours
-            # without substantial data)
-            # - Also ensure that no duplicates arising from e.g. duplicates in Australia1min.zip
-            date_diff = ed - sd
-            if date_diff.days >= 3 * 365:
-                if sid not in hourly_n_names_t:
-                    hourly_n_names_t.append(sid)
-                    hourly_n_dates_t.append((sd, ed))
-                    hourly_n_coords_t.append((float(lat), float(lon), elv))
-                    hourly_n_paths_t.append(hpath)
+            if sd is None or ed is None:
+                pass
+            else:
 
-    converted_hourly_n_coords_t = [geodetic_to_ecef(a, b, c) for a, b, c in hourly_n_coords_t]
+                # Only append if >=3 years of record (no point having potential neighbours
+                # without substantial data)
+                # - Also ensure that no duplicates arising from e.g. duplicates in Australia1min.zip
+                date_diff = ed - sd
+                if date_diff.days >= 3 * 365:
+                    if sid not in hourly_n_names_t:
+                        hourly_n_names_t.append(sid)
+                        hourly_n_dates_t.append((sd, ed))
+                        hourly_n_coords_t.append((float(lat), float(lon), elv))
+                        hourly_n_paths_t.append(hpath)
 
-    for i in range(len(converted_hourly_n_coords_t)):
-        addIt = 1
-        for j in converted_hourly_n_coords_t[i]:
-            if np.isnan(j):
-                addIt = 0
+        converted_hourly_n_coords_t = [geodetic_to_ecef(a, b, c) for a, b, c in hourly_n_coords_t]
 
-        if addIt == 1:
-            hourly_n_names.append(hourly_n_names_t[i])
-            hourly_n_dates.append(hourly_n_dates_t[i])
-            hourly_n_coords.append(hourly_n_coords_t[i])
-            hourly_n_paths.append(hourly_n_paths_t[i])
-            converted_hourly_n_coords.append(converted_hourly_n_coords_t[i])
+        for i in range(len(converted_hourly_n_coords_t)):
+            addIt = 1
+            for j in converted_hourly_n_coords_t[i]:
+                if np.isnan(j):
+                    addIt = 0
 
-    hourly_n_tree = sp.KDTree(converted_hourly_n_coords)
-    
-    hourlyn_info.close()
+            if addIt == 1:
+                hourly_n_names.append(hourly_n_names_t[i])
+                hourly_n_dates.append(hourly_n_dates_t[i])
+                hourly_n_coords.append(hourly_n_coords_t[i])
+                hourly_n_paths.append(hourly_n_paths_t[i])
+                converted_hourly_n_coords.append(converted_hourly_n_coords_t[i])
+
+        hourly_n_tree = sp.KDTree(converted_hourly_n_coords)
 
     return hourly_n_names, hourly_n_dates, hourly_n_coords, hourly_n_paths, hourly_n_tree
 

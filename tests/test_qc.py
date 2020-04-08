@@ -1,8 +1,4 @@
 import unittest
-
-#import sys
-#sys.path.append(".")
-
 from intense import utils
 from intense.qc import Qc
 from intense import intense as ex
