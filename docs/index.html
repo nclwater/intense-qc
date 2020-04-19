@@ -57,55 +57,263 @@ SB, RV, others…</p>
 <em class="property">class </em><code class="sig-prename descclassname">intense.gauge.</code><code class="sig-name descname">Gauge</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">station_id</span></em>, <em class="sig-param"><span class="n">path_to_original_data</span></em>, <em class="sig-param"><span class="n">latitude</span></em>, <em class="sig-param"><span class="n">longitude</span></em>, <em class="sig-param"><span class="n">original_timestep</span></em>, <em class="sig-param"><span class="n">original_units</span></em>, <em class="sig-param"><span class="n">new_units</span></em>, <em class="sig-param"><span class="n">new_timestep</span></em>, <em class="sig-param"><span class="n">data</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">elevation</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">country</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">original_station_number</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">original_station_name</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">time_zone</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">daylight_saving_info</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">other</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.Gauge" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>station_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The ID of the station</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>station_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – The ID of the station</p></li>
+<li><p><strong>path_to_original_data</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – path to the file which held the data in its original format</p></li>
+<li><p><strong>latitude</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – the latitude of the station</p></li>
+<li><p><strong>longitude</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>) – the longitude of the station</p></li>
+<li><p><strong>original_timestep</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – the time between each original observation</p></li>
+<li><p><strong>original_units</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – the units of the original observations</p></li>
+<li><p><strong>new_units</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – the units that the original observations were converted into</p></li>
+<li><p><strong>new_timestep</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – the time between each resampled observation</p></li>
+<li><p><strong>data</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Series</span></code>]) – a time series of rainfall depth observations</p></li>
+<li><p><strong>elevation</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – the elevation of the station</p></li>
+<li><p><strong>country</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – the country code of the station,</p></li>
+<li><p><strong>original_station_number</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – the ID number from the original observations</p></li>
+<li><p><strong>original_station_name</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – the original name of the station</p></li>
+<li><p><strong>time_zone</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – the time zone that the observations were recorded in</p></li>
+<li><p><strong>daylight_saving_info</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – if the observations include daylight savings</p></li>
+<li><p><strong>other</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – any other relevant details</p></li>
+</ul>
 </dd>
 </dl>
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.station_id">
+<code class="sig-name descname">station_id</code><a class="headerlink" href="#intense.gauge.Gauge.station_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>The ID of the station</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.country">
+<code class="sig-name descname">country</code><a class="headerlink" href="#intense.gauge.Gauge.country" title="Permalink to this definition">¶</a></dt>
+<dd><p>the country code of the station</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.elevation">
+<code class="sig-name descname">elevation</code><a class="headerlink" href="#intense.gauge.Gauge.elevation" title="Permalink to this definition">¶</a></dt>
+<dd><p>the elevation of the station</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.original_station_number">
+<code class="sig-name descname">original_station_number</code><a class="headerlink" href="#intense.gauge.Gauge.original_station_number" title="Permalink to this definition">¶</a></dt>
+<dd><p>the ID number from the original observations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.original_station_name">
+<code class="sig-name descname">original_station_name</code><a class="headerlink" href="#intense.gauge.Gauge.original_station_name" title="Permalink to this definition">¶</a></dt>
+<dd><p>the original name of the station</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.path_to_original_data">
+<code class="sig-name descname">path_to_original_data</code><a class="headerlink" href="#intense.gauge.Gauge.path_to_original_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>path to the file which held the data in its original format</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.latitude">
+<code class="sig-name descname">latitude</code><a class="headerlink" href="#intense.gauge.Gauge.latitude" title="Permalink to this definition">¶</a></dt>
+<dd><p>the latitude of the station</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.longitude">
+<code class="sig-name descname">longitude</code><a class="headerlink" href="#intense.gauge.Gauge.longitude" title="Permalink to this definition">¶</a></dt>
+<dd><p>the longitude of the station</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>float</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.data">
+<code class="sig-name descname">data</code><a class="headerlink" href="#intense.gauge.Gauge.data" title="Permalink to this definition">¶</a></dt>
+<dd><p>a time series of rainfall depth observations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>pd.Series</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.no_data_value">
+<code class="sig-name descname">no_data_value</code><a class="headerlink" href="#intense.gauge.Gauge.no_data_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>the value used to represent missing data</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.masked">
+<code class="sig-name descname">masked</code><a class="headerlink" href="#intense.gauge.Gauge.masked" title="Permalink to this definition">¶</a></dt>
+<dd><p>a subset of data where values are not missing</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.start_datetime">
+<code class="sig-name descname">start_datetime</code><a class="headerlink" href="#intense.gauge.Gauge.start_datetime" title="Permalink to this definition">¶</a></dt>
+<dd><p>the time at which the first observation was recorded</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.end_datetime">
+<code class="sig-name descname">end_datetime</code><a class="headerlink" href="#intense.gauge.Gauge.end_datetime" title="Permalink to this definition">¶</a></dt>
+<dd><p>the time at which the most recent obseration was recorded</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.number_of_records">
+<code class="sig-name descname">number_of_records</code><a class="headerlink" href="#intense.gauge.Gauge.number_of_records" title="Permalink to this definition">¶</a></dt>
+<dd><p>the number of records (including missing data)</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.percent_missing_data">
+<code class="sig-name descname">percent_missing_data</code><a class="headerlink" href="#intense.gauge.Gauge.percent_missing_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>the percentage of all records that are missing</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.original_timestep">
+<code class="sig-name descname">original_timestep</code><a class="headerlink" href="#intense.gauge.Gauge.original_timestep" title="Permalink to this definition">¶</a></dt>
+<dd><p>the time between each original observation</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.original_units">
+<code class="sig-name descname">original_units</code><a class="headerlink" href="#intense.gauge.Gauge.original_units" title="Permalink to this definition">¶</a></dt>
+<dd><p>the units of the original observations</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.new_units">
+<code class="sig-name descname">new_units</code><a class="headerlink" href="#intense.gauge.Gauge.new_units" title="Permalink to this definition">¶</a></dt>
+<dd><p>the units that the original observations were converted into</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.time_zone">
+<code class="sig-name descname">time_zone</code><a class="headerlink" href="#intense.gauge.Gauge.time_zone" title="Permalink to this definition">¶</a></dt>
+<dd><p>the time zone that the observations were recorded in</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.daylight_saving_info">
+<code class="sig-name descname">daylight_saving_info</code><a class="headerlink" href="#intense.gauge.Gauge.daylight_saving_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>if the observations include daylight savings</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.resolution">
+<code class="sig-name descname">resolution</code><a class="headerlink" href="#intense.gauge.Gauge.resolution" title="Permalink to this definition">¶</a></dt>
+<dd><p>the pandas offset alias describing the frequency of observations</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.new_timestep">
+<code class="sig-name descname">new_timestep</code><a class="headerlink" href="#intense.gauge.Gauge.new_timestep" title="Permalink to this definition">¶</a></dt>
+<dd><p>the time between each resampled observation</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.gauge.Gauge.other">
+<code class="sig-name descname">other</code><a class="headerlink" href="#intense.gauge.Gauge.other" title="Permalink to this definition">¶</a></dt>
+<dd><p>any other relevant details</p>
+</dd></dl>
+
 <dl class="py method">
 <dt id="intense.gauge.Gauge.get_info">
 <code class="sig-name descname">get_info</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.Gauge.get_info" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Updates masked, start and end times, number of records, percent missing and resolution based on data</p>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.gauge.Gauge.monthly_max">
 <code class="sig-name descname">monthly_max</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.Gauge.monthly_max" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Returns the monthly maximum value from masked</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">Series</span></code></p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.gauge.Gauge.write">
 <code class="sig-name descname">write</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">directory</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.Gauge.write" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Writes data and metadata to a file named using the station ID</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>directory</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – the directory in which to create the text file</p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
 <dl class="py function">
-<dt id="intense.gauge.convert_isd">
-<code class="sig-prename descclassname">intense.gauge.</code><code class="sig-name descname">convert_isd</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">in_path</span></em>, <em class="sig-param"><span class="n">out_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.convert_isd" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
 <dt id="intense.gauge.read_intense">
-<code class="sig-prename descclassname">intense.gauge.</code><code class="sig-name descname">read_intense</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">only_metadata</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">opened</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.read_intense" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt id="intense.gauge.try_float">
-<code class="sig-prename descclassname">intense.gauge.</code><code class="sig-name descname">try_float</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_val</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.try_float" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt id="intense.gauge.try_int">
-<code class="sig-prename descclassname">intense.gauge.</code><code class="sig-name descname">try_int</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_val</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.try_int" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt id="intense.gauge.try_list">
-<code class="sig-prename descclassname">intense.gauge.</code><code class="sig-name descname">try_list</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_list</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.try_list" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt id="intense.gauge.try_strptime">
-<code class="sig-prename descclassname">intense.gauge.</code><code class="sig-name descname">try_strptime</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_val</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.try_strptime" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">intense.gauge.</code><code class="sig-name descname">read_intense</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path_or_stream</span></em>, <em class="sig-param"><span class="n">only_metadata</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.read_intense" title="Permalink to this definition">¶</a></dt>
+<dd><p>Reads data and metadata from a text file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path_or_stream</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">IO</span></code>]) – a path of the file to read from or an I/O stream</p></li>
+<li><p><strong>only_metadata</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – if True then stop reading after metadata</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><a class="reference internal" href="#intense.gauge.Gauge" title="intense.gauge.Gauge"><code class="xref py py-class docutils literal notranslate"><span class="pre">Gauge</span></code></a></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>An intense.Gauge object</p>
+</dd>
+</dl>
+</dd></dl>
 
 </div>
 <div class="section" id="module-intense.qc">

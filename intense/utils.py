@@ -435,7 +435,7 @@ def get_gsdr(gsdr_id, path):
     zfh = zipfile.ZipFile(path, "r")
 
     d = zfh.open(gsdr_id + ".txt", mode="r")
-    df = ex.read_intense(d, only_metadata=False, opened=True).data.to_frame("GSDR")
+    df = ex.read_intense(d, only_metadata=False).data.to_frame("GSDR")
     d.close()
     zfh.close()
 
@@ -1133,3 +1133,79 @@ def open_file(file_folders, files_to_process, file, orig_folder, qc_folder):
     zf = zipfile.ZipFile(orig_folder + "/" + folder_to_check, "r")
 
     return zf.open(file, mode="r")
+
+
+def convert_isd(in_path, out_path):
+    import netCDF4
+    if not os.path.exists(out_path):
+        os.mkdir(out_path)
+    f = netCDF4.Dataset(in_path)
+    time = f.variables['time'][:]
+    precip = f.variables['precip1_depth'][:]
+    periods = f.variables['precip1_period'][:]
+    if isinstance(periods, np.ma.MaskedArray):
+        precip = precip.data
+        periods = periods.data
+
+    for period in np.unique(periods)[np.unique(periods) > 0]:
+        mask = np.logical_and(periods == period, precip >= 0)
+
+        if len(precip[mask]) > 1:
+            times = netCDF4.num2date(time[mask], f.variables['time'].units)
+            datetimes = pd.date_range(start=min(times), end=max(times), freq=str(period) + 'H')
+
+            data = pd.Series(precip[mask],
+                             index=times)
+            data = data.reindex(datetimes)
+            data = data[data.first_valid_index():data.last_valid_index()]
+            data[pd.isnull(data)] = -999
+
+            series = ex.Gauge(station_id='ISD_%s' % f.station_id,
+                              path_to_original_data=in_path,
+                              latitude=f.latitude,
+                              longitude=f.longitude,
+                              original_timestep='%shr' % period,
+                              original_units='mm',
+                              new_units='mm',
+                              new_timestep='%shr' % period,
+                              data=data,
+                              elevation='%sm' % f.elevation,
+                              original_station_number=f.station_id,
+                              time_zone='UTC')
+            path = os.path.join(out_path, '%shr' % period)
+            if not os.path.exists(path):
+                os.mkdir(path)
+            series.write(path)
+
+
+def try_float(test_val):
+    try:
+        v = float(test_val)
+    except:
+        v = np.nan
+    return v
+
+
+def try_strptime(test_val):
+    try:
+        v = datetime.datetime.strptime(test_val, '%Y%m%d%H')
+    except:
+        v = np.nan
+    return v
+
+
+def try_int(test_val):
+    try:
+        v = int(test_val)
+    except:
+        v = np.nan
+    return v
+
+
+def try_list(test_list):
+    try:
+        v = [try_int(i) for i in test_list[1:-1].split(", ")]
+    except:
+        v = np.nan
+    return v
+

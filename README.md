@@ -10,4 +10,7 @@ Quality control procedure for hourly rainfall data
 
 ## Documentation
 
-`docs\make`
+```
+cd docs
+make
+```

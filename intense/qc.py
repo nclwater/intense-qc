@@ -65,9 +65,8 @@ import scipy.stats
 from rpy2.robjects.vectors import StrVector
 from rpy2.rinterface import RRuntimeError
 
-from intense.gauge import try_float, try_list, try_int
 from .gauge import Gauge
-from intense import utils
+from . import utils
 
 
 def install_r_package(package_name):
@@ -1482,22 +1481,22 @@ def read_intense_qc(path, only_metadata=False, opened=False):
         data = data.where(data != -999)
 
     s = Gauge(station_id=metadata['station id'],
-               path_to_original_data=metadata['path to original data'],
-               latitude=try_float(metadata['latitude']),
-               longitude=try_float(metadata['longitude']),
-               original_timestep=metadata['original timestep'],
-               original_units=metadata['original units'],
-               new_units=metadata['new units'],
-               new_timestep=metadata['new timestep'],
-               data=data.vals,
-               elevation=metadata['elevation'],
-               country=metadata['country'],
-               original_station_number=metadata['original station number'],
-               original_station_name=metadata['original station name'],
-               time_zone=metadata['time zone'])
+              path_to_original_data=metadata['path to original data'],
+              latitude=utils.try_float(metadata['latitude']),
+              longitude=utils.try_float(metadata['longitude']),
+              original_timestep=metadata['original timestep'],
+              original_units=metadata['original units'],
+              new_units=metadata['new units'],
+              new_timestep=metadata['new timestep'],
+              data=data.vals,
+              elevation=metadata['elevation'],
+              country=metadata['country'],
+              original_station_number=metadata['original station number'],
+              original_station_name=metadata['original station name'],
+              time_zone=metadata['time zone'])
 
     tmp = metadata['years where min value changes']
-    change_flag = try_int(tmp.split(", ")[0][1:])
+    change_flag = utils.try_int(tmp.split(", ")[0][1:])
     if change_flag == 0:
         change_list = [np.nan]
     elif change_flag == 1:
@@ -1507,20 +1506,20 @@ def read_intense_qc(path, only_metadata=False, opened=False):
     
     qc = Qc(
         series=s,
-        percentiles=[try_list(metadata['years where q95 equals 0']), try_list(metadata['years where q99 equals 0'])],
-        k_largest=[try_list(metadata['years where k1 equals 0']), try_list(metadata['years where k5 equals 0']),
-                     try_list(metadata['years where k10 equals 0'])],
-        days_of_week=try_int(metadata['uneven distribution of rain over days of the week']),
-        hours_of_day=try_int(metadata['uneven distribution of rain over hours of the day']),
-        intermittency=try_list(metadata['years with intermittency issues']),
-        breakpoint=try_int(metadata['break point detected']),
-        R99pTOT=try_list(metadata['r99ptot checks']),
-        PRCPTOT=try_list(metadata['prcptot checks']),
+        percentiles=[utils.try_list(metadata['years where q95 equals 0']), utils.try_list(metadata['years where q99 equals 0'])],
+        k_largest=[utils.try_list(metadata['years where k1 equals 0']), utils.try_list(metadata['years where k5 equals 0']),
+                     utils.try_list(metadata['years where k10 equals 0'])],
+        days_of_week=utils.try_int(metadata['uneven distribution of rain over days of the week']),
+        hours_of_day=utils.try_int(metadata['uneven distribution of rain over hours of the day']),
+        intermittency=utils.try_list(metadata['years with intermittency issues']),
+        breakpoint=utils.try_int(metadata['break point detected']),
+        R99pTOT=utils.try_list(metadata['r99ptot checks']),
+        PRCPTOT=utils.try_list(metadata['prcptot checks']),
         change_min_value=[change_flag, change_list],
-        offset=try_int(metadata['optimum offset']),
-        preQC_affinity_index=try_float(metadata['pre qc affinity index']),
-        preQC_pearson_coefficient=try_float(metadata['pre qc pearson coefficient']),
-        factor_daily=try_float(metadata['factor against nearest daily gauge']),
+        offset=utils.try_int(metadata['optimum offset']),
+        preQC_affinity_index=utils.try_float(metadata['pre qc affinity index']),
+        preQC_pearson_coefficient=utils.try_float(metadata['pre qc pearson coefficient']),
+        factor_daily=utils.try_float(metadata['factor against nearest daily gauge']),
 
         hourly_neighbours=data.hourly_neighbours,
         hourly_neighbours_dry=data.hourly_neighbours_dry,

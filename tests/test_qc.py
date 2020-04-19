@@ -34,7 +34,7 @@ class TestQc(TestCase):
         files_to_process, file_folders = utils.find_files_to_process(folders_to_check, qc_folder, orig_folder)
         for file, folder in zip(files_to_process, file_folders):
             f = utils.open_file(file_folders, files_to_process, file, orig_folder, qc_folder)
-            qc = Qc(ex.read_intense(f, only_metadata=False, opened=True),
+            qc = Qc(ex.read_intense(f, only_metadata=False),
                     hourly_n_names=hourly_n_names,
                     hourly_n_dates=hourly_n_dates,
                     hourly_n_coords=hourly_n_coords,
