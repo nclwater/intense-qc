@@ -1,7 +1,7 @@
 """
-INTENSE QC Component 1 - Series class definition
+INTENSE QC Component 1 - Gauge class definition
 
-This component of the INTENSE QC package defines the Series class and multiple 
+This component of the INTENSE QC package defines the Gauge class and multiple
 utility functions required by the other components of the QC package to read and write
 rainfall timeseries objects in the standard INTENSE format. 
 
@@ -32,9 +32,13 @@ from datetime import datetime
 """
 
 
-class Series:
+class Gauge:
+    """
+    Args:
+        station_id: The ID of the station
+    """
     def __init__(self,
-                 station_id,
+                 station_id: int,
                  path_to_original_data,
                  latitude,
                  longitude,
@@ -218,20 +222,20 @@ def read_intense(path, only_metadata=False, opened=False):
                              dtype=float)
         data = data.where(data >= 0)
 
-    s = Series(station_id=metadata['station id'],
-               path_to_original_data=metadata['path to original data'],
-               latitude=try_float(metadata['latitude']),
-               longitude=try_float(metadata['longitude']),
-               original_timestep=metadata['original timestep'],
-               original_units=metadata['original units'],
-               new_units=metadata['new units'],
-               new_timestep=metadata['new timestep'],
-               data=data,
-               elevation=metadata['elevation'],
-               country=metadata['country'],
-               original_station_number=metadata['original station number'],
-               original_station_name=metadata['original station name'],
-               time_zone=metadata['time zone'])
+    s = Gauge(station_id=metadata['station id'],
+              path_to_original_data=metadata['path to original data'],
+              latitude=try_float(metadata['latitude']),
+              longitude=try_float(metadata['longitude']),
+              original_timestep=metadata['original timestep'],
+              original_units=metadata['original units'],
+              new_units=metadata['new units'],
+              new_timestep=metadata['new timestep'],
+              data=data,
+              elevation=metadata['elevation'],
+              country=metadata['country'],
+              original_station_number=metadata['original station number'],
+              original_station_name=metadata['original station name'],
+              time_zone=metadata['time zone'])
     try:
         s.number_of_records = int(metadata['number of records'])
     except:
@@ -267,18 +271,18 @@ def convert_isd(in_path, out_path):
             data = data[data.first_valid_index():data.last_valid_index()]
             data[pd.isnull(data)] = -999
 
-            series = Series(station_id='ISD_%s' % f.station_id,
-                            path_to_original_data=in_path,
-                            latitude=f.latitude,
-                            longitude=f.longitude,
-                            original_timestep='%shr' % period,
-                            original_units='mm',
-                            new_units='mm',
-                            new_timestep='%shr' % period,
-                            data=data,
-                            elevation='%sm' % f.elevation,
-                            original_station_number=f.station_id,
-                            time_zone='UTC')
+            series = Gauge(station_id='ISD_%s' % f.station_id,
+                           path_to_original_data=in_path,
+                           latitude=f.latitude,
+                           longitude=f.longitude,
+                           original_timestep='%shr' % period,
+                           original_units='mm',
+                           new_units='mm',
+                           new_timestep='%shr' % period,
+                           data=data,
+                           elevation='%sm' % f.elevation,
+                           original_station_number=f.station_id,
+                           time_zone='UTC')
             path = os.path.join(out_path, '%shr' % period)
             if not os.path.exists(path):
                 os.mkdir(path)

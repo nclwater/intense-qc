@@ -2,7 +2,7 @@
 INTENSE QC Component 2 - Quality Control
 
 This component of the INTENSE QC package reads rainfall data formatted as an INTENSE
-Series and executes the flagging process by which the data is checked. 
+Gauge and executes the flagging process by which the data is checked. 
 NO DATA IS EXCLUDED IN THIS CODE!
 To exclude flagged data use component 3: Rulebase. 
 
@@ -17,7 +17,7 @@ Data is read in by the INTENSE module as
     
     
 The INTENSE object looks like this:
-    s =  Series(station_id=metadata['station id'],
+    s =  Gauge(station_id=metadata['station id'],
                 path_to_original_data=metadata['path to original data'],
                 latitude=tryFloat(metadata['latitude']),
                 longitude=tryFloat(metadata['longitude']),
@@ -65,8 +65,8 @@ import scipy.stats
 from rpy2.robjects.vectors import StrVector
 from rpy2.rinterface import RRuntimeError
 
-from intense.intense import try_float, try_list, try_int
-from .intense import Series
+from intense.gauge import try_float, try_list, try_int
+from .gauge import Gauge
 from intense import utils
 
 
@@ -91,7 +91,7 @@ except RRuntimeError:
 class Qc:
 
     def __init__(self,
-                 series: Series,
+                 series: Gauge,
                  etccdi_data_folder=None,
                  hourly_n_names=None,
                  hourly_n_dates=None,
@@ -1481,7 +1481,7 @@ def read_intense_qc(path, only_metadata=False, opened=False):
 
         data = data.where(data != -999)
 
-    s = Series(station_id=metadata['station id'],
+    s = Gauge(station_id=metadata['station id'],
                path_to_original_data=metadata['path to original data'],
                latitude=try_float(metadata['latitude']),
                longitude=try_float(metadata['longitude']),

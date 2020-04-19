@@ -5,7 +5,7 @@ import time
 import math
 import scipy.spatial as sp
 import subprocess
-from intense import intense as ex
+from intense import gauge as ex
 import pandas as pd
 import numpy as np
 import scipy.interpolate

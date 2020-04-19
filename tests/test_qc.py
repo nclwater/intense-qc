@@ -1,8 +1,8 @@
 from intense import utils
 from intense.qc import Qc
-from intense import intense as ex
+from intense import gauge as ex
 import os
-from . import TestCase
+from unittest import TestCase
 
 
 class TestQc(TestCase):

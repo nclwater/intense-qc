@@ -1,0 +1,427 @@
+
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>INTENSE Documentation &#8212; INTENSE  documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="intense-documentation">
+<h1>INTENSE Documentation<a class="headerlink" href="#intense-documentation" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+</div>
+<div class="section" id="module-intense.gauge">
+<span id="intense-gauge-module"></span><h2>intense.gauge module<a class="headerlink" href="#module-intense.gauge" title="Permalink to this headline">¶</a></h2>
+<p>INTENSE QC Component 1 - Gauge class definition</p>
+<p>This component of the INTENSE QC package defines the Gauge class and multiple
+utility functions required by the other components of the QC package to read and write
+rainfall timeseries objects in the standard INTENSE format.</p>
+<dl class="simple">
+<dt>Required packages:</dt><dd><p>pandas
+numpy
+os</p>
+</dd>
+<dt>Developed by:</dt><dd><p>Elizabeth Lewis, PhD
+SB, RV, others…</p>
+</dd>
+<dt>Publication to be cited:</dt><dd><p>Paper</p>
+</dd>
+</dl>
+<p>June 2019</p>
+<dl class="py class">
+<dt id="intense.gauge.Gauge">
+<em class="property">class </em><code class="sig-prename descclassname">intense.gauge.</code><code class="sig-name descname">Gauge</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">station_id</span></em>, <em class="sig-param"><span class="n">path_to_original_data</span></em>, <em class="sig-param"><span class="n">latitude</span></em>, <em class="sig-param"><span class="n">longitude</span></em>, <em class="sig-param"><span class="n">original_timestep</span></em>, <em class="sig-param"><span class="n">original_units</span></em>, <em class="sig-param"><span class="n">new_units</span></em>, <em class="sig-param"><span class="n">new_timestep</span></em>, <em class="sig-param"><span class="n">data</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">elevation</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">country</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">original_station_number</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">original_station_name</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">time_zone</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">daylight_saving_info</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">other</span><span class="o">=</span><span class="default_value">''</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.Gauge" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>station_id</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>) – The ID of the station</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="intense.gauge.Gauge.get_info">
+<code class="sig-name descname">get_info</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.Gauge.get_info" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.gauge.Gauge.monthly_max">
+<code class="sig-name descname">monthly_max</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.Gauge.monthly_max" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.gauge.Gauge.write">
+<code class="sig-name descname">write</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">directory</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.Gauge.write" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="intense.gauge.convert_isd">
+<code class="sig-prename descclassname">intense.gauge.</code><code class="sig-name descname">convert_isd</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">in_path</span></em>, <em class="sig-param"><span class="n">out_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.convert_isd" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="intense.gauge.read_intense">
+<code class="sig-prename descclassname">intense.gauge.</code><code class="sig-name descname">read_intense</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">only_metadata</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">opened</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.read_intense" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="intense.gauge.try_float">
+<code class="sig-prename descclassname">intense.gauge.</code><code class="sig-name descname">try_float</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_val</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.try_float" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="intense.gauge.try_int">
+<code class="sig-prename descclassname">intense.gauge.</code><code class="sig-name descname">try_int</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_val</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.try_int" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="intense.gauge.try_list">
+<code class="sig-prename descclassname">intense.gauge.</code><code class="sig-name descname">try_list</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_list</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.try_list" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="intense.gauge.try_strptime">
+<code class="sig-prename descclassname">intense.gauge.</code><code class="sig-name descname">try_strptime</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">test_val</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.gauge.try_strptime" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-intense.qc">
+<span id="intense-qc-module"></span><h2>intense.qc module<a class="headerlink" href="#module-intense.qc" title="Permalink to this headline">¶</a></h2>
+<p>INTENSE QC Component 2 - Quality Control</p>
+<p>This component of the INTENSE QC package reads rainfall data formatted as an INTENSE
+Gauge and executes the flagging process by which the data is checked.
+NO DATA IS EXCLUDED IN THIS CODE!
+To exclude flagged data use component 3: Rulebase.</p>
+<p>This QC code will use the INTENSE module to create QC object</p>
+<dl class="simple">
+<dt>Data is read in by the INTENSE module as</dt><dd><dl class="simple">
+<dt>data = pd.Series(data,</dt><dd><p>pd.date_range(start=pd.datetime.strptime(metadata[‘start datetime’],’%Y%m%d%H’),
+end=pd.datetime.strptime(metadata[‘end datetime’],’%Y%m%d%H’),
+freq=metadata[‘new timestep’][:-2]+’H’),
+dtype=float)</p>
+</dd>
+</dl>
+</dd>
+<dt>The INTENSE object looks like this:</dt><dd><dl class="simple">
+<dt>s =  Gauge(station_id=metadata[‘station id’],</dt><dd><p>path_to_original_data=metadata[‘path to original data’],
+latitude=tryFloat(metadata[‘latitude’]),
+longitude=tryFloat(metadata[‘longitude’]),
+original_timestep=metadata[‘original timestep’],
+original_units=metadata[‘original units’],
+new_units=metadata[‘new units’],
+new_timestep=metadata[‘new timestep’],
+elevation=metadata[‘elevation’],
+data=data)</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p>For more details on INTENSE objects and the associated functionality refer to
+Component 1: intense_CW.py</p>
+<dl class="simple">
+<dt>Required packages:</dt><dd><p>intense
+pandas
+numpy
+rpy2
+xarray
+scipy
+datetime
+zipfile
+subprocess
+os</p>
+</dd>
+<dt>Developed by:</dt><dd><p>Elizabeth Lewis, PhD
+SB, RV, others…</p>
+</dd>
+<dt>Publication to be cited:</dt><dd><p>Paper</p>
+</dd>
+</dl>
+<p>June 2019</p>
+<dl class="py class">
+<dt id="intense.qc.Qc">
+<em class="property">class </em><code class="sig-prename descclassname">intense.qc.</code><code class="sig-name descname">Qc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">series</span></em>, <em class="sig-param"><span class="n">etccdi_data_folder</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_n_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_n_dates</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_n_coords</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_n_paths</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_n_tree</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_daily_neighbours</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">daily_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">daily_dates</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">daily_coords</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">tree</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_monthly_neighbours</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">monthly_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">monthly_dates</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">monthly_coords</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">monthly_tree</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_neighbours</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_neighbours_dry</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">daily_neighbours</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">daily_neighbours_dry</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">monthly_neighbours</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">world_record</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">Rx1day</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">CWD</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">CDD</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">daily_accumualtions</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">monthly_accumulations</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">streaks</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">percentiles</span><span class="o">=</span><span class="default_value">['NA', 'NA']</span></em>, <em class="sig-param"><span class="n">k_largest</span><span class="o">=</span><span class="default_value">['NA', 'NA', 'NA']</span></em>, <em class="sig-param"><span class="n">days_of_week</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">hours_of_day</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">intermittency</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">breakpoint</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">R99pTOT</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">PRCPTOT</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">change_min_value</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">offset</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">preQC_affinity_index</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">preQC_pearson_coefficient</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">factor_daily</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">factor_monthly</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="py method">
+<dt id="intense.qc.Qc.cdd_check">
+<code class="sig-name descname">cdd_check</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.cdd_check" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.change_in_min_val_check">
+<code class="sig-name descname">change_in_min_val_check</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.change_in_min_val_check" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.check_break_point">
+<code class="sig-name descname">check_break_point</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.check_break_point" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.check_daily_neighbours">
+<code class="sig-name descname">check_daily_neighbours</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.check_daily_neighbours" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.check_days_of_week">
+<code class="sig-name descname">check_days_of_week</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.check_days_of_week" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.check_hourly_neighbours">
+<code class="sig-name descname">check_hourly_neighbours</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.check_hourly_neighbours" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.check_hours_of_day">
+<code class="sig-name descname">check_hours_of_day</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.check_hours_of_day" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.check_intermittency">
+<code class="sig-name descname">check_intermittency</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.check_intermittency" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.check_k_largest">
+<code class="sig-name descname">check_k_largest</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.check_k_largest" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.check_monthly_neighbours">
+<code class="sig-name descname">check_monthly_neighbours</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.check_monthly_neighbours" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.check_percentiles">
+<code class="sig-name descname">check_percentiles</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.check_percentiles" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.cwd_check">
+<code class="sig-name descname">cwd_check</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.cwd_check" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.daily_accums_check">
+<code class="sig-name descname">daily_accums_check</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.daily_accums_check" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.find_daily_neighbours">
+<code class="sig-name descname">find_daily_neighbours</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.find_daily_neighbours" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.find_hourly_neighbours">
+<code class="sig-name descname">find_hourly_neighbours</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.find_hourly_neighbours" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.find_identical_by_id">
+<code class="sig-name descname">find_identical_by_id</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">neighbour</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.find_identical_by_id" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.find_monthly_neighbours">
+<code class="sig-name descname">find_monthly_neighbours</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.find_monthly_neighbours" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.get_flags">
+<code class="sig-name descname">get_flags</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.get_flags" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.get_sdii">
+<code class="sig-name descname">get_sdii</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.get_sdii" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.monthly_accums_check">
+<code class="sig-name descname">monthly_accums_check</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.monthly_accums_check" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.monthly_accums_day_check">
+<code class="sig-name descname">monthly_accums_day_check</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mean_wet_day_val</span></em>, <em class="sig-param"><span class="n">mean_wet_day_val_filled</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.monthly_accums_day_check" title="Permalink to this definition">¶</a></dt>
+<dd><p>Suspect monthly accumulations.
+Identified where only one hourly value is reported over a period of a month
+and that value exceeds the mean wet hour amount for the corresponding month.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.prcptot_check_annual">
+<code class="sig-name descname">prcptot_check_annual</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.prcptot_check_annual" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.r99ptot_check_annual">
+<code class="sig-name descname">r99ptot_check_annual</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.r99ptot_check_annual" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.rx1day_check_ts">
+<code class="sig-name descname">rx1day_check_ts</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.rx1day_check_ts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.streaks_check">
+<code class="sig-name descname">streaks_check</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.streaks_check" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.world_record_check_ts">
+<code class="sig-name descname">world_record_check_ts</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.world_record_check_ts" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="intense.qc.Qc.write">
+<code class="sig-name descname">write</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">directory</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.write" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="intense.qc.install_r_package">
+<code class="sig-prename descclassname">intense.qc.</code><code class="sig-name descname">install_r_package</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">package_name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.install_r_package" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="intense.qc.read_intense_qc">
+<code class="sig-prename descclassname">intense.qc.</code><code class="sig-name descname">read_intense_qc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">only_metadata</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">opened</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.read_intense_qc" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+<div class="section" id="module-intense.rulebase">
+<span id="intense-rulebase-module"></span><h2>intense.rulebase module<a class="headerlink" href="#module-intense.rulebase" title="Permalink to this headline">¶</a></h2>
+<p>INTENSE QC Component 3 - Rulebase</p>
+<p>This component of the INTENSE QC package reads flagged files and applies a rulebase
+to determine which rainfall data should be excluded.
+Required packages:</p>
+<blockquote>
+<div><p>intense
+pandas
+numpy
+datetime
+os</p>
+</div></blockquote>
+<dl class="simple">
+<dt>Developed by:</dt><dd><p>Elizabeth Lewis, PhD
+SB, RV, others…</p>
+</dd>
+<dt>Publication to be cited:</dt><dd><p>Paper</p>
+</dd>
+</dl>
+<p>June 2019</p>
+<dl class="py function">
+<dt id="intense.rulebase.apply_rulebase">
+<code class="sig-prename descclassname">intense.rulebase.</code><code class="sig-name descname">apply_rulebase</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">file_path</span></em>, <em class="sig-param"><span class="n">root_output_folder</span></em>, <em class="sig-param"><span class="n">write_rulebase_gauge_files</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.rulebase.apply_rulebase" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="intense.rulebase.find_files">
+<code class="sig-prename descclassname">intense.rulebase.</code><code class="sig-name descname">find_files</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">root_folder</span></em>, <em class="sig-param"><span class="n">overwrite</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.rulebase.find_files" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="py function">
+<dt id="intense.rulebase.main">
+<code class="sig-prename descclassname">intense.rulebase.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">root_folder</span></em>, <em class="sig-param"><span class="n">summary_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.rulebase.main" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><p><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></p></li>
+<li><p><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></p></li>
+<li><p><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></p></li>
+</ul>
+</div>
+
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">INTENSE</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script>$('#searchbox').show(0);</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020, Newcastle University.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 3.0.1</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

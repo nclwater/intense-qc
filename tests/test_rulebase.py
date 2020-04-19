@@ -1,5 +1,5 @@
 from intense import rulebase
-from . import TestCase
+from unittest import TestCase
 
 root_folder = 'tests/sample_data'
 summary_path = 'tests/test_output/Rulebase_Summary.csv'
