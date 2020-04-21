@@ -19,29 +19,41 @@ Publication to be cited:
 
 June 2019
 """
+from typing import Tuple, List
+
 from .qc import read_intense_qc
 import pandas as pd
 import numpy as np
 import os
 
 
-def apply_rulebase(file_path, root_output_folder, write_rulebase_gauge_files=False):
+def apply_rulebase(file_path: str, root_output_folder: str, write_rulebase_gauge_files: bool = False) -> str:
+    """Applies rule base and creates a quality controlled time series
+
+    Args:
+        file_path: path to the INTENSE QC file
+        root_output_folder: folder in which to store the quality controlled data
+        write_rulebase_gauge_files: whether or not to write the rule base gauge files
+
+    Returns:
+        A summary of the quality controlled data
+    """
     qc = read_intense_qc(file_path)
-    rules = pd.DataFrame(index=qc.series.data.index)
-    print(qc.series.station_id)
+    rules = pd.DataFrame(index=qc.gauge.data.index)
+    print(qc.gauge.station_id)
     # ----------------------------------- Rulebase -----------------------------------
 
-    rules["orig_vals"] = qc.series.data
+    rules["orig_vals"] = qc.gauge.data
 
     # Calculate mean wet hour
-    mwh = qc.series.data[qc.series.data > 0].mean()
+    mwh = qc.gauge.data[qc.gauge.data > 0].mean()
 
     # R1: Exclude years where K largest = 0
     rules["R1"] = 0  # for rulebase flags
     for i in range(3):
         for year in qc.k_largest[i]:
             year = int(year)
-            rules.loc[qc.series.data.index.year == year, 'R1'] = 1
+            rules.loc[qc.gauge.data.index.year == year, 'R1'] = 1
 
     # R2: Exclude years where Q99/95 = 0
     # Now we only want to run it for Q99
@@ -143,18 +155,18 @@ def apply_rulebase(file_path, root_output_folder, write_rulebase_gauge_files=Fal
     rulebase_columns = ["R" + str(x) for x in range(1, 14 + 1) if x != 3]
     rules['RemoveFlag'] = rules[rulebase_columns].max(axis=1)
 
-    qc.series.data[rules['RemoveFlag'] != 0] = np.nan
+    qc.gauge.data[rules['RemoveFlag'] != 0] = np.nan
 
     # ------------------------------------ Output ------------------------------------
 
     # Update percentage missing data
-    qc.series.get_info()
+    qc.gauge.get_info()
 
     # Write file in INTENSE format
     output_folder = root_output_folder + "/QCd_Data/"
     if not os.path.exists(output_folder):
         os.mkdir(output_folder)
-    qc.series.write(output_folder)
+    qc.gauge.write(output_folder)
 
     # 08/10/2019 (DP)
     # Write out station file as csv
@@ -162,9 +174,9 @@ def apply_rulebase(file_path, root_output_folder, write_rulebase_gauge_files=Fal
         if not os.path.exists(root_output_folder + "/RuleFlags/"):
             os.mkdir(root_output_folder + "/RuleFlags/")
         # output_path = root_output_folder + "/RuleFlags/" + s.station_id + "_v7a_ruleflags.csv"
-        output_path = root_output_folder + "/RuleFlags/" + qc.series.station_id + ".csv"
+        output_path = root_output_folder + "/RuleFlags/" + qc.gauge.station_id + ".csv"
         if not os.path.exists(output_path):
-            qc.series.data.to_csv(output_path, index_label="DateTime", na_rep="nan")
+            qc.gauge.data.to_csv(output_path, index_label="DateTime", na_rep="nan")
 
     # **********
     # FOR MULTI-PROCESSING WITH RULE FLAG SUMMARY
@@ -173,7 +185,7 @@ def apply_rulebase(file_path, root_output_folder, write_rulebase_gauge_files=Fal
 
     # - Get percent missing from original and final - calculate difference
     percent_missing_original = rules.orig_vals.isnull().sum() * 100 / len(rules.orig_vals.values)
-    percent_missing_qcd = qc.series.data.isnull().sum() * 100 / len(qc.series.data.values)
+    percent_missing_qcd = qc.gauge.data.isnull().sum() * 100 / len(qc.gauge.data.values)
     percent_removed = percent_missing_qcd - percent_missing_original
 
     # - For removed hours, median number of rulebase flags
@@ -187,7 +199,7 @@ def apply_rulebase(file_path, root_output_folder, write_rulebase_gauge_files=Fal
     df1 = df1.to_frame()
     df1.columns = ["Value"]
     df1 = df1.loc[rulebase_columns]
-    df1 = df1 / len(qc.series.data) * 100.0
+    df1 = df1 / len(qc.gauge.data) * 100.0
 
     # - Append other quantities
     df1.loc["percent_missing_original", "Value"] = percent_missing_original
@@ -197,13 +209,22 @@ def apply_rulebase(file_path, root_output_folder, write_rulebase_gauge_files=Fal
 
     # For multiprocessing
     output_list = df1["Value"].tolist()
-    output_list.extend([qc.series.station_id, qc.series.latitude, qc.series.longitude, qc.series.number_of_records,
-                        file_path, qc.series.start_datetime, qc.series.end_datetime])
+    output_list.extend([qc.gauge.station_id, qc.gauge.latitude, qc.gauge.longitude, qc.gauge.number_of_records,
+                        file_path, qc.gauge.start_datetime, qc.gauge.end_datetime])
     output_line = ",".join(str(x) for x in output_list)
     return output_line
 
 
-def find_files(root_folder, overwrite=True):
+def find_files(root_folder: str, overwrite: bool = True) -> List[Tuple[str, str]]:
+    """Finds QC files to apply the rule base to
+
+    Args:
+        root_folder: the directory to search
+        overwrite: whether to include files which have already been processed
+
+    Returns:
+        A list of input file and output folder paths [(input_file, output_folder), ...]
+    """
     folders_to_check = sorted(os.listdir(root_folder))
     folders_to_check = [f for f in folders_to_check if f not in ['qcDebug', 'Superseded']]
 
@@ -225,13 +246,19 @@ def find_files(root_folder, overwrite=True):
             qcd_data_path = output_folder + "/QCd_Data/" + f.replace("_QC.txt", ".txt")
 
             if not os.path.exists(qcd_data_path) or overwrite:
-                tmp = [input_path, output_folder]
+                tmp = input_path, output_folder
                 file_paths.append(tmp)
 
     return file_paths
 
 
-def main(root_folder, summary_path, ):
+def find_and_apply_rulebase(root_folder: str, summary_path: str):
+    """Finds INTENSE QC files and applies the rulebase to create quality controlled time series
+
+    Args:
+        root_folder: path to the directory to search for INTENSE QC files
+        summary_path: path to create a summary file of the rulebase
+    """
 
     # get list of files to process
     file_paths = find_files(root_folder)

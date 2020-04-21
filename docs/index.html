@@ -370,156 +370,923 @@ SB, RV, others…</p>
 <p>June 2019</p>
 <dl class="py class">
 <dt id="intense.qc.Qc">
-<em class="property">class </em><code class="sig-prename descclassname">intense.qc.</code><code class="sig-name descname">Qc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">series</span></em>, <em class="sig-param"><span class="n">etccdi_data_folder</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_n_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_n_dates</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_n_coords</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_n_paths</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_n_tree</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_daily_neighbours</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">daily_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">daily_dates</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">daily_coords</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">tree</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_monthly_neighbours</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">monthly_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">monthly_dates</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">monthly_coords</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">monthly_tree</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_neighbours</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_neighbours_dry</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">daily_neighbours</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">daily_neighbours_dry</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">monthly_neighbours</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">world_record</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">Rx1day</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">CWD</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">CDD</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">daily_accumualtions</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">monthly_accumulations</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">streaks</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">percentiles</span><span class="o">=</span><span class="default_value">['NA', 'NA']</span></em>, <em class="sig-param"><span class="n">k_largest</span><span class="o">=</span><span class="default_value">['NA', 'NA', 'NA']</span></em>, <em class="sig-param"><span class="n">days_of_week</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">hours_of_day</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">intermittency</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">breakpoint</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">R99pTOT</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">PRCPTOT</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">change_min_value</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">offset</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">preQC_affinity_index</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">preQC_pearson_coefficient</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">factor_daily</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">factor_monthly</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="py method">
+<em class="property">class </em><code class="sig-prename descclassname">intense.qc.</code><code class="sig-name descname">Qc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">gauge</span></em>, <em class="sig-param"><span class="n">etccdi_data_folder</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_n_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_n_dates</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_n_coords</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_n_paths</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_n_tree</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_daily_neighbours</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">daily_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">daily_dates</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">daily_coords</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">daily_tree</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">use_monthly_neighbours</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">monthly_names</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">monthly_dates</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">monthly_coords</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">monthly_tree</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_neighbours</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">hourly_neighbours_dry</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">daily_neighbours</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">daily_neighbours_dry</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">monthly_neighbours</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">world_record</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">Rx1day</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">CWD</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">CDD</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">daily_accumulations</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">monthly_accumulations</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">streaks</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">percentiles</span><span class="o">=</span><span class="default_value">'NA', 'NA'</span></em>, <em class="sig-param"><span class="n">k_largest</span><span class="o">=</span><span class="default_value">'NA', 'NA', 'NA'</span></em>, <em class="sig-param"><span class="n">days_of_week</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">hours_of_day</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">intermittency</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">breakpoint</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">R99pTOT</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">PRCPTOT</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">change_min_value</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">offset</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">preQC_affinity_index</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">preQC_pearson_coefficient</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">factor_daily</span><span class="o">=</span><span class="default_value">'NA'</span></em>, <em class="sig-param"><span class="n">factor_monthly</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gauge</strong> (<a class="reference internal" href="#intense.gauge.Gauge" title="intense.gauge.Gauge"><code class="xref py py-class docutils literal notranslate"><span class="pre">Gauge</span></code></a>) – A Gauge object containing the original data and metadata</p></li>
+<li><p><strong>etccdi_data_folder</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – path to a folder containing ETCCDI data</p></li>
+<li><p><strong>hourly_n_names</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – names of neighbouring hourly gauges</p></li>
+<li><p><strong>hourly_n_dates</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code>]]]) – start and end dates of neighbouring hourly gauges</p></li>
+<li><p><strong>hourly_n_coords</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]]) – latitudes, longitudes and elevations of neighbouring hourly gauges</p></li>
+<li><p><strong>hourly_n_paths</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – paths to neighbouring hourly gauge data</p></li>
+<li><p><strong>hourly_n_tree</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">KDTree</span></code>]) – a k-d tree containing hourly gauge locations</p></li>
+<li><p><strong>use_daily_neighbours</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – whether to include neighbouring daily gauges in quality control</p></li>
+<li><p><strong>daily_names</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – names of neighbouring daily gauges</p></li>
+<li><p><strong>daily_dates</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code>]]]) – start and end dates of neighbouring daily gauges</p></li>
+<li><p><strong>daily_coords</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]]) – latitudes, longitudes and elevations of neighbouring daily gauges</p></li>
+<li><p><strong>daily_tree</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">KDTree</span></code>]) – a k-d tree containing daily gauge locations</p></li>
+<li><p><strong>use_monthly_neighbours</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – whether to include neighbouring monthly gauges in quality control</p></li>
+<li><p><strong>monthly_names</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]) – names of neighbouring monthly gauges</p></li>
+<li><p><strong>monthly_dates</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">datetime</span></code>]]]) – start and end dates of neighbouring monthly gauges</p></li>
+<li><p><strong>monthly_coords</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Iterable</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]]) – latitudes, longitudes and elevations of neighbouring monthly gauges</p></li>
+<li><p><strong>monthly_tree</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">KDTree</span></code>]) – a k-d tree containing monthly gauge locations</p></li>
+<li><p><strong>hourly_neighbours</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Series</span></code>]) – a series of hourly neighbour qc values</p></li>
+<li><p><strong>hourly_neighbours_dry</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Series</span></code>]) – a series of hourly neighbours dry qc values</p></li>
+<li><p><strong>daily_neighbours</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Series</span></code>]) – a series of daily neighbour qc values</p></li>
+<li><p><strong>daily_neighbours_dry</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Series</span></code>]) – a series of daily neighbours dry qc values</p></li>
+<li><p><strong>monthly_neighbours</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Series</span></code>]) – a series of monthly neighbour qc values</p></li>
+<li><p><strong>world_record</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Series</span></code>]) – a series of world record qc values</p></li>
+<li><p><strong>Rx1day</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Series</span></code>]) – a series of Rx1day qc values</p></li>
+<li><p><strong>CWD</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Series</span></code>]) – a series of CWD qc values</p></li>
+<li><p><strong>CDD</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Series</span></code>]) – a series of CDD qc values</p></li>
+<li><p><strong>daily_accumulations</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Series</span></code>]) – a series of daily accumulation qc values</p></li>
+<li><p><strong>monthly_accumulations</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Series</span></code>]) – a series of monthly accumulation qc values</p></li>
+<li><p><strong>streaks</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">Series</span></code>]) – a series of streaks qc values</p></li>
+<li><p><strong>percentiles</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – years where q95 equals 0 and years where q99 equals 0</p></li>
+<li><p><strong>k_largest</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – years where k1 equals 0,  years where k5 equals 0 and years where k10 equals 0</p></li>
+<li><p><strong>days_of_week</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – uneven distribution of rain over days of the week</p></li>
+<li><p><strong>hours_of_day</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – uneven distribution of rain over hours of the day</p></li>
+<li><p><strong>intermittency</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – years with intermittency issues</p></li>
+<li><p><strong>breakpoint</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – break point detected</p></li>
+<li><p><strong>R99pTOT</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – r99ptot checks</p></li>
+<li><p><strong>PRCPTOT</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – prcptot checks</p></li>
+<li><p><strong>change_min_value</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]]) – change flag and change list</p></li>
+<li><p><strong>offset</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – optimum offset</p></li>
+<li><p><strong>preQC_affinity_index</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – pre qc affinity index</p></li>
+<li><p><strong>preQC_pearson_coefficient</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – pre qc pearson coefficient</p></li>
+<li><p><strong>factor_daily</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – factor against nearest daily gauge</p></li>
+<li><p><strong>factor_monthly</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – factor against nearest monthly gauge</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="intense.qc.Qc.gauge">
+<code class="sig-name descname">gauge</code><a class="headerlink" href="#intense.qc.Qc.gauge" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gauge object containing the original data and metadata</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#intense.gauge.Gauge" title="intense.gauge.Gauge">Gauge</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.etcdii_data">
+<code class="sig-name descname">etcdii_data</code><a class="headerlink" href="#intense.qc.Qc.etcdii_data" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[dict]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.hourly_n_names">
+<code class="sig-name descname">hourly_n_names</code><a class="headerlink" href="#intense.qc.Qc.hourly_n_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>names of neighbouring hourly gauges</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[Iterable[str]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.hourly_n_dates">
+<code class="sig-name descname">hourly_n_dates</code><a class="headerlink" href="#intense.qc.Qc.hourly_n_dates" title="Permalink to this definition">¶</a></dt>
+<dd><p>start and end dates of neighbouring hourly
+gauges</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[Iterable[Tuple[datetime, datetime]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.hourly_n_coords">
+<code class="sig-name descname">hourly_n_coords</code><a class="headerlink" href="#intense.qc.Qc.hourly_n_coords" title="Permalink to this definition">¶</a></dt>
+<dd><p>latitudes, longitudes and elevations of
+neighbouring hourly gauges</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[Iterable[Tuple[float, float, float]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.hourly_n_paths">
+<code class="sig-name descname">hourly_n_paths</code><a class="headerlink" href="#intense.qc.Qc.hourly_n_paths" title="Permalink to this definition">¶</a></dt>
+<dd><p>paths to neighbouring hourly gauge data</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[Iterable[str]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.hourly_n_tree">
+<code class="sig-name descname">hourly_n_tree</code><a class="headerlink" href="#intense.qc.Qc.hourly_n_tree" title="Permalink to this definition">¶</a></dt>
+<dd><p>a k-d tree containing hourly gauge locations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[KDTree]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.use_daily_neighbours">
+<code class="sig-name descname">use_daily_neighbours</code><a class="headerlink" href="#intense.qc.Qc.use_daily_neighbours" title="Permalink to this definition">¶</a></dt>
+<dd><p>whether to include neighbouring daily gauges in quality control</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.daily_names">
+<code class="sig-name descname">daily_names</code><a class="headerlink" href="#intense.qc.Qc.daily_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>names of neighbouring daily gauges</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[Iterable[str]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.daily_dates">
+<code class="sig-name descname">daily_dates</code><a class="headerlink" href="#intense.qc.Qc.daily_dates" title="Permalink to this definition">¶</a></dt>
+<dd><p>start and end dates of neighbouring daily gauges</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[Iterable[Tuple[datetime, datetime]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.daily_coords">
+<code class="sig-name descname">daily_coords</code><a class="headerlink" href="#intense.qc.Qc.daily_coords" title="Permalink to this definition">¶</a></dt>
+<dd><p>latitudes, longitudes and elevations of
+neighbouring daily gauges</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[Iterable[Tuple[float, float, float]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.daily_tree">
+<code class="sig-name descname">daily_tree</code><a class="headerlink" href="#intense.qc.Qc.daily_tree" title="Permalink to this definition">¶</a></dt>
+<dd><p>a k-d tree containing daily gauge locations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[KDTree]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.use_monthly_neighbours">
+<code class="sig-name descname">use_monthly_neighbours</code><a class="headerlink" href="#intense.qc.Qc.use_monthly_neighbours" title="Permalink to this definition">¶</a></dt>
+<dd><p>whether to include neighbouring monthly gauges in quality
+control</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[Iterable[str]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.monthly_names">
+<code class="sig-name descname">monthly_names</code><a class="headerlink" href="#intense.qc.Qc.monthly_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>names of neighbouring monthly gauges</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[Iterable[str]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.monthly_dates">
+<code class="sig-name descname">monthly_dates</code><a class="headerlink" href="#intense.qc.Qc.monthly_dates" title="Permalink to this definition">¶</a></dt>
+<dd><p>start and end dates of neighbouring monthly
+gauges</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[Iterable[Tuple[datetime, datetime]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.monthly_coords">
+<code class="sig-name descname">monthly_coords</code><a class="headerlink" href="#intense.qc.Qc.monthly_coords" title="Permalink to this definition">¶</a></dt>
+<dd><p>latitudes, longitudes and elevations of
+neighbouring monthly gauges</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[Iterable[Tuple[float, float, float]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.monthly_tree">
+<code class="sig-name descname">monthly_tree</code><a class="headerlink" href="#intense.qc.Qc.monthly_tree" title="Permalink to this definition">¶</a></dt>
+<dd><p>a k-d tree containing monthly gauge locations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[KDTree]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.hourly_neighbours">
+<code class="sig-name descname">hourly_neighbours</code><a class="headerlink" href="#intense.qc.Qc.hourly_neighbours" title="Permalink to this definition">¶</a></dt>
+<dd><p>a series of hourly neighbour qc values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[pd.Series]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.hourly_neighbours_dry">
+<code class="sig-name descname">hourly_neighbours_dry</code><a class="headerlink" href="#intense.qc.Qc.hourly_neighbours_dry" title="Permalink to this definition">¶</a></dt>
+<dd><p>a series of hourly neighbours dry qc values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[pd.Series]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.daily_neighbours">
+<code class="sig-name descname">daily_neighbours</code><a class="headerlink" href="#intense.qc.Qc.daily_neighbours" title="Permalink to this definition">¶</a></dt>
+<dd><p>a series of daily neighbour qc values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[pd.Series]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.daily_neighbours_dry">
+<code class="sig-name descname">daily_neighbours_dry</code><a class="headerlink" href="#intense.qc.Qc.daily_neighbours_dry" title="Permalink to this definition">¶</a></dt>
+<dd><p>a series of daily neighbours dry qc values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[pd.Series]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.monthly_neighbours">
+<code class="sig-name descname">monthly_neighbours</code><a class="headerlink" href="#intense.qc.Qc.monthly_neighbours" title="Permalink to this definition">¶</a></dt>
+<dd><p>a series of monthly neighbour qc values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[pd.Series]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.world_record">
+<code class="sig-name descname">world_record</code><a class="headerlink" href="#intense.qc.Qc.world_record" title="Permalink to this definition">¶</a></dt>
+<dd><p>a series of world record qc values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[pd.Series]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.Rx1day">
+<code class="sig-name descname">Rx1day</code><a class="headerlink" href="#intense.qc.Qc.Rx1day" title="Permalink to this definition">¶</a></dt>
+<dd><p>a series of Rx1day qc values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[pd.Series]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.CWD">
+<code class="sig-name descname">CWD</code><a class="headerlink" href="#intense.qc.Qc.CWD" title="Permalink to this definition">¶</a></dt>
+<dd><p>a series of CWD qc values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[pd.Series]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.CDD">
+<code class="sig-name descname">CDD</code><a class="headerlink" href="#intense.qc.Qc.CDD" title="Permalink to this definition">¶</a></dt>
+<dd><p>a series of CDD qc values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[pd.Series]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.daily_accumulations">
+<code class="sig-name descname">daily_accumulations</code><a class="headerlink" href="#intense.qc.Qc.daily_accumulations" title="Permalink to this definition">¶</a></dt>
+<dd><p>a series of daily accumulation qc values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[pd.Series]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.monthly_accumulations">
+<code class="sig-name descname">monthly_accumulations</code><a class="headerlink" href="#intense.qc.Qc.monthly_accumulations" title="Permalink to this definition">¶</a></dt>
+<dd><p>a series of monthly accumulation qc values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[pd.Series]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.streaks">
+<code class="sig-name descname">streaks</code><a class="headerlink" href="#intense.qc.Qc.streaks" title="Permalink to this definition">¶</a></dt>
+<dd><p>a series of streaks qc values</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Optional[pd.Series]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.percentiles">
+<code class="sig-name descname">percentiles</code><a class="headerlink" href="#intense.qc.Qc.percentiles" title="Permalink to this definition">¶</a></dt>
+<dd><p>years where q95 equals 0 and years where q99 equals 0</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Iterable[str, str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.k_largest">
+<code class="sig-name descname">k_largest</code><a class="headerlink" href="#intense.qc.Qc.k_largest" title="Permalink to this definition">¶</a></dt>
+<dd><p>years where k1 equals 0,  years where k5 equals 0 and years where k10
+equals 0</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Iterable[str, str, str]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.days_of_week">
+<code class="sig-name descname">days_of_week</code><a class="headerlink" href="#intense.qc.Qc.days_of_week" title="Permalink to this definition">¶</a></dt>
+<dd><p>uneven distribution of rain over days of the week</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.hours_of_day">
+<code class="sig-name descname">hours_of_day</code><a class="headerlink" href="#intense.qc.Qc.hours_of_day" title="Permalink to this definition">¶</a></dt>
+<dd><p>uneven distribution of rain over hours of the day</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.intermittency">
+<code class="sig-name descname">intermittency</code><a class="headerlink" href="#intense.qc.Qc.intermittency" title="Permalink to this definition">¶</a></dt>
+<dd><p>years with intermittency issues</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.breakpoint">
+<code class="sig-name descname">breakpoint</code><a class="headerlink" href="#intense.qc.Qc.breakpoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>break point detected</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.R99pTOT">
+<code class="sig-name descname">R99pTOT</code><a class="headerlink" href="#intense.qc.Qc.R99pTOT" title="Permalink to this definition">¶</a></dt>
+<dd><p>r99ptot checks</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.PRCPTOT">
+<code class="sig-name descname">PRCPTOT</code><a class="headerlink" href="#intense.qc.Qc.PRCPTOT" title="Permalink to this definition">¶</a></dt>
+<dd><p>prcptot checks</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.change_min_value">
+<code class="sig-name descname">change_min_value</code><a class="headerlink" href="#intense.qc.Qc.change_min_value" title="Permalink to this definition">¶</a></dt>
+<dd><p>change flag and change list</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Union[str, Tuple[List[int], List[int]]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.offset">
+<code class="sig-name descname">offset</code><a class="headerlink" href="#intense.qc.Qc.offset" title="Permalink to this definition">¶</a></dt>
+<dd><p>optimum offset</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.preQC_affinity_index">
+<code class="sig-name descname">preQC_affinity_index</code><a class="headerlink" href="#intense.qc.Qc.preQC_affinity_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>pre qc affinity index</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.preQC_pearson_coefficient">
+<code class="sig-name descname">preQC_pearson_coefficient</code><a class="headerlink" href="#intense.qc.Qc.preQC_pearson_coefficient" title="Permalink to this definition">¶</a></dt>
+<dd><p>pre qc pearson coefficient</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.factor_daily">
+<code class="sig-name descname">factor_daily</code><a class="headerlink" href="#intense.qc.Qc.factor_daily" title="Permalink to this definition">¶</a></dt>
+<dd><p>factor against nearest daily gauge</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="intense.qc.Qc.factor_monthly">
+<code class="sig-name descname">factor_monthly</code><a class="headerlink" href="#intense.qc.Qc.factor_monthly" title="Permalink to this definition">¶</a></dt>
+<dd><p>factor against nearest monthly gauge</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt id="intense.qc.Qc.cdd_check">
 <code class="sig-name descname">cdd_check</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.cdd_check" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Consecutive dry days check
+ETCCDI provide an index for maximum length of dry spell.
+We can use this to see if there are a suspicious number of consecutive dry hours recorded.
+Consecutive Dry Days: Maximum length of dry spell, maximum number of consecutive days with RR &lt; 1mm:
+Let RRij be the daily precipitation amount on day i in period j.
+Count the largest number of consecutive days where: RRij &lt; 1mm</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Magnitudes of exceedence of the length of longest dry period</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.change_in_min_val_check">
 <code class="sig-name descname">change_in_min_val_check</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.change_in_min_val_check" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Change in minimum value check</p>
+<p>Change in minimum value: This is an homogeneity check to see if the resolution of the data has changed.
+Currently, I am including a flag if there is a year of no data as that seems pretty bad to me.</p>
+<p>Alternative implementation to return list of years where the minimum value &gt;0
+differs from the data precision/resolution identified in the raw (pre-QC) files</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Change flag and flagged years</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.check_break_point">
 <code class="sig-name descname">check_break_point</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.check_break_point" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Indicative, Pettitt breakpoint check</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>1 if p &lt; 0.01 or 0 if p &gt;= 0.01 of Pettitt test</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.check_daily_neighbours">
 <code class="sig-name descname">check_daily_neighbours</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.check_daily_neighbours" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Daily neighbours check against GPCC</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Flags, offset_flag, affinity index, correlation, factor, and dry flags</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.check_days_of_week">
 <code class="sig-name descname">check_days_of_week</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.check_days_of_week" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Indicative, checks if proportions of rainfall in each day is significantly different</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>1 if p &lt; 0.01 or 0 if p &gt;= 0.01 of T-test</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.check_hourly_neighbours">
 <code class="sig-name descname">check_hourly_neighbours</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.check_hourly_neighbours" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Hourly neighbours check against GSDR</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Flags and dry flags for each value</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.check_hours_of_day">
 <code class="sig-name descname">check_hours_of_day</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.check_hours_of_day" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Indicative, hourly analogue to daily check</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>1 if p &lt; 0.01 or 0 if p &gt;= 0.01 of T-test</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.check_intermittency">
 <code class="sig-name descname">check_intermittency</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.check_intermittency" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Annual check for discontinuous records.
+A no data period is defined as 2 or more consecutive missing values.
+Return years where more than 5 no data periods are bounded by zeros
+A no data period is defined as 2 or more consecutive missing values
+For a year to be flagged no data periods must occur in at least 5 different days</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Years where more than 5 no data periods are bounded by zeros.</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.check_k_largest">
 <code class="sig-name descname">check_k_largest</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.check_k_largest" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Checks K largest</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>The first, five and ten largest rainfall values</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.check_monthly_neighbours">
 <code class="sig-name descname">check_monthly_neighbours</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.check_monthly_neighbours" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Monthly neighbours check</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Flags and factor flags</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.check_percentiles">
 <code class="sig-name descname">check_percentiles</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.check_percentiles" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Indicative check to flag years with 95th or 99th percentiles equal to zero.
+:rtype: <code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]]
+:returns: Years where 95th and 99th percentiles are zero</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p>Tuple[List[int], List[int]]</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.cwd_check">
 <code class="sig-name descname">cwd_check</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.cwd_check" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Consecutive wet days check
+ETCCDI provide an index for maximum length of wet spell.
+We can use this to see if there are a suspicious number of consecutive wet hours recorded.
+Consecutive Wet Days: Maximum length of wet spell, maximum number of consecutive days with RR = 1mm:
+Let RRij be the daily precipitation amount on day i in period j.
+Count the largest number of consecutive days where: RRij = 1mm</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Magnitudes of exceedence of the length of longest wet period</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.daily_accums_check">
 <code class="sig-name descname">daily_accums_check</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.daily_accums_check" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Check daily accumulations
+Suspect daily accumulations flagged where a recorded rainfall amount at these times is preceded by 23 hours
+with no rain. A threshold of 2x the mean wet day amount for the corresponding month is applied to increase the
+chance of identifying accumulated values at the expense of genuine, moderate events.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of flags</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.find_daily_neighbours">
 <code class="sig-name descname">find_daily_neighbours</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.find_daily_neighbours" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Helper function, finds daily neighbour stations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Names of neighbouring daily stations</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.find_hourly_neighbours">
 <code class="sig-name descname">find_hourly_neighbours</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.find_hourly_neighbours" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt id="intense.qc.Qc.find_identical_by_id">
-<code class="sig-name descname">find_identical_by_id</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">neighbour</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.find_identical_by_id" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Helper function, finds hourly neighbour stations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>], <code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Names and paths of neighbouring hourly stations</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.find_monthly_neighbours">
 <code class="sig-name descname">find_monthly_neighbours</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.find_monthly_neighbours" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Helper function, finds monthly neighbour stations</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-data docutils literal notranslate"><span class="pre">Optional</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Names of neighbouring monthly stations</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.get_flags">
 <code class="sig-name descname">get_flags</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.get_flags" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Runs all quality control checks</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><a class="reference internal" href="#intense.qc.Qc" title="intense.qc.Qc"><code class="xref py py-class docutils literal notranslate"><span class="pre">Qc</span></code></a></p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>This Qc object</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.get_sdii">
 <code class="sig-name descname">get_sdii</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.get_sdii" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Simple precipitation intensity index</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>SDII from ETCCDI and from gauge values</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.monthly_accums_check">
 <code class="sig-name descname">monthly_accums_check</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.monthly_accums_check" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py method">
-<dt id="intense.qc.Qc.monthly_accums_day_check">
-<code class="sig-name descname">monthly_accums_day_check</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">mean_wet_day_val</span></em>, <em class="sig-param"><span class="n">mean_wet_day_val_filled</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.monthly_accums_day_check" title="Permalink to this definition">¶</a></dt>
-<dd><p>Suspect monthly accumulations.
-Identified where only one hourly value is reported over a period of a month
-and that value exceeds the mean wet hour amount for the corresponding month.</p>
+<dd><p>Check monthly accumulations
+Flags month prior to high value</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code>]]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of flags</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.prcptot_check_annual">
 <code class="sig-name descname">prcptot_check_annual</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.prcptot_check_annual" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Indicative check against annual total: PRCPTOT. Annual total precipitation in wet days:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Magnitudes of exceedance for yearly totals</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.r99ptot_check_annual">
 <code class="sig-name descname">r99ptot_check_annual</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.r99ptot_check_annual" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Indicative check against R99pTOT: R99pTOT. Annual total PRCP when RR &gt; 99p:</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Magnitudes of exceedance for yearly 99th percentiles</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.rx1day_check_ts">
 <code class="sig-name descname">rx1day_check_ts</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.rx1day_check_ts" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Checks hourly values against maximum 1-day precipitation</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Magnitudes of exceedance for each day</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.streaks_check">
 <code class="sig-name descname">streaks_check</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.streaks_check" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Streaks check</p>
+<p>Streaks: This is where you see the same value repeated in a run.
+Currently this records streaks of 2hrs in a row or more over 2 x Monthly mean rainfall.
+It is considered to be unlikely that you would see even 2 consecutive large rainfall amounts.
+For this code I have substituted the monthly mean rainfall for SDII as I want the thresholds
+to be independent of the rainfall time series as the global dataset is of highly variable quality.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A list of flags</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.world_record_check_ts">
 <code class="sig-name descname">world_record_check_ts</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.world_record_check_ts" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Checks if and to what degree the world record has been exceeded by each rainfall value</p>
+<dl class="field-list simple">
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code>]</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>4, 3, 2 or 1 if exceeded by &gt; 1.5x, 1.33x, 1.22x or 0x respectively and 0 if not exceeded for each value</p>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py method">
 <dt id="intense.qc.Qc.write">
 <code class="sig-name descname">write</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">directory</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.Qc.write" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Write flags and values to a text file named &lt;station_id&gt;_QC.txt</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>directory</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – the path to the directory to create the file in</p>
+</dd>
+</dl>
+</dd></dl>
 
 </dd></dl>
 
 <dl class="py function">
-<dt id="intense.qc.install_r_package">
-<code class="sig-prename descclassname">intense.qc.</code><code class="sig-name descname">install_r_package</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">package_name</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.install_r_package" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
 <dt id="intense.qc.read_intense_qc">
-<code class="sig-prename descclassname">intense.qc.</code><code class="sig-name descname">read_intense_qc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path</span></em>, <em class="sig-param"><span class="n">only_metadata</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">opened</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.read_intense_qc" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<code class="sig-prename descclassname">intense.qc.</code><code class="sig-name descname">read_intense_qc</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">path_or_stream</span></em>, <em class="sig-param"><span class="n">only_metadata</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.qc.read_intense_qc" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read flags and rainfall values from an INTENSE QC file</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>path_or_stream</strong> (<code class="xref py py-data docutils literal notranslate"><span class="pre">Union</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">IO</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]) – a path of the file to read from or an I/O stream</p></li>
+<li><p><strong>only_metadata</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – if True then stop reading after metadata</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 </div>
 <div class="section" id="module-intense.rulebase">
@@ -546,17 +1313,57 @@ SB, RV, others…</p>
 <dl class="py function">
 <dt id="intense.rulebase.apply_rulebase">
 <code class="sig-prename descclassname">intense.rulebase.</code><code class="sig-name descname">apply_rulebase</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">file_path</span></em>, <em class="sig-param"><span class="n">root_output_folder</span></em>, <em class="sig-param"><span class="n">write_rulebase_gauge_files</span><span class="o">=</span><span class="default_value">False</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.rulebase.apply_rulebase" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Applies rule base and creates a quality controlled time series</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>file_path</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – path to the INTENSE QC file</p></li>
+<li><p><strong>root_output_folder</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – folder in which to store the quality controlled data</p></li>
+<li><p><strong>write_rulebase_gauge_files</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – whether or not to write the rule base gauge files</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A summary of the quality controlled data</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="intense.rulebase.find_and_apply_rulebase">
+<code class="sig-prename descclassname">intense.rulebase.</code><code class="sig-name descname">find_and_apply_rulebase</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">root_folder</span></em>, <em class="sig-param"><span class="n">summary_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.rulebase.find_and_apply_rulebase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Finds INTENSE QC files and applies the rulebase to create quality controlled time series</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>root_folder</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – path to the directory to search for INTENSE QC files</p></li>
+<li><p><strong>summary_path</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – path to create a summary file of the rulebase</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
 
 <dl class="py function">
 <dt id="intense.rulebase.find_files">
 <code class="sig-prename descclassname">intense.rulebase.</code><code class="sig-name descname">find_files</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">root_folder</span></em>, <em class="sig-param"><span class="n">overwrite</span><span class="o">=</span><span class="default_value">True</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.rulebase.find_files" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
-
-<dl class="py function">
-<dt id="intense.rulebase.main">
-<code class="sig-prename descclassname">intense.rulebase.</code><code class="sig-name descname">main</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">root_folder</span></em>, <em class="sig-param"><span class="n">summary_path</span></em><span class="sig-paren">)</span><a class="headerlink" href="#intense.rulebase.main" title="Permalink to this definition">¶</a></dt>
-<dd></dd></dl>
+<dd><p>Finds QC files to apply the rule base to</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>root_folder</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>) – the directory to search</p></li>
+<li><p><strong>overwrite</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">bool</span></code>) – whether to include files which have already been processed</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type</dt>
+<dd class="field-even"><p><code class="xref py py-class docutils literal notranslate"><span class="pre">List</span></code>[<code class="xref py py-data docutils literal notranslate"><span class="pre">Tuple</span></code>[<code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code>]]</p>
+</dd>
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>A list of input file and output folder paths [(input_file, output_folder), …]</p>
+</dd>
+</dl>
+</dd></dl>
 
 </div>
 </div>

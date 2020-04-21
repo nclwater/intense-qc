@@ -7,4 +7,4 @@ summary_path = 'tests/test_output/Rulebase_Summary.csv'
 
 class TestRuleBase(TestCase):
     def test_main(self):
-        rulebase.main(root_folder, summary_path)
+        rulebase.find_and_apply_rulebase(root_folder, summary_path)

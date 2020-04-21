@@ -5,6 +5,10 @@ import time
 import math
 import scipy.spatial as sp
 import subprocess
+
+from rpy2.robjects import StrVector
+from rpy2.robjects.packages import importr
+
 from intense import gauge as ex
 import pandas as pd
 import numpy as np
@@ -280,6 +284,33 @@ def daily_accums_day_check(day_list, mean_wet_day_val, mean_wet_day_val_filled):
         flag = 0
 
     return flag
+
+def monthly_accums_day_check(month_list, mean_wet_day_val, mean_wet_day_val_filled):
+    """Monthly accumulations check
+    Identified where only one hourly value is reported over a period of a month
+    and that value exceeds the mean wet hour amount for the corresponding month.
+    """
+
+    if month_list[719] > 0:
+        dry_hours = 0
+        for i in range(719):
+            if month_list[i] <= 0:
+                dry_hours += 1
+        if dry_hours == 719:
+            if np.isnan(mean_wet_day_val):
+                if month_list[719] > mean_wet_day_val_filled * 2:
+                    return 2
+                else:
+                    return 0
+            else:
+                if month_list[719] > mean_wet_day_val * 2:
+                    return 1
+                else:
+                    return 0
+        else:
+            return 0
+    else:
+        return 0
 
 # Coordinate system conversion
 def geodetic_to_ecef(lat, lon, h):
@@ -1209,3 +1240,8 @@ def try_list(test_list):
         v = np.nan
     return v
 
+
+def install_r_package(package_name):
+    """Installs """
+    utils = importr('utils')
+    utils.install_packages(StrVector([package_name]), repos='http://cran.us.r-project.org')
