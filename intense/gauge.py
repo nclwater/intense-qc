@@ -1,7 +1,7 @@
 """
-INTENSE QC Component 1 - Series class definition
+INTENSE QC Component 1 - Gauge class definition
 
-This component of the INTENSE QC package defines the Series class and multiple 
+This component of the INTENSE QC package defines the Gauge class and multiple
 utility functions required by the other components of the QC package to read and write
 rainfall timeseries objects in the standard INTENSE format. 
 
@@ -24,32 +24,78 @@ from __future__ import division
 import os
 import numpy as np
 import pandas as pd
-import netCDF4
+from . import utils
 from datetime import datetime
+from typing import IO, Union
 
 """
 ------------------------------- INTENSE Series definition -------------------------------
 """
 
 
-class Series:
+class Gauge:
+    """
+    Args:
+        station_id: The ID of the station
+        path_to_original_data: path to the file which held the data in its original format
+        latitude: the latitude of the station
+        longitude: the longitude of the station
+        original_timestep: the time between each original observation
+        original_units: the units of the original observations
+        new_units: the units that the original observations were converted into
+        new_timestep: the time between each resampled observation
+        data: a time series of rainfall depth observations
+        elevation: the elevation of the station
+        country: the country code of the station,
+        original_station_number: the ID number from the original observations
+        original_station_name: the original name of the station
+        time_zone: the time zone that the observations were recorded in
+        daylight_saving_info: if the observations include daylight savings
+        other: any other relevant details
+
+    Attributes:
+        station_id (str): The ID of the station
+        country (str): the country code of the station
+        elevation (str): the elevation of the station
+        original_station_number (str): the ID number from the original observations
+        original_station_name (str): the original name of the station
+        path_to_original_data (str): path to the file which held the data in its original format
+        latitude (float): the latitude of the station
+        longitude (float): the longitude of the station
+        data (pd.Series): a time series of rainfall depth observations
+        no_data_value (int): the value used to represent missing data
+        masked: a subset of data where values are not missing
+        start_datetime: the time at which the first observation was recorded
+        end_datetime: the time at which the most recent obseration was recorded
+        number_of_records: the number of records (including missing data)
+        percent_missing_data: the percentage of all records that are missing
+        original_timestep: the time between each original observation
+        original_units: the units of the original observations
+        new_units: the units that the original observations were converted into
+        time_zone: the time zone that the observations were recorded in
+        daylight_saving_info: if the observations include daylight savings
+        resolution: the pandas offset alias describing the frequency of observations
+        new_timestep: the time between each resampled observation
+        other: any other relevant details
+
+    """
     def __init__(self,
-                 station_id,
-                 path_to_original_data,
-                 latitude,
-                 longitude,
-                 original_timestep,
-                 original_units,
-                 new_units,
-                 new_timestep,
-                 data=None,
-                 elevation='NA',
-                 country='NA',
-                 original_station_number='NA',
-                 original_station_name='NA',
-                 time_zone='NA',
-                 daylight_saving_info='NA',
-                 other='',
+                 station_id: str,
+                 path_to_original_data: str,
+                 latitude: float,
+                 longitude: float,
+                 original_timestep: str,
+                 original_units: str,
+                 new_units: str,
+                 new_timestep: str,
+                 data: pd.Series = None,
+                 elevation: str = 'NA',
+                 country: str = 'NA',
+                 original_station_number: str = 'NA' ,
+                 original_station_name: str = 'NA',
+                 time_zone: str = 'NA',
+                 daylight_saving_info: str = 'NA',
+                 other: str = ''
                  ):
         self.station_id = station_id
         self.country = country
@@ -78,6 +124,7 @@ class Series:
             self.get_info()
 
     def get_info(self):
+        """Updates masked, start and end times, number of records, percent missing and resolution based on data"""
         self.masked = self.data[self.data != self.no_data_value]
         self.start_datetime = min(self.data.index)
         self.end_datetime = max(self.data.index)
@@ -86,7 +133,13 @@ class Series:
         self.resolution = self.data[self.data != self.no_data_value].diff()[
             self.data[self.data != self.no_data_value].diff() > 0].abs().min()
 
-    def write(self, directory):
+    def write(self, directory: str):
+        """Writes data and metadata to a file named using the station ID
+
+        Args:
+            directory: the directory in which to create the text file
+        """
+
         if not os.path.exists(directory):
             os.mkdir(directory)
         with open(os.path.join(directory, self.station_id) + '.txt', 'w') as o:
@@ -120,47 +173,25 @@ class Series:
             output_data[np.isnan(output_data)] = -999
             o.writelines([('%f' % v).rstrip('0').rstrip('.') + '\n' for v in output_data])
 
-    def monthly_max(self):
+    def monthly_max(self) -> pd.Series:
+        """Returns the monthly maximum value from masked"""
         return self.masked.groupby(pd.TimeGrouper('M')).max()
 
 
-def try_float(test_val):
-    try:
-        v = float(test_val)
-    except:
-        v = np.nan
-    return v
+def read_intense(path_or_stream: Union[str, IO], only_metadata: bool = False) -> Gauge:
+    """Reads data and metadata from a text file
 
+    Args:
+        path_or_stream: a path of the file to read from or an I/O stream
+        only_metadata: if True then stop reading after metadata
 
-def try_int(test_val):
-    try:
-        v = int(test_val)
-    except:
-        v = np.nan
-    return v
-
-
-def try_strptime(test_val):
-    try:
-        v = datetime.strptime(test_val, '%Y%m%d%H')
-    except:
-        v = np.nan
-    return v
-
-
-def try_list(test_list):
-    try:
-        v = [try_int(i) for i in test_list[1:-1].split(", ")]
-    except:
-        v = np.nan
-    return v
-
-
-def read_intense(path, only_metadata=False, opened=False):
+    Returns:
+        An intense.Gauge object
+    """
     metadata = []
-    if not opened:
+    if type(path_or_stream) == str:
         try:
-            with open(path, 'rb') as f:
+            with open(path_or_stream, 'rb') as f:
                 while True:
                     key, val = f.readline().strip().split(':', maxsplit=1)
                     key = key.lower()
@@ -172,7 +203,7 @@ def read_intense(path, only_metadata=False, opened=False):
                 else:
                     data = f.readlines()
         except:
-            with open(path, 'r') as f:
+            with open(path_or_stream, 'r') as f:
                 while True:
                     key, val = f.readline().strip().split(':', maxsplit=1)
                     key = key.lower()
@@ -185,7 +216,7 @@ def read_intense(path, only_metadata=False, opened=False):
                     data = f.readlines()
 
     else:
-        f = path
+        f = path_or_stream
         while True:
             key, val = str(f.readline().strip())[2:-1].split(':', maxsplit=1)
             key = key.lower()
@@ -218,68 +249,26 @@ def read_intense(path, only_metadata=False, opened=False):
                              dtype=float)
         data = data.where(data >= 0)
 
-    s = Series(station_id=metadata['station id'],
-               path_to_original_data=metadata['path to original data'],
-               latitude=try_float(metadata['latitude']),
-               longitude=try_float(metadata['longitude']),
-               original_timestep=metadata['original timestep'],
-               original_units=metadata['original units'],
-               new_units=metadata['new units'],
-               new_timestep=metadata['new timestep'],
-               data=data,
-               elevation=metadata['elevation'],
-               country=metadata['country'],
-               original_station_number=metadata['original station number'],
-               original_station_name=metadata['original station name'],
-               time_zone=metadata['time zone'])
+    gauge = Gauge(station_id=metadata['station id'],
+                  path_to_original_data=metadata['path to original data'],
+                  latitude=utils.try_float(metadata['latitude']),
+                  longitude=utils.try_float(metadata['longitude']),
+                  original_timestep=metadata['original timestep'],
+                  original_units=metadata['original units'],
+                  new_units=metadata['new units'],
+                  new_timestep=metadata['new timestep'],
+                  data=data,
+                  elevation=metadata['elevation'],
+                  country=metadata['country'],
+                  original_station_number=metadata['original station number'],
+                  original_station_name=metadata['original station name'],
+                  time_zone=metadata['time zone'])
     try:
-        s.number_of_records = int(metadata['number of records'])
+        gauge.number_of_records = int(metadata['number of records'])
     except:
-        s.number_of_records = int(metadata['number of hours'])
-    s.percent_missing_data = try_float(metadata['percent missing data'])
-    s.resolution = try_float(metadata['resolution'])
-    s.start_datetime = try_strptime(metadata['start datetime'])
-    s.end_datetime = try_strptime(metadata['end datetime'])
-    return s
-
-
-def convert_isd(in_path, out_path):
-    if not os.path.exists(out_path):
-        os.mkdir(out_path)
-    f = netCDF4.Dataset(in_path)
-    time = f.variables['time'][:]
-    precip = f.variables['precip1_depth'][:]
-    periods = f.variables['precip1_period'][:]
-    if isinstance(periods, np.ma.MaskedArray):
-        precip = precip.data
-        periods = periods.data
-
-    for period in np.unique(periods)[np.unique(periods) > 0]:
-        mask = np.logical_and(periods == period, precip >= 0)
-
-        if len(precip[mask]) > 1:
-            times = netCDF4.num2date(time[mask], f.variables['time'].units)
-            datetimes = pd.date_range(start=min(times), end=max(times), freq=str(period) + 'H')
-
-            data = pd.Series(precip[mask],
-                             index=times)
-            data = data.reindex(datetimes)
-            data = data[data.first_valid_index():data.last_valid_index()]
-            data[pd.isnull(data)] = -999
-
-            series = Series(station_id='ISD_%s' % f.station_id,
-                            path_to_original_data=in_path,
-                            latitude=f.latitude,
-                            longitude=f.longitude,
-                            original_timestep='%shr' % period,
-                            original_units='mm',
-                            new_units='mm',
-                            new_timestep='%shr' % period,
-                            data=data,
-                            elevation='%sm' % f.elevation,
-                            original_station_number=f.station_id,
-                            time_zone='UTC')
-            path = os.path.join(out_path, '%shr' % period)
-            if not os.path.exists(path):
-                os.mkdir(path)
-            series.write(path)
+        gauge.number_of_records = int(metadata['number of hours'])
+    gauge.percent_missing_data = utils.try_float(metadata['percent missing data'])
+    gauge.resolution = utils.try_float(metadata['resolution'])
+    gauge.start_datetime = utils.try_strptime(metadata['start datetime'])
+    gauge.end_datetime = utils.try_strptime(metadata['end datetime'])
+    return gauge

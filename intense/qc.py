@@ -2,7 +2,7 @@
 INTENSE QC Component 2 - Quality Control
 
 This component of the INTENSE QC package reads rainfall data formatted as an INTENSE
-Series and executes the flagging process by which the data is checked. 
+Gauge and executes the flagging process by which the data is checked. 
 NO DATA IS EXCLUDED IN THIS CODE!
 To exclude flagged data use component 3: Rulebase. 
 
@@ -17,7 +17,7 @@ Data is read in by the INTENSE module as
     
     
 The INTENSE object looks like this:
-    s =  Series(station_id=metadata['station id'],
+    s =  Gauge(station_id=metadata['station id'],
                 path_to_original_data=metadata['path to original data'],
                 latitude=tryFloat(metadata['latitude']),
                 longitude=tryFloat(metadata['longitude']),
@@ -62,82 +62,172 @@ import rpy2.robjects as robjects
 from rpy2.robjects.packages import importr
 import scipy.interpolate
 import scipy.stats
-from rpy2.robjects.vectors import StrVector
 from rpy2.rinterface import RRuntimeError
+from typing import Optional, Iterable, Tuple, List, Union, IO
+from scipy.spatial import KDTree
 
-from intense.intense import try_float, try_list, try_int
-from .intense import Series
-from intense import utils
-
-
-def install_r_package(package_name):
-    utils = importr('utils')
-    utils.install_packages(StrVector([package_name]), repos ='http://cran.us.r-project.org')
-
+from .gauge import Gauge
+from . import utils
 
 try:
     trend = importr('trend')
 except RRuntimeError:
     # Had to run line below on macOS:
     # sudo installer -pkg /Library/Developer/CommandLineTools/Packages/macOS_SDK_headers_for_macOS_10.14.pkg -target /
-    install_r_package('trend')
+    utils.install_r_package('trend')
     trend = importr('trend')
-
-"""
-+++++++++++++++++++++++++++++++++++++++++++ Basic checks +++++++++++++++++++++++++++++++++++++++++++
-"""
 
 
 class Qc:
+    """
+    Args:
+        gauge: A Gauge object containing the original data and metadata
+        etccdi_data_folder: path to a folder containing ETCCDI data
+        hourly_n_names: names of neighbouring hourly gauges
+        hourly_n_dates: start and end dates of neighbouring hourly gauges
+        hourly_n_coords: latitudes, longitudes and elevations of neighbouring hourly gauges
+        hourly_n_paths: paths to neighbouring hourly gauge data
+        hourly_n_tree: a k-d tree containing hourly gauge locations
+        use_daily_neighbours: whether to include neighbouring daily gauges in quality control
+        daily_names: names of neighbouring daily gauges
+        daily_dates: start and end dates of neighbouring daily gauges
+        daily_coords: latitudes, longitudes and elevations of neighbouring daily gauges
+        daily_tree: a k-d tree containing daily gauge locations
+        use_monthly_neighbours: whether to include neighbouring monthly gauges in quality control
+        monthly_names: names of neighbouring monthly gauges
+        monthly_dates: start and end dates of neighbouring monthly gauges
+        monthly_coords: latitudes, longitudes and elevations of neighbouring monthly gauges
+        monthly_tree: a k-d tree containing monthly gauge locations
+        hourly_neighbours: a series of hourly neighbour qc values
+        hourly_neighbours_dry: a series of hourly neighbours dry qc values
+        daily_neighbours: a series of daily neighbour qc values
+        daily_neighbours_dry: a series of daily neighbours dry qc values
+        monthly_neighbours: a series of monthly neighbour qc values
+        world_record: a series of world record qc values
+        Rx1day: a series of Rx1day qc values
+        CWD: a series of CWD qc values
+        CDD: a series of CDD qc values
+        daily_accumulations: a series of daily accumulation qc values
+        monthly_accumulations: a series of monthly accumulation qc values
+        streaks: a series of streaks qc values
+        percentiles: years where q95 equals 0 and years where q99 equals 0
+        k_largest: years where k1 equals 0,  years where k5 equals 0 and years where k10 equals 0
+        days_of_week: uneven distribution of rain over days of the week
+        hours_of_day: uneven distribution of rain over hours of the day
+        intermittency: years with intermittency issues
+        breakpoint: break point detected
+        R99pTOT: r99ptot checks
+        PRCPTOT: prcptot checks
+        change_min_value: change flag and change list
+        offset: optimum offset
+        preQC_affinity_index: pre qc affinity index
+        preQC_pearson_coefficient: pre qc pearson coefficient
+        factor_daily: factor against nearest daily gauge
+        factor_monthly: factor against nearest monthly gauge
+
+    Attributes:
+        gauge (Gauge): Gauge object containing the original data and metadata
+        etcdii_data (Optional[dict]) = the ETCDII data
+        hourly_n_names (Optional[Iterable[str]]): names of neighbouring hourly gauges
+        hourly_n_dates (Optional[Iterable[Tuple[datetime, datetime]]]): start and end dates of neighbouring hourly
+            gauges
+        hourly_n_coords(Optional[Iterable[Tuple[float, float, float]]]): latitudes, longitudes and elevations of
+            neighbouring hourly gauges
+        hourly_n_paths (Optional[Iterable[str]]): paths to neighbouring hourly gauge data
+        hourly_n_tree (Optional[KDTree]): a k-d tree containing hourly gauge locations
+        use_daily_neighbours (bool): whether to include neighbouring daily gauges in quality control
+        daily_names (Optional[Iterable[str]]): names of neighbouring daily gauges
+        daily_dates (Optional[Iterable[Tuple[datetime, datetime]]]): start and end dates of neighbouring daily gauges
+        daily_coords (Optional[Iterable[Tuple[float, float, float]]]): latitudes, longitudes and elevations of
+            neighbouring daily gauges
+        daily_tree (Optional[KDTree]): a k-d tree containing daily gauge locations
+        use_monthly_neighbours (Optional[Iterable[str]]): whether to include neighbouring monthly gauges in quality
+            control
+        monthly_names (Optional[Iterable[str]]): names of neighbouring monthly gauges
+        monthly_dates (Optional[Iterable[Tuple[datetime, datetime]]]): start and end dates of neighbouring monthly
+            gauges
+        monthly_coords (Optional[Iterable[Tuple[float, float, float]]]): latitudes, longitudes and elevations of
+            neighbouring monthly gauges
+        monthly_tree (Optional[KDTree]): a k-d tree containing monthly gauge locations
+        hourly_neighbours (Optional[pd.Series]): a series of hourly neighbour qc values
+        hourly_neighbours_dry (Optional[pd.Series]): a series of hourly neighbours dry qc values
+        daily_neighbours (Optional[pd.Series]): a series of daily neighbour qc values
+        daily_neighbours_dry (Optional[pd.Series]): a series of daily neighbours dry qc values
+        monthly_neighbours (Optional[pd.Series]): a series of monthly neighbour qc values
+        world_record (Optional[pd.Series]): a series of world record qc values
+        Rx1day (Optional[pd.Series]): a series of Rx1day qc values
+        CWD (Optional[pd.Series]): a series of CWD qc values
+        CDD (Optional[pd.Series]): a series of CDD qc values
+        daily_accumulations (Optional[pd.Series]): a series of daily accumulation qc values
+        monthly_accumulations (Optional[pd.Series]): a series of monthly accumulation qc values
+        streaks (Optional[pd.Series]): a series of streaks qc values
+        percentiles (Iterable[str, str]): years where q95 equals 0 and years where q99 equals 0
+        k_largest (Iterable[str, str, str]): years where k1 equals 0,  years where k5 equals 0 and years where k10
+            equals 0
+        days_of_week (str): uneven distribution of rain over days of the week
+        hours_of_day (str): uneven distribution of rain over hours of the day
+        intermittency (str): years with intermittency issues
+        breakpoint (str): break point detected
+        R99pTOT (str): r99ptot checks
+        PRCPTOT (str): prcptot checks
+        change_min_value (Union[str, Tuple[List[int], List[int]]]): change flag and change list
+        offset (str): optimum offset
+        preQC_affinity_index (str): pre qc affinity index
+        preQC_pearson_coefficient (str): pre qc pearson coefficient
+        factor_daily (str): factor against nearest daily gauge
+        factor_monthly (str): factor against nearest monthly gauge
+        
+    """
 
     def __init__(self,
-                 series: Series,
-                 etccdi_data_folder=None,
-                 hourly_n_names=None,
-                 hourly_n_dates=None,
-                 hourly_n_coords=None,
-                 hourly_n_paths=None,
-                 hourly_n_tree=None,
-                 use_daily_neighbours=False,
-                 daily_names=None,
-                 daily_dates=None,
-                 daily_coords=None,
-                 tree=None,
-                 use_monthly_neighbours=False,
-                 monthly_names=None,
-                 monthly_dates=None,
-                 monthly_coords=None,
-                 monthly_tree=None,
+                 gauge: Gauge,
+                 etccdi_data_folder: Optional[str] = None,
+                 hourly_n_names: Optional[Iterable[str]] = None,
+                 hourly_n_dates: Optional[Iterable[Tuple[datetime, datetime]]] = None,
+                 hourly_n_coords: Optional[Iterable[Tuple[float, float, float]]] = None,
+                 hourly_n_paths: Optional[Iterable[str]] = None,
+                 hourly_n_tree: Optional[KDTree] = None,
 
-                 hourly_neighbours=None,
-                 hourly_neighbours_dry=None,
-                 daily_neighbours=None,
-                 daily_neighbours_dry=None,
-                 monthly_neighbours=None,
-                 world_record=None,
-                 Rx1day=None,
-                 CWD=None,
-                 CDD=None,
-                 daily_accumualtions=None,
-                 monthly_accumulations=None,
-                 streaks=None,
-                 percentiles=["NA", "NA"],
-                 k_largest=["NA", "NA", "NA"],
-                 days_of_week="NA",
-                 hours_of_day="NA",
-                 intermittency="NA",
-                 breakpoint="NA",
-                 R99pTOT="NA",
-                 PRCPTOT="NA",
-                 change_min_value="NA",
-                 offset="NA",
-                 preQC_affinity_index="NA",
-                 preQC_pearson_coefficient="NA",
-                 factor_daily="NA",
-                 factor_monthly=None
-                 
+                 use_daily_neighbours: bool = False,
+                 daily_names: Optional[Iterable[str]] = None,
+                 daily_dates: Optional[Iterable[Tuple[datetime, datetime]]] = None,
+                 daily_coords: Optional[Iterable[Tuple[float, float, float]]] = None,
+                 daily_tree: Optional[KDTree] = None,
+
+                 use_monthly_neighbours: Optional[Iterable[str]] = False,
+                 monthly_names: Optional[Iterable[str]] = None,
+                 monthly_dates: Optional[Iterable[Tuple[datetime, datetime]]] = None,
+                 monthly_coords: Optional[Iterable[Tuple[float, float, float]]] = None,
+                 monthly_tree: Optional[KDTree] = None,
+
+                 hourly_neighbours: Optional[pd.Series] = None,
+                 hourly_neighbours_dry: Optional[pd.Series] = None,
+                 daily_neighbours: Optional[pd.Series] = None,
+                 daily_neighbours_dry: Optional[pd.Series] = None,
+                 monthly_neighbours: Optional[pd.Series] = None,
+                 world_record: Optional[pd.Series] = None,
+                 Rx1day: Optional[pd.Series] = None,
+                 CWD: Optional[pd.Series] = None,
+                 CDD: Optional[pd.Series] = None,
+                 daily_accumulations: Optional[pd.Series] = None,
+                 monthly_accumulations: Optional[pd.Series] = None,
+                 streaks: Optional[pd.Series] = None,
+                 percentiles: Tuple[str, str] = ("NA", "NA"),
+                 k_largest: Tuple[str, str, str] = ("NA", "NA", "NA"),
+                 days_of_week: str = "NA",
+                 hours_of_day: str = "NA",
+                 intermittency: str = "NA",
+                 breakpoint: str = "NA",
+                 R99pTOT: str = "NA",
+                 PRCPTOT: str = "NA",
+                 change_min_value: Union[str, Tuple[List[int], List[int]]] = "NA",
+                 offset: str = "NA",
+                 preQC_affinity_index: str = "NA",
+                 preQC_pearson_coefficient: str = "NA",
+                 factor_daily: str = "NA",
+                 factor_monthly: Optional[str] = None
                  ):
-        self.series = series
+        self.gauge = gauge
 
         self.etcdii_data = etccdi_data_folder
         if etccdi_data_folder is not None:
@@ -152,7 +242,7 @@ class Qc:
         self.daily_names = daily_names
         self.daily_dates = daily_dates
         self.daily_coords = daily_coords
-        self.tree = tree
+        self.tree = daily_tree
         self.use_monthly_neighbours = use_monthly_neighbours
         self.monthly_names = monthly_names
         self.monthly_dates = monthly_dates
@@ -168,7 +258,7 @@ class Qc:
         self.Rx1day = Rx1day
         self.CWD = CWD
         self.CDD = CDD
-        self.daily_accumualtions = daily_accumualtions
+        self.daily_accumualtions = daily_accumulations
         self.monthly_accumulations = monthly_accumulations
         self.streaks = streaks
         self.percentiles = percentiles
@@ -186,58 +276,72 @@ class Qc:
         self.factor_daily = factor_daily
         self.factor_monthly = factor_monthly
 
-    # Indicative check to flag years with 95th or 99th percentiles equal to zero.
-    def check_percentiles(self):
-        perc95 = self.series.data.groupby(pd.Grouper(freq='A')).quantile(.95)
-        perc99 = self.series.data.groupby(pd.Grouper(freq='A')).quantile(.99)
+    def check_percentiles(self) -> Tuple[List[int], List[int]]:
+        """Indicative check to flag years with 95th or 99th percentiles equal to zero.
+        Returns:
+            Years where 95th and 99th percentiles are zero
+        """
+        perc95 = self.gauge.data.groupby(pd.Grouper(freq='A')).quantile(.95)
+        perc99 = self.gauge.data.groupby(pd.Grouper(freq='A')).quantile(.99)
 
-        return [[d.year for d in list(perc95[perc95 == 0].index)], [d.year for d in list(perc99[perc99 == 0].index)]]
+        return [d.year for d in list(perc95[perc95 == 0].index)], [d.year for d in list(perc99[perc99 == 0].index)]
 
+    def check_k_largest(self) -> Tuple[List[int], List[int], List[int]]:
+        """Checks K largest
 
-    # Indicative check to flag years with K-largest values equal to zero.
-    def check_k_largest(self):
-        k1 = self.series.data.groupby(pd.Grouper(freq='A')).nlargest(n=1).min(level=0)
-        k5 = self.series.data.groupby(pd.Grouper(freq='A')).nlargest(n=5).min(level=0)
-        k10 = self.series.data.groupby(pd.Grouper(freq='A')).nlargest(n=10).min(level=0)
+        Returns:
+            The first, five and ten largest rainfall values
+        """
+        k1 = self.gauge.data.groupby(pd.Grouper(freq='A')).nlargest(n=1).min(level=0)
+        k5 = self.gauge.data.groupby(pd.Grouper(freq='A')).nlargest(n=5).min(level=0)
+        k10 = self.gauge.data.groupby(pd.Grouper(freq='A')).nlargest(n=10).min(level=0)
 
-        return [[d.year for d in list(k1[k1 == 0].index)], [d.year for d in list(k5[k5 == 0].index)],
-                [d.year for d in list(k10[k10 == 0].index)]]
+        return [d.year for d in list(k1[k1 == 0].index)], \
+               [d.year for d in list(k5[k5 == 0].index)], \
+               [d.year for d in list(k10[k10 == 0].index)]
 
+    def check_days_of_week(self) -> int:
+        """Indicative, checks if proportions of rainfall in each day is significantly different
 
-    # Indicative, checks if proportions of rainfall in each day is significantly different
-    def check_days_of_week(self):
+        Returns:
+            1 if p < 0.01 or 0 if p >= 0.01 of T-test
+        """
         # 0 is monday, 1 is tuesday etc...
-        days = self.series.data.groupby(lambda x: x.weekday).mean()
-        popmean = self.series.data.mean()
+        days = self.gauge.data.groupby(lambda x: x.weekday).mean()
+        popmean = self.gauge.data.mean()
         p = scipy.stats.ttest_1samp(days, popmean)[1]
         if p < 0.01:  # different
             return 1
         else:
             return 0
 
-
-    # Indicative, hourly analogue to daily check
-    def check_hours_of_day(self):
+    def check_hours_of_day(self) -> int:
+        """Indicative, hourly analogue to daily check
+        
+        Returns:
+            1 if p < 0.01 or 0 if p >= 0.01 of T-test
+        """
         # 0 is midnight, 1 is 01:00 etc...
-        hours = self.series.data.groupby(lambda x: x.hour).mean()
-        popmean = self.series.data.mean()
+        hours = self.gauge.data.groupby(lambda x: x.hour).mean()
+        popmean = self.gauge.data.mean()
         p = scipy.stats.ttest_1samp(hours, popmean)[1]
         if p < 0.01:  # different
             return 1
         else:
             return 0
 
+    def check_intermittency(self) -> List[int]:
+        """Annual check for discontinuous records.
+        A no data period is defined as 2 or more consecutive missing values.
+        Return years where more than 5 no data periods are bounded by zeros
+        A no data period is defined as 2 or more consecutive missing values
+        For a year to be flagged no data periods must occur in at least 5 different days
 
-    # Annual check for discontinuous records.
-    # Returns years where more than 5 no data periods are bounded by zeros.
-    # A no data period is defined as 2 or more consecutive missing values.
-    # Return years where more than 5 no data periods are bounded by zeros
-    # A no data period is defined as 2 or more consecutive missing values
-    # For a year to be flagged no data periods must occur in at least 5 different days
-
-    def check_intermittency(self):
+        Returns:
+            Years where more than 5 no data periods are bounded by zeros.
+        """
         # Shift data +/- 1 hour to help identify missing data periods with vectorised approach
-        df = self.series.data.copy().to_frame()
+        df = self.gauge.data.copy().to_frame()
         df.columns = ['val']
         df['prev'] = df.shift(1)['val']
         df['next'] = df.shift(-1)['val']
@@ -328,10 +432,13 @@ class Qc:
 
         return flag_years
 
+    def check_break_point(self) -> int:
+        """Indicative, Pettitt breakpoint check
 
-    # Indicative, Pettitt breakpoint check
-    def check_break_point(self):
-        x = self.series.data.resample("D").sum().values
+        Returns:
+            1 if p < 0.01 or 0 if p >= 0.01 of Pettitt test
+        """
+        x = self.gauge.data.resample("D").sum().values
         x = x[~np.isnan(x)]
         x = x
         x = robjects.FloatVector(x)
@@ -344,17 +451,17 @@ class Qc:
         else:
             return 0
 
-    """
-    ++++++++++++++++++++++++++++++++++ Threshold Checks +++++++++++++++++++++++++++++++++++
-    """
+    def world_record_check_ts(self) -> List[int]:
+        """Checks if and to what degree the world record has been exceeded by each rainfall value
 
+        Returns:
+            4, 3, 2 or 1 if exceeded by > 1.5x, 1.33x, 1.22x or 0x respectively and 0 if not exceeded for each value
+        """
 
-    def world_record_check_ts(self):
-        wrcts = self.series.data.map(lambda x: utils.world_record_check(x))
-        return list(wrcts)
+        return list(self.gauge.data.map(lambda x: utils.world_record_check(x)))
 
-    # Checks against ETCCDI indices ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
+    # Checks against ETCCDI indices
+    # -----------------------------
     # We are using [ETCCDI indicies](http://etccdi.pacificclimate.org/list_27_indices.shtml)
     # to act as thresholds for expected hourly values.
     # In particular, we are using index 17:
@@ -364,21 +471,22 @@ class Qc:
     # First we must read in the indicies from the netCDF file:
     # We then calculate the maximum rainfall value over the whole period for each gridsquare.
 
+    def rx1day_check_ts(self) -> List[int]:
+        """Checks hourly values against maximum 1-day precipitation
 
-    # ++++++++ Rx1day: check hourly values against maximum 1-day precipitation   ++++++++
+        Returns:
+            Magnitudes of exceedance for each day
+        """
+        p_max, p_max_filled = utils.get_etccdi_value(self.etcdii_data, 'Rx1day', self.gauge.longitude, self.gauge.latitude)
+        df = self.gauge.data.to_frame("GSDR")
 
+        # If you have a high density of daily gauges, you can calculate Rx1day stats from that and compare them to a
+        # daily total from the hourly gauges. The ETCCDI gauge density is not high enough to do this so we use it as a
+        # threshold check for hourly values
+        #
+        # df["roll"] = np.around(df.GSDR.rolling(window=24, center=False, min_periods=24).sum())
+        # df["r1dcts"] = df.roll.map(lambda x: dayCheck(x, pMax, pMaxFilled))
 
-    def rx1day_check_ts(self):
-        p_max, p_max_filled = utils.get_etccdi_value(self.etcdii_data, 'Rx1day', self.series.longitude, self.series.latitude)
-        df = self.series.data.to_frame("GSDR")
-
-        ''' If you have a high density of daily gauges, you can calculate Rx1day stats from that and compare them to a daily
-            total from the hourly gauges. The ETCCDI gauge density is not high enough to do this so we use it as a threshold
-            check for hourly values
-        
-        df["roll"] = np.around(df.GSDR.rolling(window=24, center=False, min_periods=24).sum())
-        df["r1dcts"] = df.roll.map(lambda x: dayCheck(x, pMax, pMaxFilled))
-        '''
         if np.isfinite(p_max) or np.isfinite(p_max_filled):
             df["r1dcts"] = df.GSDR.map(lambda x: utils.day_check(x, p_max, p_max_filled))
         else:
@@ -386,17 +494,20 @@ class Qc:
 
         return list(df.r1dcts)
 
+    # Other precipitation index checks
+    # --------------------------------
 
-    # ++++++++ Other precipitation index checks ++++++++
+    def r99ptot_check_annual(self) -> List[int]:
+        """Indicative check against R99pTOT: R99pTOT. Annual total PRCP when RR > 99p:
 
-    # Indicative check against R99pTOT: R99pTOT. Annual total PRCP when RR > 99p:
-
-    def r99ptot_check_annual(self):
-        p_max, p_max_filled = utils.get_etccdi_value(self.etcdii_data, 'R99p', self.series.longitude, self.series.latitude)
+        Returns:
+            Magnitudes of exceedance for yearly 99th percentiles
+        """
+        p_max, p_max_filled = utils.get_etccdi_value(self.etcdii_data, 'R99p', self.gauge.longitude, self.gauge.latitude)
 
         if np.isfinite(p_max) or np.isfinite(p_max_filled):
 
-            daily_ts = self.series.data.resample(
+            daily_ts = self.gauge.data.resample(
                 "D").sum()  # this changes depending on which version of pandas youre using. o.14 requires how agument,
             # later requires .sum
 
@@ -419,15 +530,17 @@ class Qc:
 
         return checks
 
+    def prcptot_check_annual(self) -> List[int]:
+        """Indicative check against annual total: PRCPTOT. Annual total precipitation in wet days:
 
-    # Indicative check against annual total: PRCPTOT. Annual total precipitation in wet days:
-
-    def prcptot_check_annual(self):
-        # pMax, pMaxFilled = getPRCPTOT(self.series.latitude, self.series.longitude)
-        p_max, p_max_filled = utils.get_etccdi_value(self.etcdii_data, 'PRCPTOT', self.series.longitude, self.series.latitude)
+        Returns:
+            Magnitudes of exceedance for yearly totals
+        """
+        # pMax, pMaxFilled = getPRCPTOT(self.gauge.latitude, self.gauge.longitude)
+        p_max, p_max_filled = utils.get_etccdi_value(self.etcdii_data, 'PRCPTOT', self.gauge.longitude, self.gauge.latitude)
 
         if np.isfinite(p_max) or np.isfinite(p_max_filled):
-            ann_tots = self.series.data.groupby(pd.Grouper(freq='A')).sum()
+            ann_tots = self.gauge.data.groupby(pd.Grouper(freq='A')).sum()
             tots = list(ann_tots)
             checks = [utils.day_check(t, p_max, p_max_filled) for t in tots]
         else:
@@ -435,19 +548,22 @@ class Qc:
 
         return checks
 
+    # Long wet/dry spell checks
+    # -------------------------
 
-    # ++++++++ Long wet/dry spell checks ++++++++
+    def cwd_check(self) -> List[Union[int, float]]:
+        """Consecutive wet days check
+        ETCCDI provide an index for maximum length of wet spell.
+        We can use this to see if there are a suspicious number of consecutive wet hours recorded.
+        Consecutive Wet Days: Maximum length of wet spell, maximum number of consecutive days with RR = 1mm:
+        Let RRij be the daily precipitation amount on day i in period j.
+        Count the largest number of consecutive days where: RRij = 1mm
 
-    # ETCCDI provide an index for maximum length of wet spell.
-    # We can use this to see if there are a suspicious number of consecutive wet hours recorded.
-    # Consecutive Wet Days: Maximum length of wet spell, maximum number of consecutive days with RR = 1mm:
-    # Let RRij be the daily precipitation amount on day i in period j.
-    # Count the largest number of consecutive days where: RRij = 1mm
-
-
-    def cwd_check(self):
-        vals = self.series.data
-        longest_wet_period, longest_wet_period_filled = utils.get_etccdi_value(self.etcdii_data, 'CWD', self.series.longitude, self.series.latitude)
+        Returns:
+            Magnitudes of exceedence of the length of longest wet period
+        """
+        vals = self.gauge.data
+        longest_wet_period, longest_wet_period_filled = utils.get_etccdi_value(self.etcdii_data, 'CWD', self.gauge.longitude, self.gauge.latitude)
         start_index_list, duration_list = utils.get_wet_periods(vals)
         flags_list = [0 for i in range(len(vals))]
 
@@ -465,19 +581,22 @@ class Qc:
 
         return flags_list
 
+    # Long dry spells
+    # ---------------
 
-    # ### Long dry spells
+    def cdd_check(self) -> List[Union[int, float]]:
+        """Consecutive dry days check
+        ETCCDI provide an index for maximum length of dry spell.
+        We can use this to see if there are a suspicious number of consecutive dry hours recorded.
+        Consecutive Dry Days: Maximum length of dry spell, maximum number of consecutive days with RR < 1mm:
+        Let RRij be the daily precipitation amount on day i in period j.
+        Count the largest number of consecutive days where: RRij < 1mm
 
-    # ETCCDI provide an index for maximum length of dry spell.
-    # We can use this to see if there are a suspicious number of consecutive dry hours recorded.
-    # Consecutive Dry Days: Maximum length of dry spell, maximum number of consecutive days with RR < 1mm:
-    # Let RRij be the daily precipitation amount on day i in period j.
-    # Count the largest number of consecutive days where: RRij < 1mm
-
-
-    def cdd_check(self):
-        vals = list(self.series.data)
-        longest_dry_period, longest_dry_period_filled = utils.get_etccdi_value(self.etcdii_data, 'CDD', self.series.longitude, self.series.latitude)
+        Returns:
+            Magnitudes of exceedence of the length of longest dry period
+        """
+        vals = list(self.gauge.data)
+        longest_dry_period, longest_dry_period_filled = utils.get_etccdi_value(self.etcdii_data, 'CDD', self.gauge.longitude, self.gauge.latitude)
 
         start_index_list, duration_list = utils.get_dry_periods(vals)
         flags_list = [0 for i in range(len(vals))]
@@ -494,16 +613,20 @@ class Qc:
 
         return flags_list
 
+    # Non-Threshold Checks
+    # --------------------
 
-    # ++++++++++++++++++++++++++++++++++ Non-Threshold Checks +++++++++++++++++++++++++++++++++++
+    def get_sdii(self) -> List[float]:
+        """Simple precipitation intensity index
 
-
-    def get_sdii(self):
+        Returns:
+            SDII from ETCCDI and from gauge values
+        """
         # *** CHECK HOURLY WORLD RECORD PRECIPITATION ***
         # ?? insert a check for whether gauge SDII exceeds minimum tip / resolution/precision ??
 
         # Remove any hours exceeding world record in the gauge record
-        df1 = self.series.data.copy().to_frame()
+        df1 = self.gauge.data.copy().to_frame()
         df1.columns = ['val']
         df1['val'] = np.where(df1['val'] > utils.world_records['hourly'], np.nan, df1['val'])
 
@@ -519,7 +642,7 @@ class Qc:
         sdii_gauge = prcp_sum / float(wetday_count)
 
         # Retrieve SDII from gridded ETCCDI datasets
-        sdii_cell, sdii_filled = utils.get_etccdi_value(self.etcdii_data, 'SDII', self.series.longitude, self.series.latitude)
+        sdii_cell, sdii_filled = utils.get_etccdi_value(self.etcdii_data, 'SDII', self.gauge.longitude, self.gauge.latitude)
         if np.isfinite(sdii_cell):
             sdii_gridded = sdii_cell
         else:
@@ -530,12 +653,19 @@ class Qc:
 
         return [sdii_gridded, sdii_gauge]
 
+    # Daily accumulation checks
+    # -------------------------
 
-    # ++++++++ Daily accumulation checks ++++++++
+    def daily_accums_check(self) -> List[int]:
+        """Check daily accumulations
+        Suspect daily accumulations flagged where a recorded rainfall amount at these times is preceded by 23 hours
+        with no rain. A threshold of 2x the mean wet day amount for the corresponding month is applied to increase the
+        chance of identifying accumulated values at the expense of genuine, moderate events.
 
-
-    def daily_accums_check(self):
-        vals = list(self.series.data)
+        Returns:
+            A list of flags
+        """
+        vals = list(self.gauge.data)
 
         mean_wet_day_val, mean_wet_day_val_filled = self.get_sdii()
 
@@ -549,42 +679,13 @@ class Qc:
 
         return flags
 
+    def monthly_accums_check(self) -> List[Union[int, float]]:
+        """Check monthly accumulations
+        Flags month prior to high value
 
-    """
-    ++++++++ Monthly accumulation checks ++++++++
-    """
-
-
-    def monthly_accums_day_check(month_list, mean_wet_day_val, mean_wet_day_val_filled):
-        """Suspect monthly accumulations.
-        Identified where only one hourly value is reported over a period of a month
-        and that value exceeds the mean wet hour amount for the corresponding month."""
-
-        if month_list[719] > 0:
-            dry_hours = 0
-            for i in range(719):
-                if month_list[i] <= 0:
-                    dry_hours += 1
-            if dry_hours == 719:
-                if np.isnan(mean_wet_day_val):
-                    if month_list[719] > mean_wet_day_val_filled * 2:
-                        return 2
-                    else:
-                        return 0
-                else:
-                    if month_list[719] > mean_wet_day_val * 2:
-                        return 1
-                    else:
-                        return 0
-            else:
-                return 0
-        else:
-            return 0
-
-
-    # Flags month prior to high value
-
-    def monthly_accums_check(self):
+        Returns:
+            A list of flags
+        """
         # Find threshold for wet hour following dry month (2 * mean wet day rainfall)
         mean_wetday_val, mean_wetday_val_filled = self.get_sdii()
         if np.isnan(mean_wetday_val):
@@ -593,7 +694,7 @@ class Qc:
             threshold = mean_wetday_val * 2.0
 
         # Lag values forwards and backwards to help identify consecutive value streaks
-        df = self.series.data.copy().to_frame()
+        df = self.gauge.data.copy().to_frame()
         df.columns = ['val']
         df['prev'] = df.shift(1)['val']
         df['next'] = df.shift(-1)['val']
@@ -673,25 +774,27 @@ class Qc:
 
         return flags
 
+    def streaks_check(self) -> List[int]:
+        """Streaks check
 
-    # ++++++++ Streak checks ++++++++
+        Streaks: This is where you see the same value repeated in a run.
+        Currently this records streaks of 2hrs in a row or more over 2 x Monthly mean rainfall.
+        It is considered to be unlikely that you would see even 2 consecutive large rainfall amounts.
+        For this code I have substituted the monthly mean rainfall for SDII as I want the thresholds
+        to be independent of the rainfall time series as the global dataset is of highly variable quality.
 
-    # Streaks: This is where you see the same value repeated in a run.
-    # Currently this records streaks of 2hrs in a row or more over 2 x Monthly mean rainfall.
-    # It is considered to be unlikely that you would see even 2 consecutive large rainfall amounts.
-    # For this code I have substituted the monthly mean rainfall for SDII as I want the thresholds
-    # to be independent of the rainfall time series as the global dataset is of highly variable quality.
-
-    def streaks_check(self):
+        Returns:
+            A list of flags
+        """
         # Find wet day rainfall threshold (for streaks of any length)
-        # mean_wetday_val, mean_wetday_val_filled = getSDII(self.series.latitude, self.series.longitude)
+        # mean_wetday_val, mean_wetday_val_filled = getSDII(self.gauge.latitude, self.gauge.longitude)
         mean_wetday_val, mean_wetday_val_filled = self.get_sdii()
         threshold = mean_wetday_val * 2.0
         if np.isnan(mean_wetday_val):
             threshold = mean_wetday_val_filled * 2.0
 
         # Lag values forwards and backwards to help identify consecutive value streaks
-        df = self.series.data.copy().to_frame()
+        df = self.gauge.data.copy().to_frame()
         df.columns = ['val']
         df['prev'] = df.shift(1)['val']
         df['next'] = df.shift(-1)['val']
@@ -763,51 +866,56 @@ class Qc:
 
         return flags
 
-    # ++++++++ Change in minimum value check ++++++++
+    def change_in_min_val_check(self) -> Tuple[int, List[int]]:
+        """Change in minimum value check
 
+        Change in minimum value: This is an homogeneity check to see if the resolution of the data has changed.
+        Currently, I am including a flag if there is a year of no data as that seems pretty bad to me.
 
-    # Change in minimum value: This is an homogeneity check to see if the resolution of the data has changed.
-    # Currently, I am including a flag if there is a year of no data as that seems pretty bad to me.
+        Alternative implementation to return list of years where the minimum value >0
+        differs from the data precision/resolution identified in the raw (pre-QC) files
 
-    # Alternative implementation to return list of years where the minimum value >0
-    # differs from the data precision/resolution identified in the raw (pre-QC) files
-    def change_in_min_val_check(self):
+        Returns:
+            Change flag and flagged years
+
+        """
         # Filter on values >0
-        df = self.series.data[self.series.data > 0.0].to_frame()
+        df = self.gauge.data[self.gauge.data > 0.0].to_frame()
         df.columns = ['val']
 
         # Find minimum by year
         df = df.groupby(df.index.year).min()
 
         # List of years differing from inferred precision in raw (pre-QC) data files
-        df = df.loc[df['val'] != self.series.resolution]
+        df = df.loc[df['val'] != self.gauge.resolution]
         flag_years = df.index.tolist()
         if len(flag_years) > 0:
             change_flag = 1
         else:
             change_flag = 0
 
-        return [change_flag, flag_years]
+        return change_flag, flag_years
 
+    # Neighbour Checks - Basic functions
+    # ----------------------------------
 
-    """
-    ++++++++++++++++++++++++++ Neighbour Checks - Basic functions +++++++++++++++++++++++++++
-    """
+    def find_hourly_neighbours(self) -> Tuple[List[str], List[str]]:
+        """Helper function, finds hourly neighbour stations
 
-
-    # Helper function, finds hourly neighbour stations ++++++++++++++++++++++++++++
-    def find_hourly_neighbours(self):
+        Returns:
+            Names and paths of neighbouring hourly stations
+        """
         # float("nan") returns np.nan so needs to be handled separately (occurs in some Italy (Sicily) files)
         # whereas float("NA") returns value error (i.e. convention in most raw/formatted files)
         try:
-            if elv != "nan":
-                elv = float(self.series.elevation)
+            if self.gauge.elevation != "nan":
+                elv = float(self.gauge.elevation)
             else:
                 elv = 100
         except:
             elv = 100
 
-        converted_hourly_coords = utils.geodetic_to_ecef(self.series.latitude, self.series.longitude, elv)
+        converted_hourly_coords = utils.geodetic_to_ecef(self.gauge.latitude, self.gauge.longitude, elv)
         dist, index = self.hourly_n_tree.query(converted_hourly_coords,
                                           k=30)
         # K needs to be equal or less than the number
@@ -817,7 +925,7 @@ class Qc:
         distance = []
         paths = []
 
-        hourly_dates = (self.series.start_datetime, self.series.end_datetime)
+        hourly_dates = (self.gauge.start_datetime, self.gauge.end_datetime)
 
         dist = [d for d in dist if np.isfinite(d)]
         index = [i for i,d in zip(index,dist) if np.isfinite(d)]
@@ -840,19 +948,22 @@ class Qc:
                         counter += 1
 
         if len(paired_stations) >= 3:
-            return [paired_stations, paths]
+            return paired_stations, paths
         else:
-            return [[], []]
+            return [], []
 
+    def find_daily_neighbours(self) -> List[str]:
+        """Helper function, finds daily neighbour stations
 
-    # Helper function, finds daily neighbour stations +++++++++++++++++++++++++++++
-    def find_daily_neighbours(self):
+        Returns:
+            Names of neighbouring daily stations
+        """
         try:
-            elv = float(self.series.elevation)
+            elv = float(self.gauge.elevation)
         except:
             elv = 100
 
-        converted_hourly_coords = utils.geodetic_to_ecef(self.series.latitude, self.series.longitude, elv)
+        converted_hourly_coords = utils.geodetic_to_ecef(self.gauge.latitude, self.gauge.longitude, elv)
 
         dist, index = self.tree.query(converted_hourly_coords, k=30)
 
@@ -860,7 +971,7 @@ class Qc:
         paired_stations = []
         distance = []
 
-        hourly_dates = (self.series.start_datetime, self.series.end_datetime)
+        hourly_dates = (self.gauge.start_datetime, self.gauge.end_datetime)
 
         counter = 0
         for i in range(len(dist)):
@@ -882,15 +993,17 @@ class Qc:
         else:
             return []
 
+    def find_monthly_neighbours(self) -> Optional[List[str]]:
+        """Helper function, finds monthly neighbour stations
 
-    # Helper function, finds daily neighbour stations +++++++++++++++++++++++++++++
-    def find_monthly_neighbours(self):
+        Returns:
+            Names of neighbouring monthly stations"""
         try:
-            elv = float(self.series.elevation)
+            elv = float(self.gauge.elevation)
         except:
             elv = 100
 
-        converted_hourly_coords = utils.geodetic_to_ecef(self.series.latitude, self.series.longitude, elv)
+        converted_hourly_coords = utils.geodetic_to_ecef(self.gauge.latitude, self.gauge.longitude, elv)
 
         dist, index = self.monthly_tree.query(converted_hourly_coords, k=30)
 
@@ -898,7 +1011,7 @@ class Qc:
         paired_stations = []
         distance = []
 
-        hourly_dates = (self.series.start_datetime, self.series.end_datetime)
+        hourly_dates = (self.gauge.start_datetime, self.gauge.end_datetime)
 
         counter = 0
         for i in range(len(dist)):
@@ -920,47 +1033,17 @@ class Qc:
         else:
             return None
 
+    # Neighbour Checks
+    # ----------------
 
-    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    def check_hourly_neighbours(self) -> Tuple[List[int], List[int]]:
+        """Hourly neighbours check against GSDR
 
+        Returns:
+            Flags and dry flags for each value
 
-    # Match station id helper function ++++++++++++++++++++++++++++++++++++++++++++
-    def find_identical_by_id(self, neighbour):  # this probably needs refining...
-        match = 0
-        if self.series.station_id[3:] in neighbour.name:
-            match = 1
-        if self.series.station_id[3:] in neighbour.station_id:
-            match = 1
-        if self.series.station_id[3:] in neighbour.wmo_id:
-            match = 1
-        if self.series.original_station_number in neighbour.name:
-            match = 1
-        if self.series.original_station_number in neighbour.station_id:
-            match = 1
-        if self.series.original_station_number in neighbour.wmo_id:
-            match = 1
-        if self.series.original_station_name in neighbour.name:
-            match = 1
-        if self.series.original_station_name in neighbour.station_id:
-            match = 1
-        if self.series.original_station_name in neighbour.wmo_id:
-            match = 1
-
-        return match
-
-
-    """
-    ++++++++++++++++++++++++++++++++++ GPCC functions -end +++++++++++++++++++++++++++++++++++
-    """
-
-    """
-    ++++++++++++++++++++++++++++++++++ Neighbour Checks +++++++++++++++++++++++++++++++++++
-    """
-
-
-    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    def check_hourly_neighbours(self):
-        df = self.series.data.to_frame("target")
+        """
+        df = self.gauge.data.to_frame("target")
 
         # convert hourly to daily 7am-7am
         df["roll"] = np.around(df.target.rolling(window=24, center=False, min_periods=24).sum(), 1)
@@ -1001,7 +1084,7 @@ class Qc:
                 else:
                     pass
 
-            flags_df = utils.check_neighbours(ts0.to_frame("ts1"), neighbour_dfs2, self.series.station_id, 'hourly')
+            flags_df = utils.check_neighbours(ts0.to_frame("ts1"), neighbour_dfs2, self.gauge.station_id, 'hourly')
 
             flags_dates = list(flags_df.index.values)
             flags_vals = list(flags_df)
@@ -1046,16 +1129,20 @@ class Qc:
             df.dryFlags = df.dryFlags.fillna(method="ffill", limit=23)
             df.fillna(-999, inplace=True)
 
-            return [list(df.flags.astype(int)), list(df.dryFlags.astype(int))]
+            return list(df.flags.astype(int)), list(df.dryFlags.astype(int))
 
         else:
             tmp = [-999 for i in range(df['roll'].shape[0])]
             return [tmp, tmp]
 
+    def check_daily_neighbours(self) -> Tuple[List[int], int, float, float, float, List[int]]:
+        """Daily neighbours check against GPCC
 
-    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    def check_daily_neighbours(self):
-        df = self.series.data.to_frame("target")
+        Returns:
+            Flags, offset_flag, affinity index, correlation, factor, and dry flags
+
+        """
+        df = self.gauge.data.to_frame("target")
         # convert hourly to daily 7am-7am
         df["roll"] = np.around(df.target.rolling(window=24, center=False, min_periods=24).sum(), 1)
         dfd = df[df.index.hour == 7]
@@ -1133,7 +1220,7 @@ class Qc:
                 else:
                     pass
 
-            flags_df = utils.check_neighbours(ts0.to_frame("ts1"), neighbour_dfs2, self.series.station_id, 'daily')
+            flags_df = utils.check_neighbours(ts0.to_frame("ts1"), neighbour_dfs2, self.gauge.station_id, 'daily')
             flags_dates = list(flags_df.index.values)
             flags_vals = list(flags_df)
 
@@ -1176,21 +1263,20 @@ class Qc:
             df.flags = df.flags.fillna(method="ffill", limit=23)
             df.dryFlags = df.dryFlags.fillna(method="ffill", limit=23)
             df.fillna(-999, inplace=True)
-            return [list(df.flags.astype(int)), offset_flag, s0ai, s0r2, s0f, list(df.dryFlags.astype(int))]
+            return list(df.flags.astype(int)), offset_flag, s0ai, s0r2, s0f, list(df.dryFlags.astype(int))
 
         # -999 if no neighbours
         else:
             tmp = [-999 for i in range(df['roll'].shape[0])]
-            return [tmp, -999, -999, -999, -999, tmp]
+            return tmp, -999, -999, -999, -999, tmp
 
+    def check_monthly_neighbours(self) -> Tuple[List[int], List[int]]:
+        """Monthly neighbours check
 
-    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-
-
-    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    def check_monthly_neighbours(self):  # Hey Liz! check this when you have access to monthly, esp mapping back onto hourly.
-        df = self.series.data.to_frame("target")
+        Returns:
+            Flags and factor flags
+        """
+        df = self.gauge.data.to_frame("target")
 
         # convert hourly to daily 7am-7am
         dfm = df.resample("M", label='right', closed='right').apply(lambda x: x.values.sum())
@@ -1253,16 +1339,17 @@ class Qc:
             hourly_flags_s.fillna(-999, inplace=True)
             hourly_factor_flags_s.fillna(-999, inplace=True)
 
-        return [list(hourly_flags_s['flags'].astype(int)), list(hourly_factor_flags_s['factor_flags'].astype(int))]
+        return list(hourly_flags_s['flags'].astype(int)), list(hourly_factor_flags_s['factor_flags'].astype(int))
 
+    def get_flags(self) -> __qualname__:
+        """Runs all quality control checks
 
-    # +++++++++++++++++++++++++++++++ MAIN FUNCTION, CALLS CHECKS ++++++++++++++++++++++++++++++++
-
-
-    def get_flags(self):  # pass intense object
+        Returns:
+            This Qc object
+        """
 
         # Ensure non-nan lat/lon before neighbour checks (issue for some Sicily stations)
-        if np.isfinite(self.series.latitude) and np.isfinite(self.series.longitude):
+        if np.isfinite(self.gauge.latitude) and np.isfinite(self.gauge.longitude):
             self.hourly_neighbours, self.hourly_neighbours_dry = self.check_hourly_neighbours()
             if self.use_daily_neighbours:
                 self.daily_neighbours, self.offset, self.preQC_affinity_index, self.preQC_pearson_coefficient, self.factor_daily, self.daily_neighbours_dry = self.check_daily_neighbours()
@@ -1301,32 +1388,37 @@ class Qc:
 
         return self
 
-    def write(self, directory):
+    def write(self, directory: str):
+        """Write flags and values to a text file named <station_id>_QC.txt
+
+        Args:
+            directory: the path to the directory to create the file in
+        """
         if not os.path.exists(directory):
             os.mkdir(directory)
-        with open(os.path.join(directory, self.series.station_id) + '_QC.txt', 'w') as o:
+        with open(os.path.join(directory, self.gauge.station_id) + '_QC.txt', 'w') as o:
             o.write(
-                "Station ID: {self.series.station_id}\n"
-                "Country: {self.series.country}\n"
-                "Original Station Number: {self.series.original_station_number}\n"
-                "Original Station Name: {self.series.original_station_name}\n"
-                "Path to original data: {self.series.path_to_original_data}\n"
-                "Latitude: {self.series.latitude}\n"
-                "Longitude: {self.series.longitude}\n"
-                "Start datetime: {self.series.start_datetime:%Y%m%d%H}\n"
-                "End datetime: {self.series.end_datetime:%Y%m%d%H}\n"
-                "Elevation: {self.series.elevation}\n"
-                "Number of records: {self.series.number_of_records}\n"
-                "Percent missing data: {self.series.percent_missing_data:.2f}\n"
-                "Original Timestep: {self.series.original_timestep}\n"
-                "New Timestep: {self.series.new_timestep}\n"
-                "Original Units: {self.series.original_units}\n"
-                "New Units: {self.series.new_units}\n"
-                "Time Zone: {self.series.time_zone}\n"
-                "Daylight Saving info: {self.series.daylight_saving_info}\n"
-                "No data value: {self.series.no_data_value}\n"
-                "Resolution: {self.series.resolution:.2f}\n"
-                "Other: {self.series.other}\n"
+                "Station ID: {self.gauge.station_id}\n"
+                "Country: {self.gauge.country}\n"
+                "Original Station Number: {self.gauge.original_station_number}\n"
+                "Original Station Name: {self.gauge.original_station_name}\n"
+                "Path to original data: {self.gauge.path_to_original_data}\n"
+                "Latitude: {self.gauge.latitude}\n"
+                "Longitude: {self.gauge.longitude}\n"
+                "Start datetime: {self.gauge.start_datetime:%Y%m%d%H}\n"
+                "End datetime: {self.gauge.end_datetime:%Y%m%d%H}\n"
+                "Elevation: {self.gauge.elevation}\n"
+                "Number of records: {self.gauge.number_of_records}\n"
+                "Percent missing data: {self.gauge.percent_missing_data:.2f}\n"
+                "Original Timestep: {self.gauge.original_timestep}\n"
+                "New Timestep: {self.gauge.new_timestep}\n"
+                "Original Units: {self.gauge.original_units}\n"
+                "New Units: {self.gauge.new_units}\n"
+                "Time Zone: {self.gauge.time_zone}\n"
+                "Daylight Saving info: {self.gauge.daylight_saving_info}\n"
+                "No data value: {self.gauge.no_data_value}\n"
+                "Resolution: {self.gauge.resolution:.2f}\n"
+                "Other: {self.gauge.other}\n"
                 "Years where Q95 equals 0: {self.percentiles[0]}\n"
                 "Years where Q99 equals 0: {self.percentiles[1]}\n"
                 "Years where k1 equals 0: {self.k_largest[0]}\n"
@@ -1344,7 +1436,7 @@ class Qc:
                 "Pre QC Pearson coefficient: {self.preQC_pearson_coefficient}\n"
                 "Factor against nearest daily gauge: {self.factor_daily}\n".format(self=self))
 
-            empty_series = np.full(len(self.series.data), self.series.no_data_value, dtype=int)
+            empty_series = np.full(len(self.gauge.data), self.gauge.no_data_value, dtype=int)
 
             if self.hourly_neighbours is None:
                 self.hourly_neighbours = empty_series
@@ -1356,10 +1448,10 @@ class Qc:
                 self.daily_neighbours = empty_series
 
             if self.daily_neighbours_dry is None:
-                self.daily_neighbours_dry = np.full(len(self.series.data), self.series.no_data_value, dtype=int)
+                self.daily_neighbours_dry = np.full(len(self.gauge.data), self.gauge.no_data_value, dtype=int)
 
             if self.monthly_neighbours is None:
-                self.monthly_neighbours = np.full(len(self.series.data), self.series.no_data_value, dtype=int)
+                self.monthly_neighbours = np.full(len(self.gauge.data), self.gauge.no_data_value, dtype=int)
 
             if self.world_record is None:
                 self.world_record = empty_series
@@ -1385,8 +1477,8 @@ class Qc:
             if self.factor_monthly is None:
                 self.factor_monthly = empty_series
 
-            self.series.data.fillna(self.series.no_data_value, inplace=True)
-            vals_flags = zip([float(format(v, '.3f')) for v in self.series.data.values],
+            self.gauge.data.fillna(self.gauge.no_data_value, inplace=True)
+            vals_flags = zip([float(format(v, '.3f')) for v in self.gauge.data.values],
                              self.hourly_neighbours,
                              self.hourly_neighbours_dry,
                              self.daily_neighbours,
@@ -1404,11 +1496,17 @@ class Qc:
             o.writelines(str(a)[1:-1] + "\n" for a in vals_flags)
 
 
-def read_intense_qc(path, only_metadata=False, opened=False):
+def read_intense_qc(path_or_stream: Union[IO, str], only_metadata: bool = False):
+    """Read flags and rainfall values from an INTENSE QC file
+
+    Args:
+        path_or_stream: a path of the file to read from or an I/O stream
+        only_metadata: if True then stop reading after metadata
+    """
     metadata = []
-    if not opened:
+    if type(path_or_stream) == str:
         try:
-            with open(path, 'rb') as f:
+            with open(path_or_stream, 'rb') as f:
                 while True:
                     try:
                         key, val = f.readline().strip().split(':', maxsplit=1)
@@ -1424,7 +1522,7 @@ def read_intense_qc(path, only_metadata=False, opened=False):
                 else:
                     data = f.readlines()
         except:
-            with open(path, 'r') as f:
+            with open(path_or_stream, 'r') as f:
                 while True:
                     try:
                         key, val = f.readline().strip().split(':', maxsplit=1)
@@ -1441,7 +1539,7 @@ def read_intense_qc(path, only_metadata=False, opened=False):
                     data = f.readlines()
 
     else:
-        f = path
+        f = path_or_stream
         while True:
             try:
                 key, val = str(f.readline().strip())[2:-1].split(':', maxsplit=1)
@@ -1481,23 +1579,23 @@ def read_intense_qc(path, only_metadata=False, opened=False):
 
         data = data.where(data != -999)
 
-    s = Series(station_id=metadata['station id'],
-               path_to_original_data=metadata['path to original data'],
-               latitude=try_float(metadata['latitude']),
-               longitude=try_float(metadata['longitude']),
-               original_timestep=metadata['original timestep'],
-               original_units=metadata['original units'],
-               new_units=metadata['new units'],
-               new_timestep=metadata['new timestep'],
-               data=data.vals,
-               elevation=metadata['elevation'],
-               country=metadata['country'],
-               original_station_number=metadata['original station number'],
-               original_station_name=metadata['original station name'],
-               time_zone=metadata['time zone'])
+    s = Gauge(station_id=metadata['station id'],
+              path_to_original_data=metadata['path to original data'],
+              latitude=utils.try_float(metadata['latitude']),
+              longitude=utils.try_float(metadata['longitude']),
+              original_timestep=metadata['original timestep'],
+              original_units=metadata['original units'],
+              new_units=metadata['new units'],
+              new_timestep=metadata['new timestep'],
+              data=data.vals,
+              elevation=metadata['elevation'],
+              country=metadata['country'],
+              original_station_number=metadata['original station number'],
+              original_station_name=metadata['original station name'],
+              time_zone=metadata['time zone'])
 
     tmp = metadata['years where min value changes']
-    change_flag = try_int(tmp.split(", ")[0][1:])
+    change_flag = utils.try_int(tmp.split(", ")[0][1:])
     if change_flag == 0:
         change_list = [np.nan]
     elif change_flag == 1:
@@ -1506,21 +1604,21 @@ def read_intense_qc(path, only_metadata=False, opened=False):
         change_list = [int(y) for y in years]
     
     qc = Qc(
-        series=s,
-        percentiles=[try_list(metadata['years where q95 equals 0']), try_list(metadata['years where q99 equals 0'])],
-        k_largest=[try_list(metadata['years where k1 equals 0']), try_list(metadata['years where k5 equals 0']),
-                     try_list(metadata['years where k10 equals 0'])],
-        days_of_week=try_int(metadata['uneven distribution of rain over days of the week']),
-        hours_of_day=try_int(metadata['uneven distribution of rain over hours of the day']),
-        intermittency=try_list(metadata['years with intermittency issues']),
-        breakpoint=try_int(metadata['break point detected']),
-        R99pTOT=try_list(metadata['r99ptot checks']),
-        PRCPTOT=try_list(metadata['prcptot checks']),
-        change_min_value=[change_flag, change_list],
-        offset=try_int(metadata['optimum offset']),
-        preQC_affinity_index=try_float(metadata['pre qc affinity index']),
-        preQC_pearson_coefficient=try_float(metadata['pre qc pearson coefficient']),
-        factor_daily=try_float(metadata['factor against nearest daily gauge']),
+        gauge=s,
+        percentiles=(utils.try_list(metadata['years where q95 equals 0']), utils.try_list(metadata['years where q99 equals 0'])),
+        k_largest=(utils.try_list(metadata['years where k1 equals 0']), utils.try_list(metadata['years where k5 equals 0']),
+                     utils.try_list(metadata['years where k10 equals 0'])),
+        days_of_week=utils.try_int(metadata['uneven distribution of rain over days of the week']),
+        hours_of_day=utils.try_int(metadata['uneven distribution of rain over hours of the day']),
+        intermittency=utils.try_list(metadata['years with intermittency issues']),
+        breakpoint=utils.try_int(metadata['break point detected']),
+        R99pTOT=utils.try_list(metadata['r99ptot checks']),
+        PRCPTOT=utils.try_list(metadata['prcptot checks']),
+        change_min_value=(change_flag, change_list),
+        offset=utils.try_int(metadata['optimum offset']),
+        preQC_affinity_index=utils.try_float(metadata['pre qc affinity index']),
+        preQC_pearson_coefficient=utils.try_float(metadata['pre qc pearson coefficient']),
+        factor_daily=utils.try_float(metadata['factor against nearest daily gauge']),
 
         hourly_neighbours=data.hourly_neighbours,
         hourly_neighbours_dry=data.hourly_neighbours_dry,
@@ -1531,7 +1629,7 @@ def read_intense_qc(path, only_metadata=False, opened=False):
         Rx1day=data.Rx1day,
         CWD=data.CWD,
         CDD=data.CDD,
-        daily_accumualtions=data.daily_accumualtions,
+        daily_accumulations=data.daily_accumualtions,
         monthly_accumulations=data.monthly_accumulations,
         streaks=data.streaks,
         factor_monthly=data.factor_monthly

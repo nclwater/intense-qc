@@ -7,3 +7,10 @@ Quality control procedure for hourly rainfall data
 [![codecov](https://codecov.io/gh/nclwater/intense-qc/branch/master/graph/badge.svg?token=R44B23GYHS)](https://codecov.io/gh/nclwater/intense-qc)
 
 `python -m unittest discover`
+
+## Documentation
+
+```
+cd docs
+make
+```

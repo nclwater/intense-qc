@@ -1,8 +1,10 @@
 from intense import rulebase
-from . import TestCase
-import os
+from unittest import TestCase
+
+root_folder = 'tests/sample_data'
+summary_path = 'tests/test_output/Rulebase_Summary.csv'
 
 
 class TestRuleBase(TestCase):
     def test_main(self):
-        rulebase.main(self.sample_data, os.path.join(self.test_output, 'Rulebase_Summary.csv'))
+        rulebase.find_and_apply_rulebase(root_folder, summary_path)

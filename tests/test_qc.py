@@ -1,13 +1,15 @@
 from intense import utils
 from intense.qc import Qc
-from intense import intense as ex
+from intense import gauge as ex
 import os
-from . import TestCase
+from unittest import TestCase
 
 
 class TestQc(TestCase):
 
     def test_get_flags(self):
+        self.sample_data = "tests/sample_data"
+        self.test_output = "tests/test_output"
 
         if not os.path.exists(self.test_output):
             os.mkdir(self.test_output)
@@ -34,7 +36,7 @@ class TestQc(TestCase):
         file_folders = ["DE_02483.zip"]
         for file, folder in zip(files_to_process, file_folders):
             f = utils.open_file(file_folders, files_to_process, file, self.sample_data, self.test_output)
-            qc = Qc(ex.read_intense(f, only_metadata=False, opened=True),
+            qc = Qc(ex.read_intense(f, only_metadata=False),
                     hourly_n_names=hourly_n_names,
                     hourly_n_dates=hourly_n_dates,
                     hourly_n_coords=hourly_n_coords,
