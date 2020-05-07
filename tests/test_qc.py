@@ -36,7 +36,7 @@ class TestQc(TestCase):
         file_folders = ["DE_02483.zip"]
         for file, folder in zip(files_to_process, file_folders):
             f = utils.open_file(file_folders, files_to_process, file, self.sample_data, self.test_output)
-            qc = Qc(ex.read_intense(f, only_metadata=False, opened=True),
+            qc = Qc(ex.read_intense(f, only_metadata=False),
                     hourly_n_names=hourly_n_names,
                     hourly_n_dates=hourly_n_dates,
                     hourly_n_coords=hourly_n_coords,
