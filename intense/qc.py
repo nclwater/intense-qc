@@ -1124,7 +1124,7 @@ class Qc:
             dry_flags_dt = [datetime(d.year, d.month, d.day, 7) for d in dry_flags_dates]
             dry_flags_df = pd.Series(dry_flags_vals, index=dry_flags_dt).to_frame("dryFlags")
 
-            df = pd.concat([df, flags_df, dry_flags_df], axis=1, join_axes=[df.index])
+            df = pd.concat([df, flags_df, dry_flags_df], axis=1)
             df.flags = df.flags.fillna(method="ffill", limit=23)
             df.dryFlags = df.dryFlags.fillna(method="ffill", limit=23)
             df.fillna(-999, inplace=True)

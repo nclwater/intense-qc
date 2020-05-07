@@ -1,5 +1,0 @@
-Station ID,Latitude,Longitude,Start datetime,End datetime,Elevation,path
-UK_EA_00_Bardney_qc,53.213301,-0.3444875,1987060207,2012010100,100.0m,/media/nas/x21971/QualityControlledData/UK.zip
-UK_EA_00_Carbrooke_WSW_(T)_qc,52.586678,0.86330251,1991080101,2012010100,100.0m,/media/nas/x21971/QualityControlledData/UK.zip
-UK_EA_03_dart_raffe_farm39_qc,50.925135,-3.7134936,2001040209,2015010100,100.0m,/media/nas/x21971/QualityControlledData/UK.zip
-UK_EA_04_angmering_tbr_qc,50.855361,-0.48524295,1994021501,2015010100,100.0m,/media/nas/x21971/QualityControlledData/UK.zip
