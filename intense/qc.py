@@ -1118,13 +1118,19 @@ class Qc:
             for i in i3:
                 dry_flags_vals[i] = 3
 
-            # add daily flags back onto hourly
-            flags_dt = [datetime(d.year, d.month, d.day, 7) for d in flags_dates]
+            # add daily flags back onto hourly (needs to be at hour=0800 to 
+            # reconcile GPCC vs GSDR aggregation definitions)
+            flags_dt = [datetime(d.year, d.month, d.day, 8) for d in flags_dates]
             flags_df = pd.Series(flags_vals, index=flags_dt).to_frame("flags")
-            dry_flags_dt = [datetime(d.year, d.month, d.day, 7) for d in dry_flags_dates]
+            dry_flags_dt = [datetime(d.year, d.month, d.day, 8) for d in dry_flags_dates]
             dry_flags_df = pd.Series(dry_flags_vals, index=dry_flags_dt).to_frame("dryFlags")
 
             df = pd.concat([df, flags_df, dry_flags_df], axis=1)
+            
+            # Ensure that the day before the beginning of the hourly time 
+            # series is not incorporated as a result of the concat operation
+            df = df.loc[self.gauge.start_datetime:self.gauge.end_datetime]
+            
             df.flags = df.flags.fillna(method="ffill", limit=23)
             df.dryFlags = df.dryFlags.fillna(method="ffill", limit=23)
             df.fillna(-999, inplace=True)
@@ -1253,13 +1259,19 @@ class Qc:
             for i in i3:
                 dry_flags_vals[i] = 3
 
-            # add daily flags back onto hourly
-            flags_dt = [datetime(d.year, d.month, d.day, 7) for d in flags_dates]
+            # add daily flags back onto hourly (needs to be at hour=0800 to 
+            # reconcile GPCC vs GSDR aggregation definitions)
+            flags_dt = [datetime(d.year, d.month, d.day, 8) for d in flags_dates]
             flags_df = pd.Series(flags_vals, index=flags_dt).to_frame("flags")
-            dry_flags_dt = [datetime(d.year, d.month, d.day, 7) for d in dry_flags_dates]
+            dry_flags_dt = [datetime(d.year, d.month, d.day, 8) for d in dry_flags_dates]
             dry_flags_df = pd.Series(dry_flags_vals, index=dry_flags_dt).to_frame("dryFlags")
 
             df = pd.concat([df, flags_df, dry_flags_df], axis=1, join_axes=[df.index])
+            
+            # Ensure that the day before the beginning of the hourly time 
+            # series is not incorporated as a result of the concat operation
+            df = df.loc[self.gauge.start_datetime:self.gauge.end_datetime]
+            
             df.flags = df.flags.fillna(method="ffill", limit=23)
             df.dryFlags = df.dryFlags.fillna(method="ffill", limit=23)
             df.fillna(-999, inplace=True)
