@@ -125,11 +125,12 @@ class Gauge:
 
     def get_info(self):
         """Updates masked, start and end times, number of records, percent missing and resolution based on data"""
-        self.masked = self.data[self.data != self.no_data_value]
+        self.masked = self.data[(self.data != self.no_data_value) & np.isfinite(self.data)]
         self.start_datetime = min(self.data.index)
         self.end_datetime = max(self.data.index)
         self.number_of_records = len(self.data)
-        self.percent_missing_data = len(self.data[self.data == self.no_data_value]) * 100 / self.number_of_records
+        self.percent_missing_data = len(self.data[(self.data == self.no_data_value) | 
+            np.isnan(self.data)]) * 100 / self.number_of_records
         self.resolution = self.data[self.data != self.no_data_value].diff()[
             self.data[self.data != self.no_data_value].diff() > 0].abs().min()
 
