@@ -121,6 +121,7 @@ class Gauge:
         self.new_timestep = new_timestep
         self.other = other
         if self.data is not None:
+            self.data.where((self.data >= 0) & (self.data != self.no_data_value))
             self.get_info()
 
     def get_info(self):
@@ -247,7 +248,6 @@ def read_intense(path_or_stream: Union[str, IO], only_metadata: bool = False) ->
                                            end=datetime.strptime(metadata['end datetime'], '%Y%m%d%H'),
                                            freq=metadata['new timestep'][:-2] + 'H'),
                              dtype=float)
-        data = data.where(data >= 0)
 
     gauge = Gauge(station_id=metadata['station id'],
                   path_to_original_data=metadata['path to original data'],
