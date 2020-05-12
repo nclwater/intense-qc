@@ -17,5 +17,5 @@ class TestRuleBase(TestCase):
             benchmark_output = benchmark_file.readlines()
         with open(test_output_path, "r") as test_file:
             test_output = test_file.readlines()
-        assert test_output == benchmark_output
+        self.assertEqual(test_output, benchmark_output)
         
