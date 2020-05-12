@@ -121,15 +121,16 @@ class Gauge:
         self.new_timestep = new_timestep
         self.other = other
         if self.data is not None:
+            self.data.loc[(self.data == self.no_data_value) | (self.data < 0)] = np.nan
             self.get_info()
 
     def get_info(self):
         """Updates masked, start and end times, number of records, percent missing and resolution based on data"""
-        self.masked = self.data[self.data != self.no_data_value]
+        self.masked = self.data[np.isfinite(self.data)]
         self.start_datetime = min(self.data.index)
         self.end_datetime = max(self.data.index)
         self.number_of_records = len(self.data)
-        self.percent_missing_data = len(self.data[self.data == self.no_data_value]) * 100 / self.number_of_records
+        self.percent_missing_data = len(self.data[np.isnan(self.data)]) * 100 / self.number_of_records
         self.resolution = self.data[self.data != self.no_data_value].diff()[
             self.data[self.data != self.no_data_value].diff() > 0].abs().min()
 
@@ -247,7 +248,6 @@ def read_intense(path_or_stream: Union[str, IO], only_metadata: bool = False) ->
                                            end=datetime.strptime(metadata['end datetime'], '%Y%m%d%H'),
                                            freq=metadata['new timestep'][:-2] + 'H'),
                              dtype=float)
-        data = data.where(data >= 0)
 
     gauge = Gauge(station_id=metadata['station id'],
                   path_to_original_data=metadata['path to original data'],

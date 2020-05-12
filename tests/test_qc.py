@@ -45,9 +45,21 @@ class TestQc(TestCase):
                     etccdi_data_folder='tests/etccdi_data'
                     )
             qc.get_flags()
-            output_folder = os.path.join(self.test_output, folder[:4])
+            output_folder = os.path.join(self.test_output, folder[:-4])
             if not os.path.exists(output_folder):
                 os.mkdir(output_folder)
 
             # for global run
             qc.write(output_folder + "/Flags")
+            
+            # Compare output QC flags file with benchmark
+            benchmark_file_path = os.path.join(self.sample_data, "DE_02483/Flags/DE_02483_QC.txt")
+            test_output_path = os.path.join(output_folder, "Flags/DE_02483_QC.txt")
+            with open(benchmark_file_path, "r") as benchmark_file:
+                benchmark_output = benchmark_file.readlines()
+            with open(test_output_path, "r") as test_file:
+                test_output = test_file.readlines()
+            for benchmark_line, test_line in zip(benchmark_output, test_output):
+                self.assertEqual(test_line.replace("(", "[").replace(")", "]"), 
+                        benchmark_line.replace("(", "[").replace(")", "]"))
+            
