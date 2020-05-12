@@ -60,8 +60,6 @@ class TestQc(TestCase):
             with open(test_output_path, "r") as test_file:
                 test_output = test_file.readlines()
             for benchmark_line, test_line in zip(benchmark_output, test_output):
-                try:
-                    assert test_line == benchmark_line
-                except AssertionError:
-                    assert test_line.replace("(", "[").replace(")", "]") == benchmark_line
+                self.assertEqual(test_line.replace("(", "[").replace(")", "]"), 
+                        benchmark_line.replace("(", "[").replace(")", "]"))
             
