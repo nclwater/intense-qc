@@ -121,7 +121,7 @@ class Gauge:
         self.new_timestep = new_timestep
         self.other = other
         if self.data is not None:
-            self.data.where((self.data >= 0) & (self.data != self.no_data_value))
+            self.data.loc[(self.data == self.no_data_value) | (self.data < 0)] = np.nan
             self.get_info()
 
     def get_info(self):
