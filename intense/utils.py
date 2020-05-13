@@ -463,13 +463,15 @@ def get_gpcc(start_year, end_year, gpcc_id):
 
 # Helper function to access Global Sub Daily Rainfall database (a.k.a. Intense Database)
 def get_gsdr(gsdr_id, path):
-    zfh = zipfile.ZipFile(path, "r")
 
-    d = zfh.open(gsdr_id + ".txt", mode="r")
-    df = ex.read_intense(d, only_metadata=False).data.to_frame("GSDR")
-    d.close()
-    zfh.close()
+    filename = gsdr_id + '.txt'
 
+    if path.endswith('.zip'):
+        f = zipfile.ZipFile(path).open(filename)
+    else:
+        f = os.path.join(path, filename)
+
+    df = ex.read_intense(f, only_metadata=False).data.to_frame("GSDR")
     # convert hourly to daily 7am-7am
     df["roll"] = np.around(df.GSDR.rolling(window=24, center=False, min_periods=24).sum(), 1)
 

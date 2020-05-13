@@ -216,46 +216,13 @@ def apply_rulebase(file_path: str, root_output_folder: str, write_rulebase_gauge
     return output_line
 
 
-def find_files(root_folder: str, overwrite: bool = True) -> List[Tuple[str, str]]:
-    """Finds QC files to apply the rule base to
+def apply_all(paths: List[str], summary_path: str):
+    """Applies the rulebase to many many QC files and creates a summary
 
     Args:
-        root_folder: the directory to search
-        overwrite: whether to include files which have already been processed
-
-    Returns:
-        A list of input file and output folder paths [(input_file, output_folder), ...]
-    """
-
-    folders_in_root_folder = [f for f in sorted(os.listdir(root_folder)) if
-                            f not in ['qcDebug', 'Superseded'] and
-                            os.path.isdir(root_folder + '/' + f)]
-
-
-    file_paths = []
-
-    for folder in folders_in_root_folder:
-
-        # List of QC flag files
-        flag_folder = os.path.join(root_folder, folder, 'Flags')
-        flag_files = sorted(os.listdir(flag_folder))
-
-        # Equivalent list of paths
-        for f in flag_files:
-            file_paths.append(os.path.join(flag_folder, f))
-    return file_paths
-
-
-def find_and_apply_rulebase(root_folder: str, summary_path: str):
-    """Finds INTENSE QC files and applies the rulebase to create quality controlled time series
-
-    Args:
-        root_folder: path to the directory to search for INTENSE QC files
+        paths: list of paths to INTENSE QC files
         summary_path: path to create a summary file of the rulebase
     """
-
-    # get list of files to process
-    file_paths = find_files(root_folder)
 
     with open(summary_path, 'w') as f:
 
@@ -267,5 +234,5 @@ def find_and_apply_rulebase(root_folder: str, summary_path: str):
         headers = ",".join(headers)
         f.write(headers + "\n")
 
-        for input_path in file_paths:
+        for input_path in paths:
             f.write(apply_rulebase(input_path, os.path.dirname(summary_path)) + '\n')
