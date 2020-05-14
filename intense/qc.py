@@ -1055,99 +1055,62 @@ class Qc:
 
         # convert hourly to daily 7am-7am
         df["roll"] = np.around(df.target.rolling(window=24, center=False, min_periods=24).sum(), 1)
-        dfd = df[df.index.hour == 7]
-        dts = list(dfd.index)
-        daily_vals = list(dfd.roll)
+        df_daily = df[df.index.hour == 7]
 
-        dts0 = []
-        for dt in dts:
-            s0 = dt - timedelta(days=1)
-            dts0.append(date(s0.year, s0.month, s0.day))
-        ts0 = pd.Series(daily_vals, index=dts0)
+        daily_values = pd.Series(df_daily.roll.values, index=(df_daily.index.to_series() - timedelta(days=1)).dt.date)
 
         neighbours, paths = self.find_hourly_neighbours()
 
         # dp 30/11/2019 - assuming neighbours[0] is the target
         if len(neighbours) > 1:
 
-            # More GSDR bits here Liz: -+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-
-
             # get GSDR
             neighbour_dfs = []
-            for nId in range(len(neighbours)):
-                if nId == 0:
-                    pass
-                else:
-                    neighbour_dfs.append(utils.get_gsdr(neighbours[nId], paths[nId]))
+            for idx in range(1, len(neighbours)):
+                neighbour_dfs.append(utils.get_gsdr(neighbours[idx], paths[idx]))
             # get matching stats for nearest gauge and offset calculateAffinityIndexAndPearson(ts1, ts2) -> returns a flag
 
             # do neighbour check
 
             # filter out gauges with AI < 0.9
-            neighbour_dfs2 = []
-            for ndf in neighbour_dfs:
-                nai, nr2, nf = utils.calculate_affinity_index_and_pearson(ts0.to_frame("ts1"), ndf)
-                if nai > 0.9:
-                    neighbour_dfs2.append(ndf)
-                else:
-                    pass
+            filtered_neighbour_dfs = []
+            for neighbour_df in neighbour_dfs:
+                affinity_index, _, _ = utils.calculate_affinity_index_and_pearson(daily_values.to_frame("ts1"),
+                                                                                  neighbour_df)
+                if affinity_index > 0.9:
+                    filtered_neighbour_dfs.append(neighbour_df)
 
-            flags_df = utils.check_neighbours(ts0.to_frame("ts1"), neighbour_dfs2, self.gauge.station_id, 'hourly')
-
-            flags_dates = list(flags_df.index.values)
-            flags_vals = list(flags_df)
+            flags_df = utils.check_neighbours(daily_values.to_frame("ts1"), filtered_neighbour_dfs,
+                                              self.gauge.station_id, 'hourly').rename('flags')
 
             # do neighbour check for dry periods and flag the whole 15 day period
-            dry_flags_df = utils.check_neighbours_dry(ts0.to_frame("ts1"), neighbour_dfs2)
-            dry_flags_dates = list(dry_flags_df.index.values)
-            dry_flags_vals = list(dry_flags_df)
+            dry_flags = utils.check_neighbours_dry(daily_values.to_frame("ts1"),
+                                                   filtered_neighbour_dfs).rename('dry_flags')
 
-            i1 = []
-            i2 = []
-            i3 = []
-
-            for i in range(len(dry_flags_vals)):
-                if dry_flags_vals[i] == 1:
-                    for j in range(15):
-                        i1.append(i - j)
-                elif dry_flags_vals[i] == 2:
-                    for j in range(15):
-                        i2.append(i - j)
-                elif dry_flags_vals[i] == 3:
-                    for j in range(15):
-                        i3.append(i - j)
-                else:
-                    pass
-
-            for i in i1:
-                dry_flags_vals[i] = 1
-            for i in i2:
-                dry_flags_vals[i] = 2
-            for i in i3:
-                dry_flags_vals[i] = 3
-
+            for flag in [1, 2, 3]:
+                for idx, value in dry_flags[dry_flags == flag].iteritems():
+                    dry_flags[idx-timedelta(days=14):idx] = flag
             # add daily flags back onto hourly (needs to be at hour=0800 to 
             # reconcile GPCC vs GSDR aggregation definitions)
-            flags_dt = [datetime(d.year, d.month, d.day, 8) for d in flags_dates]
-            flags_df = pd.Series(flags_vals, index=flags_dt).to_frame("flags")
-            dry_flags_dt = [datetime(d.year, d.month, d.day, 8) for d in dry_flags_dates]
-            dry_flags_df = pd.Series(dry_flags_vals, index=dry_flags_dt).to_frame("dryFlags")
+            flags_df.index = pd.to_datetime(flags_df.index)+timedelta(hours=8)
 
-            df = pd.concat([df, flags_df, dry_flags_df], axis=1)
+            dry_flags.index = pd.to_datetime(dry_flags.index) + timedelta(hours=8)
+
+            df = pd.concat([df, flags_df, dry_flags], axis=1)
             
             # Ensure that the day before the beginning of the hourly time 
             # series is not incorporated as a result of the concat operation
             df = df.loc[self.gauge.start_datetime:self.gauge.end_datetime]
             
             df.flags = df.flags.fillna(method="ffill", limit=23)
-            df.dryFlags = df.dryFlags.fillna(method="ffill", limit=23)
+            df.dry_flags = df.dry_flags.fillna(method="ffill", limit=23)
             df.fillna(-999, inplace=True)
 
-            return list(df.flags.astype(int)), list(df.dryFlags.astype(int))
+            return list(df.flags.astype(int)), list(df.dry_flags.astype(int))
 
         else:
-            tmp = [-999 for i in range(df['roll'].shape[0])]
-            return [tmp, tmp]
+            tmp = [-999 for _ in range(df['roll'].shape[0])]
+            return tmp, tmp
 
     def check_daily_neighbours(self) -> Tuple[List[int], int, float, float, float, List[int]]:
         """Daily neighbours check against GPCC
