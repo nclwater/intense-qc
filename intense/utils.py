@@ -272,12 +272,12 @@ def daily_accums_day_check(day_list, mean_wet_day_val, mean_wet_day_val_filled):
                 if day_list[23] > mean_wet_day_val_filled:
                     flag = 2
                 else:
-                    flag = 0
+                    flag = 4 # to help identify streaks of lower value daily accumulations
             else:
                 if day_list[23] > mean_wet_day_val:
                     flag = 1
                 else:
-                    flag = 0
+                    flag = 3 # to help identify streaks of lower value daily accumulations
         else:
             flag = 0
     else:
