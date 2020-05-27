@@ -676,6 +676,62 @@ class Qc:
             flag = utils.daily_accums_day_check(day_val_list, mean_wet_day_val, mean_wet_day_val_filled)
             if flag > max(flags[i:i + 24]):
                 flags[i:i + 24] = [flag for j in range(24)]
+        
+        # ---
+        # Update flags such that only periods of >=2 consecutive days of flags
+        # are retained for the lower magnitude values
+        
+        # Lag flags forwards and backwards to help identify flag periods
+        df = self.gauge.data.copy().to_frame()
+        df.columns = ['val']
+        df['flag'] = flags
+        df['prev_flag'] = df.shift(1)['flag']
+        df['next_flag'] = df.shift(-1)['flag']
+        df.iloc[0, df.columns.get_loc('prev_flag')] = 0
+        df.iloc[df['val'].shape[0]-1, df.columns.get_loc('next_flag')] = 0
+        
+        # Find indices marking start and end of streaks of flags
+        # - any possibility of start without end?
+        start_inds = np.flatnonzero((df.prev_flag == 0) & (df.flag > 0))
+        end_inds = np.flatnonzero((df.flag > 0) & (df.next_flag == 0))
+        
+        # Calculate length of continuous flag durations and get corresponding
+        # flag value
+        df0 = pd.DataFrame({'start': start_inds, 'end': end_inds})
+        df0['duration'] = df0['end'] - df0['start'] + 1
+        
+        # Filter on periods of <2 days with flags if flags are for low magnitude
+        # accumulations and update flag series (to 0)
+        df0 = df0.loc[df0['duration'] < 48]
+        for row in df0.iterrows():
+            idx1 = int(row[1].start)
+            idx2 = int(row[1].end)
+            period_flag = df.iloc[idx1, df.columns.get_loc('flag')]
+            if period_flag >= 3:
+                df.iloc[idx1:idx2 + 1, df.columns.get_loc('flag')] = 0
+        
+        # ---
+        # Find periods of zeros bounded by potential daily accumulations
+        
+        # Get indices of wet hours that have a daily accumulation flag >0
+        inds = np.flatnonzero((df.val > 0.0) & (df.flag > 0))
+        
+        # Calculate differences between these indices
+        df1 = pd.DataFrame({'indices': inds})
+        df1['diffs'] = df1['indices'].diff()
+        df1.iloc[0, df1.columns.get_loc('diffs')] = 0
+        
+        # If differences are multiples of 24 AND if sum of rainfall between
+        # indices is zero then flag zeros (if not already flagged)
+        df1['mod24'] = np.mod(df1['diffs'], 24)
+        df1 = df1.loc[(df1['diffs'] > 24) & (df1['mod24'] == 0)]
+        for row in df1.iterrows():
+            idx1 = int(row[1].indices) - int(row[1].diffs) + 1
+            idx2 = int(row[1].indices) - 23 - 1 #- 1
+            period_sum = df.iloc[idx1:idx2 + 1, df.columns.get_loc('val')].sum()
+            if period_sum == 0.0:
+                df.iloc[idx1:idx2 + 1, df.columns.get_loc('flag')] = 6
+        flags = df['flag'].tolist()
 
         return flags
 
