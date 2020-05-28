@@ -947,10 +947,6 @@ class Qc:
         """Change in minimum value check
 
         Change in minimum value: This is an homogeneity check to see if the resolution of the data has changed.
-        Currently, I am including a flag if there is a year of no data as that seems pretty bad to me.
-
-        Alternative implementation to return list of years where the minimum value >0
-        differs from the data precision/resolution identified in the raw (pre-QC) files
 
         Returns:
             Change flag and flagged years
@@ -962,9 +958,16 @@ class Qc:
 
         # Find minimum by year
         df = df.groupby(df.index.year).min()
-
-        # List of years differing from inferred precision in raw (pre-QC) data files
-        df = df.loc[df['val'] != self.gauge.resolution]
+        
+        # Identify years where minimum value changes from one year to the next
+        # - focusing on whether there is a change between one year and the next
+        # available year, i.e. if any years with no data in between then they
+        # are ignored
+        df['prev_val'] = df.shift(1)['val']
+        df.iloc[0, df.columns.get_loc('prev_val')] = df.iloc[0, df.columns.get_loc('val')]
+        df['flag'] = np.where(df['val'] == df['prev_val'], 0, 1)
+        print(df)
+        df = df.loc[df['flag'] == 1]
         flag_years = df.index.tolist()
         if len(flag_years) > 0:
             change_flag = 1
