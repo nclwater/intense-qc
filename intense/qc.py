@@ -864,61 +864,82 @@ class Qc:
                  end=np.flatnonzero((df.val == df.prev) & (df.val != df.next) &
                                     (df.val >= threshold))))
         df1['diff'] = df1['end'] - df1['start'] + 1
+        
+        # Look also for long streaks of relatively low values exceeding the data
+        # resolution
+        # - simplified to just use one minimum value threshold for determining long
+        # streaks of relatively low values (rather than yearly varying threshold)
+        
+        # Identify minimum threshold
+        # - set lower and upper bounds for the threshold based on typical highest
+        # measurement resolution and lowest resolution (US)
+        min_threshold = np.min(df['val'][df['val'] > 0.0])
+        min_threshold = np.maximum(min_threshold, 0.1)
+        min_threshold = np.minimum(min_threshold, 2.6)
 
-        # Calculate annual minimum data value >0 in each year (added FL09)
-        df99 = df[df['val'] > 0.0].groupby(df[df['val'] > 0.0].index.year)['val'].agg('min')
-        df99 = df99.to_frame()
-        df99.rename({'val': 'year_min'}, axis=1, inplace=True)
-        df99['year'] = df99.index
-
-        # Ensure that year_min is not too small (FL10) - set minimum as 0.1
-        # - issues with small numbers, especially where minimum changes between years
-        # - also ensure not too large (<= 2.6, i.e. US tip resolution)
-        df99['year_min'] = np.where(df99['year_min'] < 0.1, 0.1, df99['year_min'])
-        df99['year_min'] = np.where(df99['year_min'] > 2.6, 2.6, df99['year_min'])
-
-        # Add annual minimum data value >0 as column (added FL09)
-        df['year'] = df.index.year
-        df['datetime'] = df.index
-        df = df.merge(df99, how='left', left_on='year', right_on='year')
-        df.drop('year', axis=1, inplace=True)
-        df.set_index('datetime', inplace=True)
-
-        # Look for streaks of consecutive values (changed from >0 to any
-        # magnitude > year minimum data value above 0 in FL09)
-        try:
-            df2 = pd.DataFrame(
-                dict(start=np.flatnonzero((df.val != df.prev) & (df.val == df.next) &
-                                          (df.val > df.year_min)),
-                     end=np.flatnonzero((df.val == df.prev) & (df.val != df.next) &
-                                        (df.val > df.year_min))))
-
-        # If above fails then use one value for all years as threshold, based on
-        # maximum of annual minima, ensuring >= 0.1 and <= 2.6 (done above) (FL10)
-        except:
-            min_threshold = np.max(df99['year_min'])
-            df2 = pd.DataFrame(
-                dict(start=np.flatnonzero((df.val != df.prev) & (df.val == df.next) &
-                                          (df.val > min_threshold)),
-                     end=np.flatnonzero((df.val == df.prev) & (df.val != df.next) &
-                                        (df.val > min_threshold))))
-
-        # Subset on periods of >= 12 consecutive values
+        # Look for streaks of >= 12 consecutive values > minimum data value above 0
+        df2 = pd.DataFrame(
+            dict(start=np.flatnonzero((df.val != df.prev) & (df.val == df.next) &
+                                      (df.val > min_threshold)),
+                 end=np.flatnonzero((df.val == df.prev) & (df.val != df.next) &
+                                    (df.val > min_threshold))))
         df2['diff'] = df2['end'] - df2['start'] + 1
         df2 = df2.loc[df2['diff'] >= 12]
-
+        
+        # Look also for streaks of >= 24 values of any number to account for
+        # any daily repeated/disaggregated streaks missed in the steps above
+        df3 = pd.DataFrame(
+            dict(start=np.flatnonzero((df.val != df.prev) & (df.val == df.next) &
+                                      (df.val > 0.0)),
+                 end=np.flatnonzero((df.val == df.prev) & (df.val != df.next) &
+                                    (df.val > 0.0))))
+        df3['diff'] = df3['end'] - df3['start'] + 1
+        df3 = df3.loc[df3['diff'] >= 24]
+        
+        # Compile flags
+        # - possible that a period could have more than one flag value, so the order 
+        # of append operations "prioritises" streaks of >= 24 hours which helps
+        # to remove any periods of zeros in daily disaggregated/repeated series
         flag = 1
         if np.isnan(mean_wetday_val):
             flag = 2
         df1['flag'] = flag
         df2['flag'] = 3
-        df3 = df1.append(df2)
+        df3['flag'] = 4
+        df4 = df1.append(df2)
+        df4 = df4.append(df3)
 
         # Make list of flags
         flags = [0 for i in range(len(df['val']))]
-        for row in df3.iterrows():
+        for row in df4.iterrows():
             for i in range(row[1].start, row[1].end + 1):
                 flags[i] = row[1].flag
+        
+        # Find periods of zeros bounded by streaks of >=24 hours by getting
+        # indices of wet hours that have a flag == 4
+        df['flag'] = flags
+        inds = np.flatnonzero((df.val > 0.0) & (df.flag == 4))
+        
+        # Calculate differences between these indices
+        df5 = pd.DataFrame({'indices': inds})
+        df5['diffs'] = df5['indices'].diff()
+        df5.iloc[0, df5.columns.get_loc('diffs')] = 0
+        
+        # If differences are multiples of 24 AND if sum of rainfall between
+        # indices is zero then flag zeros (if not already flagged)
+        # - note difference between indices of preceding and next 4 flag is 25
+        # if there are 24 hours missing in between etc - so expecting 1 from
+        # mod calculation
+        df5['mod24'] = np.mod(df5['diffs'], 24)
+        df5 = df5.loc[(df5['diffs'] >= 24) & (df5['mod24'] == 1)]
+        
+        for row in df5.iterrows():
+            idx1 = int(row[1].indices) - int(row[1].diffs) + 1
+            idx2 = int(row[1].indices) - 1
+            period_sum = df.iloc[idx1:idx2 + 1, df.columns.get_loc('val')].sum()
+            if period_sum == 0.0:
+                df.iloc[idx1:idx2 + 1, df.columns.get_loc('flag')] = 5
+        flags = df['flag'].tolist()
 
         return flags
 
