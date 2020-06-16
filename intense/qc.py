@@ -1279,7 +1279,13 @@ class Qc:
             df.flags = df.flags.fillna(method="ffill", limit=23)
             df.dryFlags = df.dryFlags.fillna(method="ffill", limit=23)
             df.fillna(-999, inplace=True)
-            return list(df.flags.astype(int)), offset_flag, s0ai, s0r2, s0f, list(df.dryFlags.astype(int))
+            return \
+                list(df.flags.astype(int)), \
+                offset_flag, \
+                round(s0ai, 5), \
+                round(s0r2, 5), \
+                round(s0f, 5), \
+                list(df.dryFlags.astype(int))
 
         # -999 if no neighbours
         else:
@@ -1368,7 +1374,8 @@ class Qc:
         if np.isfinite(self.gauge.latitude) and np.isfinite(self.gauge.longitude):
             self.hourly_neighbours, self.hourly_neighbours_dry = self.check_hourly_neighbours()
             if self.use_daily_neighbours:
-                self.daily_neighbours, self.offset, self.preQC_affinity_index, self.preQC_pearson_coefficient, self.factor_daily, self.daily_neighbours_dry = self.check_daily_neighbours()
+                self.daily_neighbours, self.offset, self.preQC_affinity_index, self.preQC_pearson_coefficient, \
+                self.factor_daily, self.daily_neighbours_dry = self.check_daily_neighbours()
             if self.use_monthly_neighbours:
                 self.monthly_neighbours, self.factor_monthly = self.check_monthly_neighbours()
 

@@ -32,9 +32,9 @@ R99pTOT checks: [4, 4, 4, 4, 4]
 PRCPTOT checks: [4, 4, 3, 4, 2]
 Years where min value changes: (1, [2006, 2010])
 Optimum offset: 0
-Pre QC Affinity Index: 0.9597030752916225
-Pre QC Pearson coefficient: 0.014666155104221052
-Factor against nearest daily gauge: 2.471590269890986
+Pre QC Affinity Index: 0.9597
+Pre QC Pearson coefficient: 0.01467
+Factor against nearest daily gauge: 2.47159
 0.9, -999, -999, -999, -999, -999, 0, 0, -999, 0, 0, 0, 0, 3
 0.3, -999, -999, -999, -999, -999, 0, 0, -999, 0, 0, 0, 0, 3
 0.3, -999, -999, -999, -999, -999, 0, 0, -999, 0, 0, 0, 0, 3
