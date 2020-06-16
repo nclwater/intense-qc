@@ -93,11 +93,13 @@ class Qc:
         daily_dates: start and end dates of neighbouring daily gauges
         daily_coords: latitudes, longitudes and elevations of neighbouring daily gauges
         daily_tree: a k-d tree containing daily gauge locations
+        daily_path: path to neighbouring daily gauge data
         use_monthly_neighbours: whether to include neighbouring monthly gauges in quality control
         monthly_names: names of neighbouring monthly gauges
         monthly_dates: start and end dates of neighbouring monthly gauges
         monthly_coords: latitudes, longitudes and elevations of neighbouring monthly gauges
         monthly_tree: a k-d tree containing monthly gauge locations
+        monthly_path: path to neighbouring monthly gauge data
         hourly_neighbours: a series of hourly neighbour qc values
         hourly_neighbours_dry: a series of hourly neighbours dry qc values
         daily_neighbours: a series of daily neighbour qc values
@@ -141,6 +143,7 @@ class Qc:
         daily_coords (Optional[Iterable[Tuple[float, float, float]]]): latitudes, longitudes and elevations of
             neighbouring daily gauges
         daily_tree (Optional[KDTree]): a k-d tree containing daily gauge locations
+        daily_path (Optional[str]): path to neighbouring daily gauge data
         use_monthly_neighbours (bool): whether to include neighbouring monthly gauges in quality
             control
         monthly_names (Optional[Iterable[str]]): names of neighbouring monthly gauges
@@ -149,6 +152,7 @@ class Qc:
         monthly_coords (Optional[Iterable[Tuple[float, float, float]]]): latitudes, longitudes and elevations of
             neighbouring monthly gauges
         monthly_tree (Optional[KDTree]): a k-d tree containing monthly gauge locations
+        monthly_path (Optional[str]): path to neighbouring monthly gauge data
         hourly_neighbours (Optional[pd.Series]): a series of hourly neighbour qc values
         hourly_neighbours_dry (Optional[pd.Series]): a series of hourly neighbours dry qc values
         daily_neighbours (Optional[pd.Series]): a series of daily neighbour qc values
