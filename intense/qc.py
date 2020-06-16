@@ -55,6 +55,7 @@ June 2019
 
 import os
 from datetime import datetime, timedelta, date
+import calendar
 
 import pandas as pd
 import numpy as np
@@ -433,23 +434,72 @@ class Qc:
         return flag_years
 
     def check_break_point(self) -> int:
-        """Indicative, Pettitt breakpoint check
+        """Indicative Pettitt breakpoint check for shift in central tendency of
+        annual time series based on (yearly) median wet hour rainfall.
 
         Returns:
-            1 if p < 0.01 or 0 if p >= 0.01 of Pettitt test
+            Classified Pettitt test p-value and flag for magnitude shift before/
+            after possible breakpoint.
         """
-        x = self.gauge.data.resample("D").sum().values
-        x = x[~np.isnan(x)]
-        x = x
-        x = robjects.FloatVector(x)
-
-        # using the pettitt test
-        pettitt = robjects.r['pettitt.test']
-        p = pettitt(x).rx('p.value')[0][0]  # gives the p-value if p-value is below 0.05 (or 0.01) there might be a change point
-        if p < 0.01:  # different
-            return 1
+        # Calculate wet hour mean and determine data completeness by year
+        df1 = self.gauge.data.groupby(self.gauge.data.index.year).agg([utils.wet_hour_median, 'count'])
+        df1['percent_data'] = np.where([calendar.isleap(y) for y in df1.index], 
+            (df1['count'] / (366.0 * 24.0)) * 100.0,
+            (df1['count'] / (365.0 * 24.0)) * 100.0)
+        
+        # Filter on data completeness and ensure no nans in series
+        # - relatively low year completeness threshold for now...
+        df1 = df1.loc[(df1['percent_data'] >= 50.0) & (np.isfinite(df1['wet_hour_median']))]
+        
+        # Pettitt test for shift in central tendency in series
+        # - could specify higher threshold number of years to calculate...
+        if len(df1['wet_hour_median']) >= 5:
+            x = robjects.FloatVector(df1['wet_hour_median'])
+            pettitt = robjects.r['pettitt.test']
+            
+            # Classify p-value as a flag
+            # - low p-value below e.g. 0.05 or 0.01 indicates a posssible change point
+            p = pettitt(x).rx('p.value')[0][0]
+            if p > 0.1:
+                p_flag = 0
+            elif p > 0.05:
+                p_flag = 1
+            elif p > 0.01:
+                p_flag = 2
+            else:
+                p_flag = 3
+            
+            # Calculate percentage difference before and after
+            # - for now indicate difference between lower and higher period regardless of order
+            # and calculate even for large p-values
+            # - note that R indexing starts at 1
+            change_index = pettitt(x).rx('estimate')[0][0]
+            period1_mean = np.mean(df1.iloc[:change_index, df1.columns.get_loc('wet_hour_median')])
+            period2_mean = np.mean(df1.iloc[change_index:, df1.columns.get_loc('wet_hour_median')])
+            if (period1_mean > 0.0) and (period2_mean > 0.0):
+                if period1_mean >= period2_mean:
+                    diff = ((period1_mean / period2_mean) - 1.0) * 100.0
+                else:
+                    diff = ((period2_mean / period1_mean) - 1.0) * 100.0
+                
+                # Classify difference as flag
+                if diff < 50.0:
+                    diff_flag = 0
+                elif (diff >= 50.0) and (diff < 100.0):
+                    diff_flag = 1
+                elif (diff >= 100.0) and (diff < 200.0):
+                    diff_flag = 2
+                elif diff >= 200.0:
+                    diff_flag = 3
+            else:
+                diff_flag = -999
+        
+        # Flags to indicate where not running test due to insufficient data
         else:
-            return 0
+            p_flag = -999
+            diff_flag = -999
+        
+        return p_flag, diff_flag
 
     def world_record_check_ts(self) -> List[int]:
         """Checks if and to what degree the world record has been exceeded by each rainfall value
@@ -966,7 +1016,6 @@ class Qc:
         df['prev_val'] = df.shift(1)['val']
         df.iloc[0, df.columns.get_loc('prev_val')] = df.iloc[0, df.columns.get_loc('val')]
         df['flag'] = np.where(df['val'] == df['prev_val'], 0, 1)
-        print(df)
         df = df.loc[df['flag'] == 1]
         flag_years = df.index.tolist()
         if len(flag_years) > 0:

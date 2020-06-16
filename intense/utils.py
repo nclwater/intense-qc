@@ -1248,3 +1248,12 @@ def install_r_package(package_name):
     """Installs """
     utils = importr('utils')
     utils.install_packages(StrVector([package_name]), repos='http://cran.us.r-project.org')
+
+
+def wet_hour_median(x, threshold=0.0):
+    x1 = x[np.logical_and(np.isfinite(x), x > threshold)]
+    if x1.shape[0] > 0:
+        whm = np.median(x1)
+    else:
+        whm = np.nan
+    return whm
