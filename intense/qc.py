@@ -118,7 +118,7 @@ class Qc:
         days_of_week: uneven distribution of rain over days of the week
         hours_of_day: uneven distribution of rain over hours of the day
         intermittency: years with intermittency issues
-        breakpoint: break point detected
+        breakpoint: break point detected and change in mean qc value
         R99pTOT: r99ptot checks
         PRCPTOT: prcptot checks
         change_min_value: change flag and change list
@@ -1767,7 +1767,7 @@ def read_intense_qc(path_or_stream: Union[IO, str], only_metadata: bool = False)
         days_of_week=utils.try_int(metadata['uneven distribution of rain over days of the week']),
         hours_of_day=utils.try_int(metadata['uneven distribution of rain over hours of the day']),
         intermittency=utils.try_list(metadata['years with intermittency issues']),
-        breakpoint=utils.try_int(metadata['break point detected']),
+        breakpoint=utils.try_list(metadata['break point detected']),
         R99pTOT=utils.try_list(metadata['r99ptot checks']),
         PRCPTOT=utils.try_list(metadata['prcptot checks']),
         change_min_value=(change_flag, change_list),
