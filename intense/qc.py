@@ -460,16 +460,12 @@ class Qc:
             # Classify p-value as a flag
             # - low p-value below e.g. 0.05 or 0.01 indicates a posssible change point
             p = pettitt(x).rx('p.value')[0][0]
-            if p > 0.1:
+            if p > 0.05:
                 p_flag = 0
-            elif p > 0.05:
-                p_flag = 1
-            elif p > 0.01:
-                p_flag = 2
             else:
-                p_flag = 3
+                p_flag = 1
             
-            # Calculate percentage difference before and after
+            # Calculate percentage difference before and after possible breakpoint
             # - for now indicate difference between lower and higher period regardless of order
             # and calculate even for large p-values
             # - note that R indexing starts at 1
@@ -489,8 +485,12 @@ class Qc:
                     diff_flag = 1
                 elif (diff >= 100.0) and (diff < 200.0):
                     diff_flag = 2
-                elif diff >= 200.0:
+                elif (diff >= 200.0) and (diff < 500.0):
                     diff_flag = 3
+                elif (diff >= 500.0) and (diff < 1000.0):
+                    diff_flag = 4
+                else:
+                    diff_flag = 5
             else:
                 diff_flag = -999
         
