@@ -957,7 +957,11 @@ def convert_to_dry_spell(daily_df):
     # i think (i.e. do all stations agree the period is wet when the target is dry?)
     # should the threshold for dry be larger than just zero?
 
-    daily_df["fracDryDays"] = daily_df.rolling(15, min_periods=15).apply(lambda window: (window == 0).sum() / 15)
+    dry_periods = daily_df.copy()
+    dry_periods[dry_periods > 0] = -1
+    dry_periods += 1
+
+    daily_df["fracDryDays"] = dry_periods.rolling(15, min_periods=15).sum() / 15
 
     converted_df = daily_df["fracDryDays"]
     converted_df.columns = ["ts1"]
