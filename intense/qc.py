@@ -94,11 +94,13 @@ class Qc:
         daily_dates: start and end dates of neighbouring daily gauges
         daily_coords: latitudes, longitudes and elevations of neighbouring daily gauges
         daily_tree: a k-d tree containing daily gauge locations
+        daily_path: path to neighbouring daily gauge data
         use_monthly_neighbours: whether to include neighbouring monthly gauges in quality control
         monthly_names: names of neighbouring monthly gauges
         monthly_dates: start and end dates of neighbouring monthly gauges
         monthly_coords: latitudes, longitudes and elevations of neighbouring monthly gauges
         monthly_tree: a k-d tree containing monthly gauge locations
+        monthly_path: path to neighbouring monthly gauge data
         hourly_neighbours: a series of hourly neighbour qc values
         hourly_neighbours_dry: a series of hourly neighbours dry qc values
         daily_neighbours: a series of daily neighbour qc values
@@ -142,7 +144,8 @@ class Qc:
         daily_coords (Optional[Iterable[Tuple[float, float, float]]]): latitudes, longitudes and elevations of
             neighbouring daily gauges
         daily_tree (Optional[KDTree]): a k-d tree containing daily gauge locations
-        use_monthly_neighbours (Optional[Iterable[str]]): whether to include neighbouring monthly gauges in quality
+        daily_path (Optional[str]): path to neighbouring daily gauge data
+        use_monthly_neighbours (bool): whether to include neighbouring monthly gauges in quality
             control
         monthly_names (Optional[Iterable[str]]): names of neighbouring monthly gauges
         monthly_dates (Optional[Iterable[Tuple[datetime, datetime]]]): start and end dates of neighbouring monthly
@@ -150,6 +153,7 @@ class Qc:
         monthly_coords (Optional[Iterable[Tuple[float, float, float]]]): latitudes, longitudes and elevations of
             neighbouring monthly gauges
         monthly_tree (Optional[KDTree]): a k-d tree containing monthly gauge locations
+        monthly_path (Optional[str]): path to neighbouring monthly gauge data
         hourly_neighbours (Optional[pd.Series]): a series of hourly neighbour qc values
         hourly_neighbours_dry (Optional[pd.Series]): a series of hourly neighbours dry qc values
         daily_neighbours (Optional[pd.Series]): a series of daily neighbour qc values
@@ -194,12 +198,14 @@ class Qc:
                  daily_dates: Optional[Iterable[Tuple[datetime, datetime]]] = None,
                  daily_coords: Optional[Iterable[Tuple[float, float, float]]] = None,
                  daily_tree: Optional[KDTree] = None,
+                 daily_path: Optional[str] = None,
 
-                 use_monthly_neighbours: Optional[Iterable[str]] = False,
+                 use_monthly_neighbours: bool = False,
                  monthly_names: Optional[Iterable[str]] = None,
                  monthly_dates: Optional[Iterable[Tuple[datetime, datetime]]] = None,
                  monthly_coords: Optional[Iterable[Tuple[float, float, float]]] = None,
                  monthly_tree: Optional[KDTree] = None,
+                 monthly_path: Optional[str] = None,
 
                  hourly_neighbours: Optional[pd.Series] = None,
                  hourly_neighbours_dry: Optional[pd.Series] = None,
@@ -243,12 +249,14 @@ class Qc:
         self.daily_names = daily_names
         self.daily_dates = daily_dates
         self.daily_coords = daily_coords
-        self.tree = daily_tree
+        self.daily_path = daily_path
+        self.daily_tree = daily_tree
         self.use_monthly_neighbours = use_monthly_neighbours
         self.monthly_names = monthly_names
         self.monthly_dates = monthly_dates
         self.monthly_coords = monthly_coords
         self.monthly_tree = monthly_tree
+        self.monthly_path = monthly_path
 
         self.hourly_neighbours = hourly_neighbours
         self.hourly_neighbours_dry = hourly_neighbours_dry
@@ -1094,7 +1102,7 @@ class Qc:
 
         converted_hourly_coords = utils.geodetic_to_ecef(self.gauge.latitude, self.gauge.longitude, elv)
 
-        dist, index = self.tree.query(converted_hourly_coords, k=30)
+        distance_to_daily_gauges, daily_gauge_indices = self.daily_tree.query(converted_hourly_coords, k=30)
 
         overlap = []
         paired_stations = []
@@ -1103,18 +1111,18 @@ class Qc:
         hourly_dates = (self.gauge.start_datetime, self.gauge.end_datetime)
 
         counter = 0
-        for i in range(len(dist)):
-            dci = index[i]
-            pol, ol = utils.calculate_overlap(hourly_dates, self.daily_dates[dci])
-            ps = self.daily_names[dci]
-            di = dist[i]
+        for i in range(min(len(self.daily_names), len(distance_to_daily_gauges))):
+            daily_gauge_index = daily_gauge_indices[i]
+            _, daily_gauge_overlap = utils.calculate_overlap(hourly_dates, self.daily_dates[daily_gauge_index])
+            daily_gauge_name = self.daily_names[daily_gauge_index]
+            daily_gauge_distance = distance_to_daily_gauges[i]
 
-            if di < 50000:  # must be within 50km
-                if ol > 365 * 3:  # must have at least 3 years overlap
+            if daily_gauge_distance < 50000:  # must be within 50km
+                if daily_gauge_overlap > 365 * 3:  # must have at least 3 years overlap
                     if counter < 10:  # want to select the closest 10
-                        overlap.append(ol)
-                        paired_stations.append(ps)
-                        distance.append(di)
+                        overlap.append(daily_gauge_overlap)
+                        paired_stations.append(daily_gauge_name)
+                        distance.append(daily_gauge_distance)
                         counter += 1
 
         if len(paired_stations) >= 3:
@@ -1134,7 +1142,7 @@ class Qc:
 
         converted_hourly_coords = utils.geodetic_to_ecef(self.gauge.latitude, self.gauge.longitude, elv)
 
-        dist, index = self.monthly_tree.query(converted_hourly_coords, k=30)
+        distance_to_monthly_gauges, monthly_gauge_indices = self.monthly_tree.query(converted_hourly_coords, k=30)
 
         overlap = []
         paired_stations = []
@@ -1143,18 +1151,18 @@ class Qc:
         hourly_dates = (self.gauge.start_datetime, self.gauge.end_datetime)
 
         counter = 0
-        for i in range(len(dist)):
-            mci = index[i]
-            pol, ol = utils.calculate_overlap(hourly_dates, self.monthly_dates[mci])
-            ps = self.monthly_names[mci]
-            di = dist[i]
+        for i in range(min(len(self.monthly_names), len(distance_to_monthly_gauges))):
+            monthly_gauge_index = monthly_gauge_indices[i]
+            _, monthly_gauge_overlap = utils.calculate_overlap(hourly_dates, self.monthly_dates[monthly_gauge_index])
+            monthly_gauge_name = self.monthly_names[monthly_gauge_index]
+            monthly_gauge_distance = distance_to_monthly_gauges[i]
 
-            if di < 50000:  # must be within 50km
-                if ol > 365 * 3:  # must have at least 3 years overlap
+            if monthly_gauge_distance < 50000:  # must be within 50km
+                if monthly_gauge_overlap > 365 * 3:  # must have at least 3 years overlap
                     if counter < 10:  # want to select the closest 10
-                        overlap.append(ol)
-                        paired_stations.append(ps)
-                        distance.append(di)
+                        overlap.append(monthly_gauge_overlap)
+                        paired_stations.append(monthly_gauge_name)
+                        distance.append(monthly_gauge_distance)
                         counter += 1
 
         if len(paired_stations) >= 3:
@@ -1320,7 +1328,7 @@ class Qc:
             for nId in neighbours:
                 neighbour_start_year = self.daily_dates[self.daily_names.index(nId)][0].year
                 neighbour_end_year = self.daily_dates[self.daily_names.index(nId)][1].year
-                neighbour_dfs.append(utils.get_gpcc(neighbour_start_year, neighbour_end_year, nId))
+                neighbour_dfs.append(utils.get_daily_gpcc(self.daily_path, neighbour_start_year, neighbour_end_year, nId))
 
             # get matching stats for nearest gauge and offset calculateAffinityIndexAndPearson(ts1, ts2) -> returns a flag
             nearest = neighbour_dfs[0].rename(columns={"GPCC": "ts2"})
@@ -1395,7 +1403,7 @@ class Qc:
             dry_flags_dt = [datetime(d.year, d.month, d.day, 8) for d in dry_flags_dates]
             dry_flags_df = pd.Series(dry_flags_vals, index=dry_flags_dt).to_frame("dryFlags")
 
-            df = pd.concat([df, flags_df, dry_flags_df], axis=1, join_axes=[df.index])
+            df = df.join(flags_df).join(dry_flags_df)
             
             # Ensure that the day before the beginning of the hourly time 
             # series is not incorporated as a result of the concat operation
@@ -1404,7 +1412,13 @@ class Qc:
             df.flags = df.flags.fillna(method="ffill", limit=23)
             df.dryFlags = df.dryFlags.fillna(method="ffill", limit=23)
             df.fillna(-999, inplace=True)
-            return list(df.flags.astype(int)), offset_flag, s0ai, s0r2, s0f, list(df.dryFlags.astype(int))
+            return \
+                list(df.flags.astype(int)), \
+                offset_flag, \
+                round(s0ai, 5), \
+                round(s0r2, 5), \
+                round(s0f, 5), \
+                list(df.dryFlags.astype(int))
 
         # -999 if no neighbours
         else:
@@ -1444,7 +1458,7 @@ class Qc:
             for n_id in neighbours:
                 neighbour_start_year = self.monthly_dates[self.monthly_names.index(n_id)][0].year
                 neighbour_end_year = self.monthly_dates[self.monthly_names.index(n_id)][1].year
-                neighbour_dfs.append(utils.get_monthly_gpcc(neighbour_start_year, neighbour_end_year, n_id))
+                neighbour_dfs.append(utils.get_monthly_gpcc(self.monthly_path, neighbour_start_year, neighbour_end_year, n_id))
             # get matching stats for nearest gauge and offset calculateAffinityIndexAndPearson(ts1, ts2) -> returns a flag
 
             # do neighbour check
@@ -1493,7 +1507,8 @@ class Qc:
         if np.isfinite(self.gauge.latitude) and np.isfinite(self.gauge.longitude):
             self.hourly_neighbours, self.hourly_neighbours_dry = self.check_hourly_neighbours()
             if self.use_daily_neighbours:
-                self.daily_neighbours, self.offset, self.preQC_affinity_index, self.preQC_pearson_coefficient, self.factor_daily, self.daily_neighbours_dry = self.check_daily_neighbours()
+                self.daily_neighbours, self.offset, self.preQC_affinity_index, self.preQC_pearson_coefficient, \
+                self.factor_daily, self.daily_neighbours_dry = self.check_daily_neighbours()
             if self.use_monthly_neighbours:
                 self.monthly_neighbours, self.factor_monthly = self.check_monthly_neighbours()
 

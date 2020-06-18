@@ -386,10 +386,10 @@ def calculate_overlap(period1, period2):
 # ++++++++++++++++++++++++++++++++++ GPCC functions +++++++++++++++++++++++++++++++++++ LIZ WILL CHANGE THIS
 
 
-def get_gpcc(start_year, end_year, gpcc_id):
+def get_daily_gpcc(path, start_year, end_year, gpcc_id):
     gpcc_filename = "tw_" + gpcc_id + ".dat"
-    dat_path = "/media/nas/x21971/GPCC_daily2/tw_" + gpcc_id + ".dat"
-    zip_path = "/media/nas/x21971/GPCC_daily2/tw_" + gpcc_id + ".zip"
+    dat_path = os.path.join(path, "tw_" + gpcc_id + ".dat")
+    zip_path = os.path.join(path, "tw_" + gpcc_id + ".zip")
     if not os.path.exists(zip_path):
         if not os.path.exists(dat_path):
             p = subprocess.Popen(["get_zeitreihe_tw_by_id.sh", str(start_year), str(end_year), gpcc_id],
@@ -490,11 +490,11 @@ def get_gsdr(gsdr_id, path):
 
 # Helper function to access Global Precipitation Climatology Centre monthly data...
 # Ask Liz what is needed to implement this!
-def get_monthly_gpcc(start_year, end_year, gpcc_id):  # Hey liz! Check this once you have access to monthly!
+def get_monthly_gpcc(path, start_year, end_year, gpcc_id):  # Hey liz! Check this once you have access to monthly!
 
     gpcc_filename = "mw_" + gpcc_id + ".dat"
-    dat_path = "/media/nas/x21971/GPCC_monthly2/mw_" + gpcc_id + ".dat"
-    zip_path = "/media/nas/x21971/GPCC_monthly2/mw_" + gpcc_id + ".zip"
+    dat_path = os.path.join(path, "mw_" + gpcc_id + ".dat")
+    zip_path = os.path.join(path, "mw_" + gpcc_id + ".zip")
     if not os.path.exists(zip_path):
         if not os.path.exists(dat_path):
             p = subprocess.Popen(["get_zeitreihe_mw_by_id.sh", str(start_year), str(end_year), gpcc_id],
@@ -982,18 +982,13 @@ def read_etccdi_data(etccdi_data_folder):
     return etccdi_data
 
 # create kd tree of monthly gauges ++++++++++++++++++++++++++++++++++++++
-def create_kdtree_monthly_data():
-    # THIS_FOLDER = os.path.dirname(os.path.abspath(__file__))
-    THIS_FOLDER = '/media/nas/x21971/PythonLessons/Python_3'
-    my_file = os.path.join(THIS_FOLDER, 'statlex_monthly.dat')
+def create_kdtree_monthly_data(path):
 
-    with open(my_file, "r") as monthly_info:
+    with open(path, "r") as monthly_info:
 
         monthly_names = []
         monthly_dates = []
         monthly_coords = []
-
-        monthly_info = open(my_file, "r")
         monthly_info.readline()
 
         for line in monthly_info:
@@ -1023,11 +1018,10 @@ def create_kdtree_monthly_data():
     
     return monthly_names, monthly_dates, monthly_coords, monthly_tree
 
+
 # create kd tree of daily gauges ++++++++++++++++++++++++++++++++++++++
-def create_kdtree_daily_data():
-    THIS_FOLDER = '/media/nas/x21971/PythonLessons/Python_3'
-    my_file = os.path.join(THIS_FOLDER, 'statlex_daily')
-    with open(my_file, "r") as daily_info:
+def create_kdtree_daily_data(path):
+    with open(path, "r") as daily_info:
 
         daily_names = []
         daily_dates = []
