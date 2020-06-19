@@ -181,46 +181,6 @@ def spell_check(val, longest_wet_period, longest_wet_period_filled):
         else:
             return 0
 
-# Calculate length of consecutive wet days and their location in the rainfall series
-def get_wet_periods(vals):
-    daily = vals.groupby(lambda x: x.floor('1D')).aggregate(lambda x: np.sum(x))
-
-    start_day_index_list = []
-    start_index_list = []
-    duration_list = []
-
-    wet_flag = 0
-    day_ticker = 0
-
-    for i in range(len(daily)):
-        v = daily.iloc[i]
-
-        if v >= 1.0:
-            if wet_flag == 0:
-                start_day_index_list.append(daily.index[i])
-            day_ticker += 1
-            wet_flag = 1
-        else:
-            if wet_flag == 1:
-                duration_list.append(day_ticker)
-            day_ticker = 0
-            wet_flag = 0
-
-        if i == len(daily) - 1:
-            if wet_flag == 1:
-                duration_list.append(day_ticker)
-
-    # Convert date list to index list
-    for i in range(len(start_day_index_list)):
-        if (i == 0 & (start_day_index_list[i] < vals.index[i])):
-            start_index_list.append(0)
-        else:
-            start_index_list.append(vals.index.get_loc(start_day_index_list[i]))
-
-    # Convert day length to hourly length:
-    duration_list = list(np.dot(24, duration_list))
-
-    return [start_index_list, duration_list]
 
 def get_dry_periods(vals):
     start_index_list = []
@@ -285,32 +245,6 @@ def daily_accums_day_check(day_list, mean_wet_day_val, mean_wet_day_val_filled):
 
     return flag
 
-def monthly_accums_day_check(month_list, mean_wet_day_val, mean_wet_day_val_filled):
-    """Monthly accumulations check
-    Identified where only one hourly value is reported over a period of a month
-    and that value exceeds the mean wet hour amount for the corresponding month.
-    """
-
-    if month_list[719] > 0:
-        dry_hours = 0
-        for i in range(719):
-            if month_list[i] <= 0:
-                dry_hours += 1
-        if dry_hours == 719:
-            if np.isnan(mean_wet_day_val):
-                if month_list[719] > mean_wet_day_val_filled * 2:
-                    return 2
-                else:
-                    return 0
-            else:
-                if month_list[719] > mean_wet_day_val * 2:
-                    return 1
-                else:
-                    return 0
-        else:
-            return 0
-    else:
-        return 0
 
 # Coordinate system conversion
 def geodetic_to_ecef(lat, lon, h):
@@ -1126,84 +1060,6 @@ def create_kdtree_hourly_data(path):
         hourly_n_tree = sp.KDTree(converted_hourly_n_coords)
 
     return hourly_n_names, hourly_n_dates, hourly_n_coords, hourly_n_paths, hourly_n_tree
-
-
-    # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-
-def find_files_to_process(folders_to_check, qc_folder, orig_folder, overwrite=True):
-    files_to_process = []
-    file_folders = []
-    for folderToCheck in folders_to_check:
-
-        # Check for existence of output folder - make if need be
-        if not os.path.exists(qc_folder + "/" + folderToCheck[:-4] + "/Flags"):
-            os.makedirs(qc_folder + "/" + folderToCheck[:-4] + "/Flags")
-        existing_files = os.listdir(qc_folder + "/" + folderToCheck[:-4] + "/Flags")
-
-        # Get list of raw (formatted) files to process
-        zf = zipfile.ZipFile(orig_folder + "/" + folderToCheck, "r")
-        files_list = zf.namelist()
-        for file in files_list:
-
-            if file[:-4] + "_QC.txt" in existing_files and not overwrite:
-                pass
-            else:
-                files_to_process.append(file)
-                file_folders.append(folderToCheck)
-        zf.close()
-    return files_to_process, file_folders
-
-
-def open_file(file_folders, files_to_process, file, orig_folder, qc_folder):
-
-    folder_to_check = file_folders[files_to_process.index(file)]
-    zf = zipfile.ZipFile(orig_folder + "/" + folder_to_check, "r")
-
-    return zf.open(file, mode="r")
-
-
-def convert_isd(in_path, out_path):
-    import netCDF4
-    if not os.path.exists(out_path):
-        os.mkdir(out_path)
-    f = netCDF4.Dataset(in_path)
-    time = f.variables['time'][:]
-    precip = f.variables['precip1_depth'][:]
-    periods = f.variables['precip1_period'][:]
-    if isinstance(periods, np.ma.MaskedArray):
-        precip = precip.data
-        periods = periods.data
-
-    for period in np.unique(periods)[np.unique(periods) > 0]:
-        mask = np.logical_and(periods == period, precip >= 0)
-
-        if len(precip[mask]) > 1:
-            times = netCDF4.num2date(time[mask], f.variables['time'].units)
-            datetimes = pd.date_range(start=min(times), end=max(times), freq=str(period) + 'H')
-
-            data = pd.Series(precip[mask],
-                             index=times)
-            data = data.reindex(datetimes)
-            data = data[data.first_valid_index():data.last_valid_index()]
-            data[pd.isnull(data)] = -999
-
-            series = ex.Gauge(station_id='ISD_%s' % f.station_id,
-                              path_to_original_data=in_path,
-                              latitude=f.latitude,
-                              longitude=f.longitude,
-                              original_timestep='%shr' % period,
-                              original_units='mm',
-                              new_units='mm',
-                              new_timestep='%shr' % period,
-                              data=data,
-                              elevation='%sm' % f.elevation,
-                              original_station_number=f.station_id,
-                              time_zone='UTC')
-            path = os.path.join(out_path, '%shr' % period)
-            if not os.path.exists(path):
-                os.mkdir(path)
-            series.write(path)
 
 
 def try_float(test_val):
