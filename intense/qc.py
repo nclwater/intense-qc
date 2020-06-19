@@ -1086,8 +1086,8 @@ class Qc:
                                                    filtered_neighbour_dfs).rename('dry_flags')
 
             # flag preceding 15-day periods, prioritising highest flag values
-            for flag in [3, 2, 1]:
-                for idx, value in dry_flags[dry_flags == flag].iteritems():
+            for flag, dry_flags_filtered in [(flag, dry_flags[dry_flags == flag]) for flag in [1, 2, 3]]:
+                for idx, value in dry_flags_filtered.iteritems():
                     dry_flags[idx-timedelta(days=14):idx] = flag
             # add daily flags back onto hourly (needs to be at hour=0800 to 
             # reconcile GPCC vs GSDR aggregation definitions)
