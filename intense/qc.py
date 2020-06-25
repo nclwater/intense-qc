@@ -1089,6 +1089,7 @@ class Qc:
             for flag, dry_flags_filtered in [(flag, dry_flags[dry_flags == flag]) for flag in [1, 2, 3]]:
                 for idx, value in dry_flags_filtered.iteritems():
                     dry_flags[idx-timedelta(days=14):idx] = flag
+            
             # add daily flags back onto hourly (needs to be at hour=0800 to 
             # reconcile GPCC vs GSDR aggregation definitions)
             flags_df.index = pd.to_datetime(flags_df.index)+timedelta(hours=8)
