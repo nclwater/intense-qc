@@ -907,12 +907,17 @@ class Qc:
     # Neighbour Checks - Basic functions
     # ----------------------------------
 
-    def find_hourly_neighbours(self) -> Tuple[List[str], List[str]]:
-        """Helper function, finds hourly neighbour stations
+    def find_neighbours(self, frequency: str) -> Union[List[str], Tuple[List[str], List[str]]]:
+        """Helper function, finds neighbouring stations
+
+        Args:
+            frequency: must be either hourly, daily or monthly
 
         Returns:
-            Names and paths of neighbouring hourly stations
+            Names or names and paths of neighbouring stations
         """
+
+        assert frequency in ['hourly', 'daily', 'monthly']
         # float("nan") returns np.nan so needs to be handled separately (occurs in some Italy (Sicily) files)
         # whereas float("NA") returns value error (i.e. convention in most raw/formatted files)
         try:
@@ -923,126 +928,51 @@ class Qc:
         except:
             elv = 100
 
-        converted_hourly_coords = utils.geodetic_to_ecef(self.gauge.latitude, self.gauge.longitude, elv)
-        dist, index = self.hourly_n_tree.query(converted_hourly_coords,
-                                          k=30)
-        # K needs to be equal or less than the number
-        # of stations available in the database
+        tree, coords, n_dates, names = {
+            'hourly': (self.hourly_n_tree, self.hourly_n_coords, self.hourly_n_dates, self.hourly_n_names),
+            'daily': (self.daily_tree, self.daily_coords, self.daily_dates, self.daily_names),
+            'monthly': (self.monthly_tree, self.monthly_coords, self.monthly_dates, self.monthly_names),
+
+        }[frequency]
+
+        converted_coords = utils.geodetic_to_ecef(self.gauge.latitude, self.gauge.longitude, elv)
+
+        distance_to_gauges, gauge_indices = tree.query(converted_coords, k=30)
+
         overlap = []
         paired_stations = []
         distance = []
         paths = []
 
-        hourly_dates = (self.gauge.start_datetime, self.gauge.end_datetime)
-
-        dist = [d for d in dist if np.isfinite(d)]
-        index = [i for i,d in zip(index,dist) if np.isfinite(d)]
+        dates = (self.gauge.start_datetime, self.gauge.end_datetime)
 
         counter = 0
-        for i in range(len(dist)):
-            dci = index[i]
-            pol, ol = utils.calculate_overlap(hourly_dates, self.hourly_n_dates[dci])
-            ps = self.hourly_n_names[dci]
-            di = dist[i]
-            pa = self.hourly_n_paths[dci]
+        for i in range(min(len(names), len(distance_to_gauges))):
+            gauge_index = gauge_indices[i]
+            _, gauge_overlap = utils.calculate_overlap(dates, n_dates[gauge_index])
+            gauge_name = names[gauge_index]
+            gauge_distance = distance_to_gauges[i]
 
-            if di < 50000:  # must be within 50km
-                if ol > 365 * 3:  # must have at least 3 years overlap
-                    if counter < 11:  # want to select the closest 10, but the first one is always the target itself
-                        overlap.append(ol)
-                        paired_stations.append(ps)
-                        distance.append(di)
-                        paths.append(pa)
-                        counter += 1
-
-        if len(paired_stations) >= 3:
-            return paired_stations, paths
-        else:
-            return [], []
-
-    def find_daily_neighbours(self) -> List[str]:
-        """Helper function, finds daily neighbour stations
-
-        Returns:
-            Names of neighbouring daily stations
-        """
-        try:
-            elv = float(self.gauge.elevation)
-        except:
-            elv = 100
-
-        converted_hourly_coords = utils.geodetic_to_ecef(self.gauge.latitude, self.gauge.longitude, elv)
-
-        distance_to_daily_gauges, daily_gauge_indices = self.daily_tree.query(converted_hourly_coords, k=30)
-
-        overlap = []
-        paired_stations = []
-        distance = []
-
-        hourly_dates = (self.gauge.start_datetime, self.gauge.end_datetime)
-
-        counter = 0
-        for i in range(min(len(self.daily_names), len(distance_to_daily_gauges))):
-            daily_gauge_index = daily_gauge_indices[i]
-            _, daily_gauge_overlap = utils.calculate_overlap(hourly_dates, self.daily_dates[daily_gauge_index])
-            daily_gauge_name = self.daily_names[daily_gauge_index]
-            daily_gauge_distance = distance_to_daily_gauges[i]
-
-            if daily_gauge_distance < 50000:  # must be within 50km
-                if daily_gauge_overlap > 365 * 3:  # must have at least 3 years overlap
+            if gauge_distance < 50000:  # must be within 50km
+                if gauge_overlap > 365 * 3:  # must have at least 3 years overlap
                     if counter < 10:  # want to select the closest 10
-                        overlap.append(daily_gauge_overlap)
-                        paired_stations.append(daily_gauge_name)
-                        distance.append(daily_gauge_distance)
+                        overlap.append(gauge_overlap)
+                        paired_stations.append(gauge_name)
+                        distance.append(gauge_distance)
+                        if frequency == 'hourly':
+                            paths.append(self.hourly_n_paths[gauge_index])
                         counter += 1
 
         if len(paired_stations) >= 3:
-            return paired_stations
+            if frequency == 'hourly':
+                return paired_stations, paths
+            else:
+                return paired_stations
         else:
-            return []
-
-    def find_monthly_neighbours(self) -> Optional[List[str]]:
-        """Helper function, finds monthly neighbour stations
-
-        Returns:
-            Names of neighbouring monthly stations"""
-        try:
-            elv = float(self.gauge.elevation)
-        except:
-            elv = 100
-
-        converted_hourly_coords = utils.geodetic_to_ecef(self.gauge.latitude, self.gauge.longitude, elv)
-
-        distance_to_monthly_gauges, monthly_gauge_indices = self.monthly_tree.query(converted_hourly_coords, k=30)
-
-        overlap = []
-        paired_stations = []
-        distance = []
-
-        hourly_dates = (self.gauge.start_datetime, self.gauge.end_datetime)
-
-        counter = 0
-        for i in range(min(len(self.monthly_names), len(distance_to_monthly_gauges))):
-            monthly_gauge_index = monthly_gauge_indices[i]
-            _, monthly_gauge_overlap = utils.calculate_overlap(hourly_dates, self.monthly_dates[monthly_gauge_index])
-            monthly_gauge_name = self.monthly_names[monthly_gauge_index]
-            monthly_gauge_distance = distance_to_monthly_gauges[i]
-
-            if monthly_gauge_distance < 50000:  # must be within 50km
-                if monthly_gauge_overlap > 365 * 3:  # must have at least 3 years overlap
-                    if counter < 10:  # want to select the closest 10
-                        overlap.append(monthly_gauge_overlap)
-                        paired_stations.append(monthly_gauge_name)
-                        distance.append(monthly_gauge_distance)
-                        counter += 1
-
-        if len(paired_stations) >= 3:
-            return paired_stations
-        else:
-            return None
-
-    # Neighbour Checks
-    # ----------------
+            if frequency == 'hourly':
+                return [], []
+            else:
+                return []
 
     def check_hourly_neighbours(self) -> Tuple[List[int], List[int]]:
         """Hourly neighbours check against GSDR
@@ -1057,7 +987,7 @@ class Qc:
         daily_values = df.target.resample('24H', base=7, closed='right').sum(min_count=24).round(1)
         daily_values.index = daily_values.index.date
 
-        neighbours, paths = self.find_hourly_neighbours()
+        neighbours, paths = self.find_neighbours('hourly')
 
         # dp 30/11/2019 - assuming neighbours[0] is the target
         if len(neighbours) > 1:
@@ -1114,7 +1044,7 @@ class Qc:
         daily_values_lag_minus1 = pd.Series(daily_values.values, index=daily_values.index - timedelta(days=1))
         daily_values_lag_plus1 = pd.Series(daily_values.values, index=daily_values.index + timedelta(days=1))
 
-        neighbours = self.find_daily_neighbours()
+        neighbours = self.find_neighbours('daily')
 
         if len(neighbours) > 0:
             
@@ -1192,7 +1122,7 @@ class Qc:
         # groups including missing data are dropped by using np.array.sum
         dfm = df.resample("M", label='right', closed='right').apply(lambda x: x.values.sum())
         # find neighbours
-        neighbours = self.find_monthly_neighbours()
+        neighbours = self.find_neighbours('monthly')
 
         # Check for duplicate neighbours
         if neighbours is not None:
