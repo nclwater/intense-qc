@@ -1214,8 +1214,10 @@ class Qc:
             for n_id in neighbours:
                 neighbour_start_year = self.monthly_dates[self.monthly_names.index(n_id)][0].year
                 neighbour_end_year = self.monthly_dates[self.monthly_names.index(n_id)][1].year
-                neighbour_dfs.append(utils.get_monthly_gpcc(self.monthly_path, neighbour_start_year, neighbour_end_year, n_id))
-            # get matching stats for nearest gauge and offset calculateAffinityIndexAndPearson(ts1, ts2) -> returns a flag
+                neighbour_dfs.append(
+                    utils.get_monthly_gpcc(self.monthly_path, neighbour_start_year, neighbour_end_year, n_id))
+            # get matching stats for nearest gauge and offset calculateAffinityIndexAndPearson(ts1, ts2)
+            # -> returns a flag
 
             # do neighbour check
 
@@ -1226,24 +1228,19 @@ class Qc:
             factor_flags_df.index += timedelta(hours=23)
 
             orig_dates = list(df.index.values)
-            hourly_flags_s = flags_df.reindex(orig_dates, method="bfill")
-            hourly_factor_flags_s = factor_flags_df.reindex(orig_dates, method="bfill")
+            hourly_flags_s = flags_df.reindex(orig_dates, method="bfill").to_frame()
+            hourly_factor_flags_s = factor_flags_df.reindex(orig_dates, method="bfill").to_frame()
 
             # count valid values within month and set flag as nan if more than 5% of data is missing
             # - hourly percentage differences
-            hourly_flags_s = hourly_flags_s.to_frame()
-            hourly_flags_s['count'] = hourly_flags_s.groupby(
-                [hourly_flags_s.index.year, hourly_flags_s.index.month]).transform('count')
-            hourly_flags_s['expected'] = hourly_flags_s.index.days_in_month * 24
-            hourly_flags_s['frac_complete'] = hourly_flags_s['count'] / hourly_flags_s['expected']
+            for flags in [hourly_flags_s, hourly_factor_flags_s]:
+                flags['count'] = flags.groupby(
+                    [flags.index.year, flags.index.month]).transform('count')
+                flags['expected'] = flags.index.days_in_month * 24
+                flags['frac_complete'] = flags['count'] / flags['expected']
+
             hourly_flags_s.loc[hourly_flags_s['frac_complete'] < 0.95, 'flags'] = np.nan
             hourly_flags_s.drop(['count', 'expected', 'frac_complete'], axis=1, inplace=True)
-            # - hourly factor differences
-            hourly_factor_flags_s = hourly_factor_flags_s.to_frame()
-            hourly_factor_flags_s['count'] = hourly_factor_flags_s.groupby(
-                [hourly_factor_flags_s.index.year, hourly_factor_flags_s.index.month]).transform('count')
-            hourly_factor_flags_s['expected'] = hourly_factor_flags_s.index.days_in_month * 24
-            hourly_factor_flags_s['frac_complete'] = hourly_factor_flags_s['count'] / hourly_factor_flags_s['expected']
             hourly_factor_flags_s.loc[hourly_factor_flags_s['frac_complete'] < 0.95, 'factor_flags'] = np.nan
             hourly_factor_flags_s.drop(['count', 'expected', 'frac_complete'], axis=1, inplace=True)
 
