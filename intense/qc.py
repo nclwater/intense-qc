@@ -1083,26 +1083,13 @@ class Qc:
             dry_flags = utils.check_neighbours_dry(daily_values.to_frame("ts1"),
                                                    filtered_neighbour_dfs).rename('dry_flags')
 
-            # flag preceding 15-day periods, prioritising highest flag values
-            for flag, dry_flags_filtered in [(flag, dry_flags[dry_flags == flag]) for flag in [1, 2, 3]]:
-                for idx, value in dry_flags_filtered.iteritems():
-                    dry_flags[idx-timedelta(days=14):idx] = flag
-            
-            # add daily flags back onto hourly (needs to be at hour=0800 to 
-            # reconcile GPCC vs GSDR aggregation definitions)
-            flags_df.index = pd.to_datetime(flags_df.index)+timedelta(hours=8)
-
-            dry_flags.index = pd.to_datetime(dry_flags.index) + timedelta(hours=8)
+            # add daily flags back onto hourly
 
             df = pd.concat([df, flags_df, dry_flags], axis=1)
             
             # Ensure that the day before the beginning of the hourly time 
             # series is not incorporated as a result of the concat operation
-            df = df.loc[self.gauge.start_datetime:self.gauge.end_datetime]
-            
-            df.flags = df.flags.fillna(method="ffill", limit=23)
-            df.dry_flags = df.dry_flags.fillna(method="ffill", limit=23)
-            df.fillna(-999, inplace=True)
+            df = df.loc[self.gauge.start_datetime:self.gauge.end_datetime].fillna(method="ffill", limit=23).fillna(-999)
 
             return list(df.flags.astype(int)), list(df.dry_flags.astype(int))
 
@@ -1171,27 +1158,15 @@ class Qc:
             # do neighbour check for dry periods and flag the whole 15 day period
             dry_flags = utils.check_neighbours_dry(daily_values.to_frame("ts1"), 
                                                    filtered_neighbour_dfs).rename('dry_flags')
-            
-            # flag preceding 15-day periods, prioritising highest flag values
-            for flag, dry_flags_filtered in [(flag, dry_flags[dry_flags == flag]) for flag in [1, 2, 3]]:
-                for idx, value in dry_flags_filtered.iteritems():
-                    dry_flags[idx-timedelta(days=14):idx] = flag
 
-            # add daily flags back onto hourly (needs to be at hour=0800 to 
-            # reconcile GPCC vs GSDR aggregation definitions)
-            flags_df.index = pd.to_datetime(flags_df.index) + timedelta(hours=8)
-            dry_flags.index = pd.to_datetime(dry_flags.index) + timedelta(hours=8)
+            # add daily flags back onto hourly
 
             df = df.join(flags_df).join(dry_flags)
             
             # Ensure that the day before the beginning of the hourly time 
             # series is not incorporated as a result of the concat operation
-            df = df.loc[self.gauge.start_datetime:self.gauge.end_datetime]
-            
-            df.flags = df.flags.fillna(method="ffill", limit=23)
-            df.dry_flags = df.dry_flags.fillna(method="ffill", limit=23)
-            df.fillna(-999, inplace=True)
-            
+            df = df.loc[self.gauge.start_datetime:self.gauge.end_datetime].fillna(method="ffill", limit=23).fillna(-999)
+
             return \
                 list(df.flags.astype(int)), \
                 offset_flag, \
