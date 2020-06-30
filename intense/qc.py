@@ -1054,10 +1054,8 @@ class Qc:
         df = self.gauge.data.to_frame("target")
 
         # convert hourly to daily 7am-7am
-        df["roll"] = np.around(df.target.rolling(window=24, center=False, min_periods=24).sum(), 1)
-        df_daily = df[df.index.hour == 7]
-
-        daily_values = pd.Series(df_daily.roll.values, index=(df_daily.index.to_series() - timedelta(days=1)).dt.date)
+        daily_values = df.target.resample('24H', base=7, closed='right').sum(min_count=24).round(1)
+        daily_values.index = daily_values.index.date
 
         neighbours, paths = self.find_hourly_neighbours()
 
