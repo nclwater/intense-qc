@@ -753,6 +753,8 @@ def check_neighbours(target, neighbours, station=None,
     df.loc[df.online < 3, "flags"] = np.nan
     dfr = df.flags
 
+    dfr.index = pd.to_datetime(dfr.index) + datetime.timedelta(hours=8)
+
     return dfr
 
 
@@ -798,9 +800,9 @@ def check_neighbours_dry(target, neighbours):  # Liz check this
     df.loc[df.online < 3, "flags"] = -999
     df.flags = df.flags.astype(int)
     df.flags = df.flags.replace(-999, np.nan)
-    dfr = df.flags
-
-    return dfr
+    # needs to be at hour=0800 to reconcile GPCC vs GSDR aggregation definitions
+    df.index = pd.to_datetime(df.index) + datetime.timedelta(hours=8)
+    return propagate_flags(df.flags)
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -900,6 +902,16 @@ def convert_to_dry_spell(daily_df):
     converted_df = daily_df["fracDryDays"]
     converted_df.columns = ["ts1"]
     return converted_df
+
+
+def propagate_flags(series, days=14):
+    series = series.copy()
+    # flag preceding periods, prioritising higher flag values
+    for flag, series_filtered in [(flag, series[series == flag]) for flag in [1, 2, 3]]:
+        for idx, value in series_filtered.iteritems():
+            series[idx - datetime.timedelta(days=days):idx] = flag
+
+    return series
 
 # Prepare ETCCDI variables
 def read_etccdi_data(etccdi_data_folder):
