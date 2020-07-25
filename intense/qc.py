@@ -1432,8 +1432,16 @@ class Qc:
             Flags and factor flags
         """
         df = self.gauge.data.to_frame("target")
+        
+        # Prepare for resampling to monthly by finding if month is >= 95% complete
+        # - if so replace nans with zeros
+        df['count'] = df.groupby([df.index.year, df.index.month]).transform('count')
+        df['expected'] = df.index.days_in_month * 24
+        df['frac_complete'] = df['count'] / df['expected']
+        df.loc[np.isnan(df['target']) & (df['frac_complete'] >= 0.95), 'target'] = 0.0
+        df.drop(['count', 'expected', 'frac_complete'], axis=1, inplace=True)
 
-        # convert hourly to daily 7am-7am
+        # convert hourly to monthly
         dfm = df.resample("M", label='right', closed='right').apply(lambda x: x.values.sum())
         # find neighbours
         neighbours = self.find_monthly_neighbours()
@@ -1465,31 +1473,20 @@ class Qc:
 
             flags_df, factor_flags_df = utils.check_m_neighbours(dfm, neighbour_dfs)
 
-            # set dates to be at 2300 (rather than 0000) so bfill works
+            # fill in flags for months as needed
+            # - set dates to be at 2300 (rather than 0000) so bfill works
             flags_df.index += timedelta(hours=23)
             factor_flags_df.index += timedelta(hours=23)
-
             orig_dates = list(df.index.values)
             hourly_flags_s = flags_df.reindex(orig_dates, method="bfill")
             hourly_factor_flags_s = factor_flags_df.reindex(orig_dates, method="bfill")
-
-            # count valid values within month and set flag as nan if more than 5% of data is missing
-            # - hourly percentage differences
             hourly_flags_s = hourly_flags_s.to_frame()
-            hourly_flags_s['count'] = hourly_flags_s.groupby(
-                [hourly_flags_s.index.year, hourly_flags_s.index.month]).transform('count')
-            hourly_flags_s['expected'] = hourly_flags_s.index.days_in_month * 24
-            hourly_flags_s['frac_complete'] = hourly_flags_s['count'] / hourly_flags_s['expected']
-            hourly_flags_s.loc[hourly_flags_s['frac_complete'] < 0.95, 'flags'] = np.nan
-            hourly_flags_s.drop(['count', 'expected', 'frac_complete'], axis=1, inplace=True)
-            # - hourly factor differences
             hourly_factor_flags_s = hourly_factor_flags_s.to_frame()
-            hourly_factor_flags_s['count'] = hourly_factor_flags_s.groupby(
-                [hourly_factor_flags_s.index.year, hourly_factor_flags_s.index.month]).transform('count')
-            hourly_factor_flags_s['expected'] = hourly_factor_flags_s.index.days_in_month * 24
-            hourly_factor_flags_s['frac_complete'] = hourly_factor_flags_s['count'] / hourly_factor_flags_s['expected']
-            hourly_factor_flags_s.loc[hourly_factor_flags_s['frac_complete'] < 0.95, 'factor_flags'] = np.nan
-            hourly_factor_flags_s.drop(['count', 'expected', 'frac_complete'], axis=1, inplace=True)
+
+            # no longer need to set flags as nans if <95% completeness at this point,
+            # as this is now handled at the beginning
+            # - utils.check_m_neighbours will set the flag to nan for any months where
+            # the target (aggregated to monthly) is a nan
 
             hourly_flags_s.fillna(-999, inplace=True)
             hourly_factor_flags_s.fillna(-999, inplace=True)
