@@ -9,7 +9,7 @@ Start datetime: 2006010100
 End datetime: 2010123123
 Elevation: 839m
 Number of records: 43824
-Percent missing data: 0.00
+Percent missing data: 2.39
 Original Timestep: 1hr
 New Timestep: 1hr
 Original Units: mm

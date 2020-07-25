@@ -14,36 +14,7 @@ class TestQc(TestCase):
         if not os.path.exists(cls.test_output_path):
             os.mkdir(cls.test_output_path)
 
-    def test_get_flags_hourly(self):
-
-        hourly_n_names, hourly_n_dates, hourly_n_coords, hourly_n_paths, hourly_n_tree = \
-            utils.create_kdtree_hourly_data('tests/sample_data/statlex_hourly.csv')
-
-        qc = Qc(ex.read_intense(os.path.join(self.sample_data_path, 'gauges/DE_02483.txt'), only_metadata=False),
-                hourly_n_names=hourly_n_names,
-                hourly_n_dates=hourly_n_dates,
-                hourly_n_coords=hourly_n_coords,
-                hourly_n_paths=hourly_n_paths,
-                hourly_n_tree=hourly_n_tree,
-                etccdi_data_folder='tests/etccdi_data',
-                )
-        qc.get_flags()
-
-        # for global run
-        qc.write(self.test_output_path + "/Flags")
-
-        # Compare output QC flags file with benchmark
-        benchmark_file_path = os.path.join(self.sample_data_path, "Flags/DE_02483_QC.txt")
-        test_output_path = os.path.join(self.test_output_path, "Flags/DE_02483_QC.txt")
-        with open(benchmark_file_path, "r") as benchmark_file:
-            benchmark_output = benchmark_file.readlines()
-        with open(test_output_path, "r") as test_file:
-            test_output = test_file.readlines()
-        for benchmark_line, test_line in zip(benchmark_output, test_output):
-            self.assertEqual(test_line.replace("(", "[").replace(")", "]"),
-                             benchmark_line.replace("(", "[").replace(")", "]"))
-
-    def test_get_flags_hourly_daily_monthly(self):
+    def test_get_flags(self):
 
         hourly_n_names, hourly_n_dates, hourly_n_coords, hourly_n_paths, hourly_n_tree = \
             utils.create_kdtree_hourly_data('tests/sample_data/statlex_hourly.csv')
@@ -81,7 +52,7 @@ class TestQc(TestCase):
         qc.write(self.test_output_path + "/Flags")
 
         # Compare output QC flags file with benchmark
-        benchmark_file_path = os.path.join(self.sample_data_path, "Flags/DE_02483_QC_hourly_daily_monthly.txt")
+        benchmark_file_path = os.path.join(self.sample_data_path, "Flags/DE_02483_QC.txt")
         test_output_path = os.path.join(self.test_output_path, "Flags/DE_02483_QC.txt")
         with open(benchmark_file_path, "r") as benchmark_file:
             benchmark_output = benchmark_file.readlines()
