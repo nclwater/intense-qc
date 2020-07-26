@@ -34,7 +34,7 @@ Years where min value changes: (1, [2007, 2010])
 Optimum offset: 0
 Pre QC Affinity Index: 0.95957
 Pre QC Pearson coefficient: 0.01397
-Factor against nearest daily gauge: 3.17925
+Factor against nearest daily gauge: 3.17606
 0.9, -999, -999, -999, -999, 2, 0, 0, -999, 0, 0, 0, 0, 0
 0.3, -999, -999, -999, -999, 2, 0, 0, -999, 0, 0, 0, 0, 0
 0.3, -999, -999, -999, -999, 2, 0, 0, -999, 0, 0, 0, 0, 0
