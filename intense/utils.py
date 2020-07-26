@@ -651,11 +651,25 @@ def compare_target_to_neighbour(target, neighbour, high_or_dry, station=None, ch
             # Separate out high and dry checks as using slightly different approaches now
             if high_or_dry == "high":
 
+                # Prepare for fitting distribution to target/neighbour differences
+                # by flagging pairs of values to include
+                # - limit to maximum recorded at neighbour and omit very high values 
+                # (> 1-day world record rainfall) 
+                # - very basic accounting for likely outlying errors
+                df['use_in_dist_fitting'] = 1
+                threshold_value = df.loc[df['ts2'] <= 1825.0, 'ts2'].max()
+                df.loc[df['ts1'] > threshold_value, 'use_in_dist_fitting'] = 0
+                df.loc[df['ts2'] > threshold_value, 'use_in_dist_fitting'] = 0
+
                 # Normalise target and neighbour series by their respective min/max and
                 # find differences
                 # - retained actual amounts too to help filter on wet days
-                df['ts1n'] = (df['ts1'] - df['ts1'].min()) / (df['ts1'].max() - df['ts1'].min())
-                df['ts2n'] = (df['ts2'] - df['ts2'].min()) / (df['ts2'].max() - df['ts2'].min())
+                # - again limit target/neighbour maxima to plausible values (i.e.
+                # <= 1-day world record rainfall)
+                ts1_threshold = df.loc[df['ts1'] <= 1825.0, 'ts1'].max()
+                ts2_threshold = df.loc[df['ts2'] <= 1825.0, 'ts2'].max()
+                df['ts1n'] = (df['ts1'] - df['ts1'].min()) / (ts1_threshold - df['ts1'].min())
+                df['ts2n'] = (df['ts2'] - df['ts2'].min()) / (ts2_threshold - df['ts2'].min())
                 df["nd"] = df['ts1n'] - df['ts2n']
 
                 # ----------
@@ -672,22 +686,23 @@ def compare_target_to_neighbour(target, neighbour, high_or_dry, station=None, ch
                 if df1.shape[0] >= 30:
 
                     # Fit exponential distribution
-                    params = scipy.stats.expon.fit(df1['nd'])
+                    nd_subset = df1.loc[df1['use_in_dist_fitting'] == 1, 'nd']
+                    params = scipy.stats.expon.fit(nd_subset)
 
                     # Calculate thresholds at key percentiles of fitted distribution
+                    q90 = scipy.stats.expon.ppf(0.9, params[0], params[1])
                     q95 = scipy.stats.expon.ppf(0.95, params[0], params[1])
                     q99 = scipy.stats.expon.ppf(0.99, params[0], params[1])
-                    q999 = scipy.stats.expon.ppf(0.999, params[0], params[1])
 
                     # Assign flags
                     # - no need for an additional condition that target exceeds wet day threshold
                     # because the percentiles are defined based on just positive differences?
                     # -- left in for now...
                     conditions = [
-                        (df['ts1'] >= 1.0) & (df['nd'] <= q95),
+                        (df['ts1'] >= 1.0) & (df['nd'] <= q90),
+                        (df['ts1'] >= 1.0) & (df['nd'] > q90) & (df['nd'] <= q95),
                         (df['ts1'] >= 1.0) & (df['nd'] > q95) & (df['nd'] <= q99),
-                        (df['ts1'] >= 1.0) & (df['nd'] > q99) & (df['nd'] <= q999),
-                        (df['ts1'] >= 1.0) & (df['nd'] > q999)]
+                        (df['ts1'] >= 1.0) & (df['nd'] > q99)]
                     choices = [0, 1, 2, 3]
 
                     df['temp_flags'] = np.select(conditions, choices, default=0)
