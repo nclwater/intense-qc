@@ -1,25 +1,4 @@
-"""
-INTENSE QC Component 3 - Rulebase
-
-This component of the INTENSE QC package reads flagged files and applies a rulebase
-to determine which rainfall data should be excluded. 
-Required packages: 
-    intense
-    pandas
-    numpy
-    datetime
-    os
-    
-Developed by: 
-    Elizabeth Lewis, PhD
-    SB, RV, others...
-
-Publication to be cited:
-    Paper
-
-June 2019
-"""
-from typing import Tuple, List
+from typing import List
 
 from .qc import read_intense_qc
 import pandas as pd

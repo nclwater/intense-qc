@@ -1,25 +1,3 @@
-"""
-INTENSE QC Component 1 - Gauge class definition
-
-This component of the INTENSE QC package defines the Gauge class and multiple
-utility functions required by the other components of the QC package to read and write
-rainfall timeseries objects in the standard INTENSE format. 
-
-Required packages: 
-    pandas
-    numpy
-    os
-    
-Developed by: 
-    Elizabeth Lewis, PhD
-    SB, RV, others...
-
-Publication to be cited:
-    Paper
-
-June 2019
-"""
-
 from __future__ import division
 import os
 import numpy as np
@@ -27,10 +5,6 @@ import pandas as pd
 from . import utils
 from datetime import datetime
 from typing import IO, Union
-
-"""
-------------------------------- INTENSE Series definition -------------------------------
-"""
 
 
 class Gauge:

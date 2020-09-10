@@ -2,12 +2,13 @@ from setuptools import setup
 
 setup(
     name='intense',
-    version='0.0.1',
+    version='0.1.0',
     description='',
     long_description='',
     url='https://www.github.com/nclwater/intense-qc',
-    author='Fergus McClean',
+    author='Elizabeth Lewis, David Pritchard, Roberto Villalobos-Herrera, Fergus McClean',
     author_email='fergus.mcclean@newcastle.ac.uk',
-    packages=[],
-    classifiers=['Development Status :: 1 - Planning'],
+    packages=['intense'],
+    install_requires=['pandas>=1', 'rpy2>=2.9', 'xarray>=0.15', 'scipy>=1.4', 'netCDF4>=1.5'],
+    classifiers=['Development Status :: 4 - Beta'],
 )
