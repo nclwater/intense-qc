@@ -133,7 +133,7 @@ class Qc:
     def __init__(self,
                  gauge: Gauge,
                  etccdi_data_folder: Optional[str] = None,
-                 use_hourly_neighbours: bool = False,
+                 use_hourly_neighbours: bool = True,
                  hourly_n_names: Optional[Iterable[str]] = None,
                  hourly_n_dates: Optional[Iterable[Tuple[datetime, datetime]]] = None,
                  hourly_n_coords: Optional[Iterable[Tuple[float, float, float]]] = None,
