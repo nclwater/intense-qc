@@ -28,6 +28,7 @@ class Qc:
     Args:
         gauge: A Gauge object containing the original data and metadata
         etccdi_data_folder: path to a folder containing ETCCDI data
+        use_hourly_neighbours: whether to include neighbouring hourly gauges in quality control
         hourly_n_names: names of neighbouring hourly gauges
         hourly_n_dates: start and end dates of neighbouring hourly gauges
         hourly_n_coords: latitudes, longitudes and elevations of neighbouring hourly gauges
@@ -75,6 +76,7 @@ class Qc:
     Attributes:
         gauge (Gauge): Gauge object containing the original data and metadata
         etcdii_data (Optional[dict]) = the ETCDII data
+        use_hourly_neighbours (bool): whether to include neighbouring hourly gauges in quality control
         hourly_n_names (Optional[Iterable[str]]): names of neighbouring hourly gauges
         hourly_n_dates (Optional[Iterable[Tuple[datetime, datetime]]]): start and end dates of neighbouring hourly
             gauges
@@ -131,6 +133,7 @@ class Qc:
     def __init__(self,
                  gauge: Gauge,
                  etccdi_data_folder: Optional[str] = None,
+                 use_hourly_neighbours: bool = False,
                  hourly_n_names: Optional[Iterable[str]] = None,
                  hourly_n_dates: Optional[Iterable[Tuple[datetime, datetime]]] = None,
                  hourly_n_coords: Optional[Iterable[Tuple[float, float, float]]] = None,
@@ -184,6 +187,7 @@ class Qc:
         if etccdi_data_folder is not None:
             self.etcdii_data = utils.read_etccdi_data(etccdi_data_folder)
 
+        self.use_hourly_neighbours = use_hourly_neighbours
         self.hourly_n_names = hourly_n_names
         self.hourly_n_dates = hourly_n_dates
         self.hourly_n_coords = hourly_n_coords
@@ -1133,7 +1137,8 @@ class Qc:
 
         # Ensure non-nan lat/lon before neighbour checks (issue for some Sicily stations)
         if np.isfinite(self.gauge.latitude) and np.isfinite(self.gauge.longitude):
-            self.hourly_neighbours, self.hourly_neighbours_dry = self.check_hourly_neighbours()
+            if self.use_hourly_neighbours:
+                self.hourly_neighbours, self.hourly_neighbours_dry = self.check_hourly_neighbours()
             if self.use_daily_neighbours:
                 self.daily_neighbours, self.offset, self.preQC_affinity_index, self.preQC_pearson_coefficient, \
                 self.factor_daily, self.daily_neighbours_dry = self.check_daily_neighbours()
@@ -1142,15 +1147,21 @@ class Qc:
 
         self.world_record = self.world_record_check_ts()
 
-        self.Rx1day = self.rx1day_check_ts()
+        if self.etcdii_data is not None:
 
-        self.CDD = self.cdd_check()
+            self.Rx1day = self.rx1day_check_ts()
 
-        self.daily_accumualtions = self.daily_accums_check()
+            self.CDD = self.cdd_check()
 
-        self.monthly_accumulations = self.monthly_accums_check()
+            self.daily_accumualtions = self.daily_accums_check()
 
-        self.streaks = self.streaks_check()
+            self.monthly_accumulations = self.monthly_accums_check()
+
+            self.streaks = self.streaks_check()
+
+            self.R99pTOT = self.r99ptot_check_annual()
+
+            self.PRCPTOT = self.prcptot_check_annual()
 
         self.percentiles = self.check_percentiles()
 
@@ -1163,10 +1174,6 @@ class Qc:
         self.intermittency = self.check_intermittency()
 
         self.breakpoint = self.check_break_point()
-
-        self.R99pTOT = self.r99ptot_check_annual()
-
-        self.PRCPTOT = self.prcptot_check_annual()
 
         self.change_min_value = self.change_in_min_val_check()
 

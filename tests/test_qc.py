@@ -14,12 +14,20 @@ class TestQc(TestCase):
         if not os.path.exists(cls.test_output_path):
             os.mkdir(cls.test_output_path)
 
+    def test_get_flags(self):
+        qc = Qc(ex.read_intense(os.path.join(self.sample_data_path, 'gauges/DE_02483.txt'), only_metadata=False))
+        qc.get_flags()
+
+        # for global run
+        qc.write(self.test_output_path + "/Flags")
+
     def test_get_flags_hourly(self):
 
         hourly_n_names, hourly_n_dates, hourly_n_coords, hourly_n_paths, hourly_n_tree = \
             utils.create_kdtree_hourly_data('tests/sample_data/statlex_hourly.csv')
 
         qc = Qc(ex.read_intense(os.path.join(self.sample_data_path, 'gauges/DE_02483.txt'), only_metadata=False),
+                use_hourly_neighbours=True,
                 hourly_n_names=hourly_n_names,
                 hourly_n_dates=hourly_n_dates,
                 hourly_n_coords=hourly_n_coords,
@@ -56,6 +64,7 @@ class TestQc(TestCase):
         )
 
         qc = Qc(ex.read_intense(os.path.join(self.sample_data_path, 'gauges/DE_02483.txt'), only_metadata=False),
+                use_hourly_neighbours=True,
                 hourly_n_names=hourly_n_names,
                 hourly_n_dates=hourly_n_dates,
                 hourly_n_coords=hourly_n_coords,
