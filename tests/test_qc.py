@@ -1,5 +1,6 @@
 from intense import utils
 from intense.qc import Qc
+from intense.qc import read_intense_qc
 from intense import gauge as ex
 import os
 from unittest import TestCase
@@ -15,11 +16,13 @@ class TestQc(TestCase):
             os.mkdir(cls.test_output_path)
 
     def test_get_flags(self):
-        qc = Qc(ex.read_intense(os.path.join(self.sample_data_path, 'gauges/DE_02483.txt'), only_metadata=False))
+        qc = Qc(ex.read_intense(os.path.join(self.sample_data_path, 'gauges/DE_02483.txt'), only_metadata=False),
+                use_hourly_neighbours=False)
         qc.get_flags()
 
         # for global run
         qc.write(self.test_output_path + "/Flags")
+        read_intense_qc(self.test_output_path + '/Flags/DE_02483_QC.txt')
 
     def test_get_flags_hourly(self):
 
