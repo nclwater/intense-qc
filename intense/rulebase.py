@@ -6,13 +6,15 @@ import numpy as np
 import os
 
 
-def apply_rulebase(file_path: str, root_output_folder: str, write_rulebase_gauge_files: bool = False) -> str:
+def apply_rulebase(file_path: str, root_output_folder: str, write_rulebase_gauge_files: bool = False,
+                   station_id_suffix: str = '') -> str:
     """Applies rule base and creates a quality controlled time series
 
     Args:
         file_path: path to the INTENSE QC file
         root_output_folder: folder in which to store the quality controlled data
         write_rulebase_gauge_files: whether or not to write the rule base gauge files
+        station_id_suffix: string that will be appended to station ID of the gauge object
 
     Returns:
         A summary of the quality controlled data
@@ -146,6 +148,7 @@ def apply_rulebase(file_path: str, root_output_folder: str, write_rulebase_gauge
     output_folder = root_output_folder + "/QCd_Data/"
     if not os.path.exists(output_folder):
         os.mkdir(output_folder)
+    qc.gauge.station_id += station_id_suffix
     qc.gauge.write(output_folder)
 
     # 08/10/2019 (DP)

@@ -7,7 +7,7 @@ summary_path = 'tests/test_output/Rulebase_Summary.csv'
 
 
 class TestRuleBase(TestCase):
-    def test_main(self):
+    def test_apply_all(self):
         rulebase.apply_all([os.path.join(root_folder, 'flags/DE_02483_QC.txt')], summary_path)
         
         # Compare output QC'd data file with benchmark
@@ -18,3 +18,7 @@ class TestRuleBase(TestCase):
         with open(test_output_path, "r") as test_file:
             test_output = test_file.readlines()
         self.assertEqual(test_output, benchmark_output)
+
+    def test_apply(self):
+        rulebase.apply_rulebase(os.path.join(root_folder, 'flags/DE_02483_QC.txt'), os.path.dirname(summary_path),
+                                station_id_suffix='_QCd')
