@@ -517,10 +517,10 @@ def calculate_affinity_index_and_pearson(df1, df2):  # done
         b = np.around(df.loc[df['ts2'] >= 0.1, 'ts2'].min(), 1)
         p = max(a, b, 0.1)
         conditions = [
-            (df['ts1'] > p) & (df['ts2'] > p), # 1- Where both are above p
-            (df['ts1'] <= p) & (df['ts2'] <= p), # 1 - Where both are less or equal than p
-            (df['ts1'] <= p) & (df['ts2'] > p), # 0 - One equal p and other greater than p
-            (df['ts1'] > p) & (df['ts2'] == p)] # 0 - Other way around to above
+            (df['ts1'] >= p) & (df['ts2'] >= p), # 1- Where both are above p - both are wet
+            (df['ts1'] < p) & (df['ts2'] < p), # 1 - Where both are less or equal than p - both are dry
+            (df['ts1'] >= p) & (df['ts2'] < p), # 0 - One equal p and other greater than p - one wet and one dry
+            (df['ts1'] < p) & (df['ts2'] >= p)] # 0 - Other way around to above
         choices = [1, 1, 0, 0]
 
         df['duplicate'] = np.select(conditions, choices, default=np.nan)
